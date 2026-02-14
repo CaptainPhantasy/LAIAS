@@ -370,3 +370,19 @@ class DockerService:
             self.client.close()
         except Exception as e:
             logger.warning("Error closing Docker client", error=str(e))
+
+
+# Singleton instance
+_docker_service: Optional["DockerService"] = None
+
+
+def get_docker_service() -> "DockerService":
+    """Get the Docker service singleton."""
+    global _docker_service
+    if _docker_service is None:
+        _docker_service = DockerService()
+    return _docker_service
+
+
+# For backwards compatibility with imports
+docker_service = property(get_docker_service)

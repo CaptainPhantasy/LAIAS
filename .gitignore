@@ -31,6 +31,11 @@ env/
 .env.local
 .env.*.local
 !.env.example
+*.pem
+*.key
+credentials.json
+secrets.json
+*_credentials*
 
 # IDE
 .idea/
@@ -61,3 +66,6 @@ logs/
 # Local backups
 *.backup
 *.bak
+
+# Frontend (under construction - Phase 3)
+frontend/

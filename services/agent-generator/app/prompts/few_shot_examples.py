@@ -8,26 +8,6 @@ toward high-quality outputs following the Godzilla pattern.
 from typing import List, Dict, Any
 
 # =============================================================================
-# Example Categories
-# =============================================================================
-
-EXAMPLES_BY_COMPLEXITY = {
-    "simple": {
-        "research": SIMPLE_RESEARCH_EXAMPLE,
-        "automation": SIMPLE_AUTOMATION_EXAMPLE,
-    },
-    "moderate": {
-        "research": MODERATE_RESEARCH_EXAMPLE,
-        "development": MODERATE_DEVELOPMENT_EXAMPLE,
-        "analysis": MODERATE_ANALYSIS_EXAMPLE,
-    },
-    "complex": {
-        "research": COMPLEX_RESEARCH_EXAMPLE,
-        "automation": COMPLEX_AUTOMATION_EXAMPLE,
-    }
-}
-
-# =============================================================================
 # Simple Examples
 # =============================================================================
 
@@ -321,6 +301,26 @@ COMPLEX_AUTOMATION_EXAMPLE = {
     D --> I[End]
     E --> I
     H --> I"""
+    }
+}
+
+# =============================================================================
+# Example Categories (defined after examples to avoid forward reference issues)
+# =============================================================================
+
+EXAMPLES_BY_COMPLEXITY = {
+    "simple": {
+        "research": SIMPLE_RESEARCH_EXAMPLE,
+        "automation": SIMPLE_AUTOMATION_EXAMPLE,
+    },
+    "moderate": {
+        "research": MODERATE_RESEARCH_EXAMPLE,
+        "development": MODERATE_DEVELOPMENT_EXAMPLE,
+        "analysis": MODERATE_ANALYSIS_EXAMPLE,
+    },
+    "complex": {
+        "research": COMPLEX_RESEARCH_EXAMPLE,
+        "automation": COMPLEX_AUTOMATION_EXAMPLE,
     }
 }
 

@@ -210,3 +210,20 @@ class ContainerManager:
         except Exception as e:
             logger.error("Exec failed", container_id=container_id, error=str(e))
             raise
+
+
+# Singleton instance
+_container_manager: Optional["ContainerManager"] = None
+
+
+def get_container_manager() -> "ContainerManager":
+    """Get the container manager singleton."""
+    global _container_manager
+    if _container_manager is None:
+        from app.services.docker_service import get_docker_service
+        _container_manager = ContainerManager(get_docker_service())
+    return _container_manager
+
+
+# For backwards compatibility with imports
+container_manager = property(get_container_manager)

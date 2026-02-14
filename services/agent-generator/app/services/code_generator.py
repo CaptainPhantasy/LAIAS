@@ -221,7 +221,7 @@ Generate improved code addressing the feedback while maintaining Godzilla patter
             complexity="moderate",
             task_type="general",
             tools_requested=None,
-            provider=settings.default_llm_provider
+            provider=settings.effective_llm_provider
         )
 
         # Build response

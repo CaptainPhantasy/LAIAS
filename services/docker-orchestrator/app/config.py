@@ -162,10 +162,6 @@ class Settings(BaseSettings):
             raise ValueError(f"Invalid memory limit format: {v}")
         return v.lower()
 
-    class Config:
-        """Pydantic config."""
-        use_enum_values = True
-
 
 # Global settings instance
 settings = Settings()

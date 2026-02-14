@@ -1,0 +1,741 @@
+openapi: 3.0.3
+info:
+  title: LAIAS Docker Orchestrator API
+  description: |
+    API for deploying and managing LAIAS agents in Docker containers.
+
+    ## Features
+    - Deploy generated agents to containers (No-Build strategy)
+    - Start, stop, restart containers
+    - Stream and retrieve container logs
+    - Monitor container resources
+    - Health monitoring endpoints
+
+    ## No-Build Architecture
+    All agents run in a pre-built `laias/agent-runner:latest` image with
+    code mounted as volumes. No per-agent image builds required.
+  version: 1.0.0
+  contact:
+    name: LAIAS Platform
+servers:
+  - url: http://localhost:8002
+    description: Local development server
+
+tags:
+  - name: Deploy
+    description: Agent deployment endpoints
+  - name: Containers
+    description: Container lifecycle management
+  - name: Logs
+    description: Container log retrieval
+  - name: Health
+    description: Service health monitoring
+
+paths:
+  /api/deploy:
+    post:
+      tags:
+        - Deploy
+      summary: Deploy agent to container
+      description: |
+        Deploy a generated agent to a new Docker container.
+        Uses the No-Build strategy - mounts code into pre-built image.
+      operationId: deployAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeployAgentRequest'
+            examples:
+              basic:
+                summary: Basic deployment
+                value:
+                  agent_id: "550e8400-e29b-41d4-a716-446655440000"
+                  flow_code: "from crewai import Agent..."
+                  agents_yaml: "researcher:\n  role: Researcher..."
+                  auto_start: true
+              with_limits:
+                summary: With resource limits
+                value:
+                  agent_id: "550e8400-e29b-41d4-a716-446655440000"
+                  flow_code: "from crewai import Agent..."
+                  agents_yaml: "researcher:\n  role: Researcher..."
+                  auto_start: true
+                  memory_limit: "512m"
+                  cpu_limit: 0.5
+                  timeout_seconds: 300
+      responses:
+        '201':
+          description: Agent deployed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeploymentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Agent already deployed
+        '500':
+          description: Deployment failed
+
+  /api/deploy/{deployment_id}:
+    delete:
+      tags:
+        - Deploy
+      summary: Remove deployment
+      description: Stop and remove a deployed agent container
+      operationId: removeDeployment
+      parameters:
+        - name: deployment_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Deployment removed
+        '404':
+          description: Deployment not found
+
+  /api/containers:
+    get:
+      tags:
+        - Containers
+      summary: List all containers
+      description: Retrieve a list of all LAIAS agent containers
+      operationId: listContainers
+      parameters:
+        - name: all
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include stopped containers
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [running, stopped, paused, all]
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+          description: Filter by agent ID
+      responses:
+        '200':
+          description: List of containers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerListResponse'
+
+  /api/containers/{container_id}:
+    get:
+      tags:
+        - Containers
+      summary: Get container details
+      operationId: getContainer
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Container details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContainerInfo'
+        '404':
+          description: Container not found
+
+  /api/containers/{container_id}/start:
+    post:
+      tags:
+        - Containers
+      summary: Start container
+      operationId: startContainer
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Container started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '404':
+          description: Container not found
+        '409':
+          description: Container already running
+
+  /api/containers/{container_id}/stop:
+    post:
+      tags:
+        - Containers
+      summary: Stop container
+      operationId: stopContainer
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timeout:
+                  type: integer
+                  default: 10
+                  description: Seconds to wait before killing
+      responses:
+        '200':
+          description: Container stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '404':
+          description: Container not found
+
+  /api/containers/{container_id}/restart:
+    post:
+      tags:
+        - Containers
+      summary: Restart container
+      operationId: restartContainer
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                timeout:
+                  type: integer
+                  default: 10
+      responses:
+        '200':
+          description: Container restarted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+
+  /api/containers/{container_id}/exec:
+    post:
+      tags:
+        - Containers
+      summary: Execute command in container
+      operationId: execInContainer
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - command
+              properties:
+                command:
+                  type: array
+                  items:
+                    type: string
+                  example: ["python", "-c", "print('hello')"]
+      responses:
+        '200':
+          description: Command executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecResponse'
+
+  /api/containers/{container_id}/remove:
+    delete:
+      tags:
+        - Containers
+      summary: Remove container
+      operationId: removeContainer
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                force:
+                  type: boolean
+                  default: false
+                remove_volumes:
+                  type: boolean
+                  default: false
+      responses:
+        '204':
+          description: Container removed
+        '404':
+          description: Container not found
+
+  /api/containers/{container_id}/metrics:
+    get:
+      tags:
+        - Containers
+      summary: Get container metrics
+      operationId: getContainerMetrics
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Container metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /api/logs/{container_id}:
+    get:
+      tags:
+        - Logs
+      summary: Get container logs
+      description: Retrieve logs from a container with pagination support
+      operationId: getContainerLogs
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tail
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: Number of lines to return from end
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Only return logs since this timestamp
+        - name: timestamps
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include timestamps
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Pagination offset
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: Max number of log lines
+      responses:
+        '200':
+          description: Container logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogsResponse'
+        '404':
+          description: Container not found
+
+  /api/logs/{container_id}/stream:
+    get:
+      tags:
+        - Logs
+      summary: Stream container logs
+      description: Stream logs in real-time via Server-Sent Events
+      operationId: streamContainerLogs
+      parameters:
+        - name: container_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: SSE stream of log events
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /readiness:
+    get:
+      tags:
+        - Health
+      summary: Readiness check
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+
+  /liveness:
+    get:
+      tags:
+        - Health
+      summary: Liveness check
+      operationId: livenessCheck
+      responses:
+        '200':
+          description: Service is alive
+
+components:
+  schemas:
+    DeployAgentRequest:
+      type: object
+      required:
+        - agent_id
+        - flow_code
+        - agents_yaml
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          description: ID of the generated agent
+        flow_code:
+          type: string
+          description: Python code (flow.py)
+        agents_yaml:
+          type: string
+          description: YAML configuration (agents.yaml)
+        requirements:
+          type: string
+          description: Optional requirements.txt content
+        auto_start:
+          type: boolean
+          default: true
+          description: Start container after creation
+        environment:
+          type: object
+          additionalProperties:
+            type: string
+          description: Environment variables
+        memory_limit:
+          type: string
+          default: "256m"
+          pattern: "^[0-9]+[mg]$"
+          description: Memory limit (e.g., 256m, 1g)
+        cpu_limit:
+          type: number
+          minimum: 0.1
+          maximum: 4.0
+          default: 1.0
+          description: CPU limit (number of cores)
+        timeout_seconds:
+          type: integer
+          default: 3600
+          description: Maximum execution time
+        network:
+          type: string
+          default: "laias-network"
+          description: Docker network to use
+
+    DeploymentResponse:
+      type: object
+      properties:
+        deployment_id:
+          type: string
+          description: Unique deployment identifier
+        container_id:
+          type: string
+          description: Docker container ID
+        container_name:
+          type: string
+          description: Human-readable container name
+        agent_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [created, running, stopped, error]
+        port:
+          type: integer
+          description: Exposed port
+        endpoints:
+          type: object
+          properties:
+            logs:
+              type: string
+              format: uri
+            metrics:
+              type: string
+              format: uri
+        created_at:
+          type: string
+          format: date-time
+        message:
+          type: string
+
+    ContainerListResponse:
+      type: object
+      properties:
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContainerInfo'
+        total:
+          type: integer
+
+    ContainerInfo:
+      type: object
+      properties:
+        container_id:
+          type: string
+        name:
+          type: string
+        agent_id:
+          type: string
+        agent_name:
+          type: string
+        status:
+          type: string
+          enum: [running, stopped, paused, exited, error]
+        state:
+          type: string
+        image:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        ports:
+          type: array
+          items:
+            type: object
+            properties:
+              container_port:
+                type: integer
+              host_port:
+                type: integer
+              protocol:
+                type: string
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        resource_usage:
+          $ref: '#/components/schemas/ResourceUsage'
+
+    ResourceUsage:
+      type: object
+      properties:
+        cpu_percent:
+          type: number
+        memory_usage:
+          type: string
+        memory_percent:
+          type: number
+        network_rx_bytes:
+          type: integer
+        network_tx_bytes:
+          type: integer
+
+    ActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        container_id:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ExecResponse:
+      type: object
+      properties:
+        exit_code:
+          type: integer
+        output:
+          type: string
+
+    LogsResponse:
+      type: object
+      properties:
+        container_id:
+          type: string
+        logs:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              level:
+                type: string
+                enum: [debug, info, warning, error]
+              message:
+                type: string
+              raw:
+                type: string
+        total_lines:
+          type: integer
+        has_more:
+          type: boolean
+        offset:
+          type: integer
+
+    MetricsResponse:
+      type: object
+      properties:
+        container_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        cpu:
+          type: object
+          properties:
+            percent:
+              type: number
+            usage_seconds:
+              type: number
+        memory:
+          type: object
+          properties:
+            usage_bytes:
+              type: integer
+            limit_bytes:
+              type: integer
+            percent:
+              type: number
+        network:
+          type: object
+          properties:
+            rx_bytes:
+              type: integer
+            tx_bytes:
+              type: integer
+            rx_packets:
+              type: integer
+            tx_packets:
+              type: integer
+        io:
+          type: object
+          properties:
+            read_bytes:
+              type: integer
+            write_bytes:
+              type: integer
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/HealthCheck'
+            redis:
+              $ref: '#/components/schemas/HealthCheck'
+            docker:
+              $ref: '#/components/schemas/HealthCheck'
+        metrics:
+          type: object
+          properties:
+            total_deployments:
+              type: integer
+            running_containers:
+              type: integer
+            total_containers:
+              type: integer
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        latency_ms:
+          type: number
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Machine-readable error code
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+        detail:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        container_id:
+          type: string

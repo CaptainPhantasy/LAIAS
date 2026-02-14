@@ -1,0 +1,595 @@
+openapi: 3.0.3
+info:
+  title: LAIAS Agent Generator API
+  description: |
+    API for generating CrewAI agents from natural language descriptions.
+
+    ## Features
+    - Generate agent code from natural language
+    - Validate generated code against Godzilla pattern
+    - Manage saved agents (CRUD operations)
+    - Health monitoring endpoints
+  version: 1.0.0
+  contact:
+    name: LAIAS Platform
+servers:
+  - url: http://localhost:8001
+    description: Local development server
+
+tags:
+  - name: Generate
+    description: Agent generation endpoints
+  - name: Validate
+    description: Code validation endpoints
+  - name: Agents
+    description: Saved agent management
+  - name: Health
+    description: Service health monitoring
+
+paths:
+  /api/generate-agent:
+    post:
+      tags:
+        - Generate
+      summary: Generate agent from description
+      description: |
+        Generate a complete CrewAI agent from a natural language description.
+        Returns Python code following the Godzilla pattern, agent configuration,
+        and estimated complexity.
+      operationId: generateAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAgentRequest'
+            examples:
+              simple:
+                summary: Simple research agent
+                value:
+                  description: "Create a web research agent that searches for information and summarizes findings"
+                  complexity: "simple"
+                  task_type: "research"
+              complex:
+                summary: Complex multi-agent system
+                value:
+                  description: "Build a market research swarm with 3 agents: one to gather data, one to analyze trends, one to generate reports"
+                  complexity: "complex"
+                  task_type: "analysis"
+                  max_agents: 3
+      responses:
+        '200':
+          description: Agent generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateAgentResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Generation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/regenerate:
+    post:
+      tags:
+        - Generate
+      summary: Regenerate agent with modifications
+      description: Regenerate an agent with specific modifications or different parameters
+      operationId: regenerateAgent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegenerateRequest'
+      responses:
+        '200':
+          description: Agent regenerated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateAgentResponse'
+
+  /api/validate-code:
+    post:
+      tags:
+        - Validate
+      summary: Validate generated code
+      description: |
+        Validate Python code against the Godzilla pattern requirements.
+        Checks syntax, structure, and best practices.
+      operationId: validateCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCodeRequest'
+      responses:
+        '200':
+          description: Validation complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateCodeResponse'
+
+  /api/validation-rules:
+    get:
+      tags:
+        - Validate
+      summary: Get validation rules
+      description: Returns the list of validation rules used for code checking
+      operationId: getValidationRules
+      responses:
+        '200':
+          description: List of validation rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        description:
+                          type: string
+                        severity:
+                          type: string
+                          enum: [error, warning, info]
+
+  /api/agents:
+    get:
+      tags:
+        - Agents
+      summary: List saved agents
+      description: Retrieve a paginated list of all saved agents
+      operationId: listAgents
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: task_type
+          in: query
+          schema:
+            type: string
+        - name: complexity
+          in: query
+          schema:
+            type: string
+            enum: [simple, moderate, complex]
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+
+  /api/agents/{agent_id}:
+    get:
+      tags:
+        - Agents
+      summary: Get agent details
+      operationId: getAgent
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDetailResponse'
+        '404':
+          description: Agent not found
+
+    put:
+      tags:
+        - Agents
+      summary: Update agent
+      operationId: updateAgent
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpdateRequest'
+      responses:
+        '200':
+          description: Agent updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentDetailResponse'
+
+    delete:
+      tags:
+        - Agents
+      summary: Delete agent
+      operationId: deleteAgent
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Agent deleted
+        '404':
+          description: Agent not found
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the service and its dependencies
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /readiness:
+    get:
+      tags:
+        - Health
+      summary: Readiness check
+      description: Returns whether the service is ready to accept requests
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+        '503':
+          description: Service is not ready
+
+  /liveness:
+    get:
+      tags:
+        - Health
+      summary: Liveness check
+      description: Returns whether the service is alive
+      operationId: livenessCheck
+      responses:
+        '200':
+          description: Service is alive
+
+components:
+  schemas:
+    GenerateAgentRequest:
+      type: object
+      required:
+        - description
+      properties:
+        description:
+          type: string
+          description: Natural language description of the agent
+          minLength: 10
+          maxLength: 2000
+          example: "Create a web research agent that searches for information and summarizes findings"
+        complexity:
+          type: string
+          enum: [simple, moderate, complex]
+          default: moderate
+          description: Desired complexity level
+        task_type:
+          type: string
+          enum: [research, development, automation, analysis, general]
+          default: general
+          description: Type of task the agent will perform
+        max_agents:
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 10
+          description: Maximum number of agents to generate
+        tools_requested:
+          type: array
+          items:
+            type: string
+          description: Specific tools to include
+          example: ["web_search", "file_read", "code_execution"]
+        provider:
+          type: string
+          enum: [zai, openai, anthropic, openrouter]
+          default: zai
+          description: LLM provider to use for generation
+        save_agent:
+          type: boolean
+          default: true
+          description: Whether to save the generated agent
+
+    GenerateAgentResponse:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the generated agent
+        flow_code:
+          type: string
+          description: Generated Python code following Godzilla pattern
+          example: |
+            from crewai import Agent, Task, Crew, Process
+            from crewai.flow.flow import Flow, listen, start
+            ...
+        agents_config:
+          type: object
+          description: YAML configuration for agents
+        description:
+          type: string
+          description: Original description
+        complexity:
+          type: string
+          enum: [simple, moderate, complex]
+        task_type:
+          type: string
+        agent_count:
+          type: integer
+          description: Number of agents generated
+        tools_included:
+          type: array
+          items:
+            type: string
+        validation_passed:
+          type: boolean
+        warnings:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ValidateCodeRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: Python code to validate
+        strict_mode:
+          type: boolean
+          default: false
+          description: Enable strict validation
+
+    ValidateCodeResponse:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              line:
+                type: integer
+              column:
+                type: integer
+              message:
+                type: string
+              severity:
+                type: string
+                enum: [error, warning, info]
+        warnings:
+          type: array
+          items:
+            type: object
+            properties:
+              line:
+                type: integer
+              message:
+                type: string
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Quality score (0-100)
+        suggestions:
+          type: array
+          items:
+            type: string
+
+    AgentListResponse:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentSummary'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    AgentSummary:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        complexity:
+          type: string
+        task_type:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AgentDetailResponse:
+      type: object
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        flow_code:
+          type: string
+        agents_config:
+          type: object
+        complexity:
+          type: string
+        task_type:
+          type: string
+        tools_included:
+          type: array
+          items:
+            type: string
+        validation_passed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deployment_count:
+          type: integer
+
+    AgentUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+        flow_code:
+          type: string
+        agents_config:
+          type: object
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/HealthCheck'
+            redis:
+              $ref: '#/components/schemas/HealthCheck'
+            llm_provider:
+              $ref: '#/components/schemas/HealthCheck'
+        metrics:
+          type: object
+          properties:
+            total_agents:
+              type: integer
+            cache_hits:
+              type: integer
+            cache_misses:
+              type: integer
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        latency_ms:
+          type: number
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error type
+        message:
+          type: string
+          description: Human-readable error message
+        detail:
+          type: string
+          description: Additional details
+        error_code:
+          type: string
+          description: Machine-readable error code
+        timestamp:
+          type: string
+          format: date-time
+
+    RegenerateRequest:
+      type: object
+      required:
+        - agent_id
+      properties:
+        agent_id:
+          type: string
+          format: uuid
+        modifications:
+          type: string
+          description: Description of modifications to make
+        new_complexity:
+          type: string
+          enum: [simple, moderate, complex]
+        add_tools:
+          type: array
+          items:
+            type: string
+        remove_tools:
+          type: array
+          items:
+            type: string

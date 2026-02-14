@@ -6,7 +6,7 @@ Uses Pydantic Settings for type-safe environment variable loading.
 
 import os
 from functools import lru_cache
-from typing import List, Optional, tuple
+from typing import List, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -131,8 +131,8 @@ class Settings(BaseSettings):
         return bool(self.MISTRAL_API_KEY)
 
     @property
-    def default_llm_provider(self) -> str:
-        """Get the default LLM provider from env or fallback to available."""
+    def effective_llm_provider(self) -> str:
+        """Get the effective LLM provider from env or fallback to available."""
         provider_override = os.getenv("LLM_PROVIDER", "").lower()
         if provider_override:
             return provider_override

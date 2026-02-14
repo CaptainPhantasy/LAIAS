@@ -7,7 +7,7 @@ syntax checking, and quality assessment.
 
 import ast
 import re
-from typing import Tuple, List, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
 import structlog
 
 from app.utils.code_parser import CodeParser

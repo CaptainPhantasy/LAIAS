@@ -5,7 +5,7 @@ Provides domain-specific exceptions for better error handling
 and more meaningful error messages to clients.
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 
 class AgentGeneratorException(Exception):

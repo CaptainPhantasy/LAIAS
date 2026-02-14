@@ -107,11 +107,11 @@ async def get_health() -> HealthResponse:
         - Service uptime
         - Current container count
     """
-    from app.services.docker_service import docker_service
-    from app.services.resource_monitor import resource_monitor
+    from app.services.docker_service import get_docker_service
+    from app.services.resource_monitor import get_resource_monitor
 
     # Check connections
-    docker_ok = await docker_service.check_connection()
+    docker_ok = await get_docker_service().ping()
     database_ok = await _check_postgresql()
     redis_ok = await _check_redis()
     uptime = time.time() - _start_time
@@ -128,7 +128,7 @@ async def get_health() -> HealthResponse:
     container_count = 0
     if docker_ok:
         try:
-            containers = await docker_service.list_containers(all=True)
+            containers = await get_docker_service().list_containers(all=True)
             container_count = len(containers)
         except Exception:
             pass

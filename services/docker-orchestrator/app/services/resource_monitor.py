@@ -297,3 +297,15 @@ class ResourceMonitor:
             "network_tx_bytes_per_sec": max(0, tx_rate),
             "interval_seconds": interval_seconds,
         }
+
+
+# Singleton instance
+_resource_monitor: Optional["ResourceMonitor"] = None
+
+
+def get_resource_monitor() -> "ResourceMonitor":
+    """Get the resource monitor singleton."""
+    global _resource_monitor
+    if _resource_monitor is None:
+        _resource_monitor = ResourceMonitor()
+    return _resource_monitor

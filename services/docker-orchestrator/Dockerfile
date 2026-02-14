@@ -50,10 +50,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Copy application code
 WORKDIR /app
-COPY --chown=laias:laias app ./app
+COPY app ./app
 
-# Switch to non-root user
-USER laias
+# Note: Running as root to access Docker socket
+# In production, consider using TLS or rootless Docker
 
 # Expose port (API_PORT from config)
 EXPOSE 8002
@@ -66,5 +66,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["uvicorn", "app.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8002", \
-     "--workers", "1", \
-     "--log-config", "null"]
+     "--workers", "1"]

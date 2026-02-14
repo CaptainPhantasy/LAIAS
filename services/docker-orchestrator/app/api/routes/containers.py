@@ -10,8 +10,8 @@ from datetime import datetime
 
 from app.models.requests import ContainerActionRequest
 from app.models.responses import ContainerInfo, ContainerListResponse
-from app.services.docker_service import docker_service
-from app.services.resource_monitor import resource_monitor
+from app.services.docker_service import get_docker_service
+from app.services.resource_monitor import get_resource_monitor
 from app.utils.exceptions import (
     ContainerNotFoundError,
     exception_to_http_response,
@@ -43,7 +43,7 @@ async def list_containers(
         ContainerListResponse: List of containers with summary
     """
     try:
-        containers = await docker_service.list_containers(all=True)
+        containers = await get_docker_service().list_containers(all=True)
 
         # Apply status filter if provided
         if status_filter:
@@ -74,7 +74,7 @@ async def list_containers(
 
             if "running" in container_status.lower():
                 try:
-                    metrics = await resource_monitor.get_metrics(container["container_id"])
+                    metrics = await get_resource_monitor().get_metrics(container["container_id"])
                     cpu_usage = metrics.cpu_percent
                     memory_usage = f"{int(metrics.memory_usage_mb)}m"
                     uptime = metrics.uptime_seconds
@@ -134,10 +134,10 @@ async def get_container(container_id: str) -> ContainerInfo:
         HTTPException: If container not found
     """
     try:
-        container = await docker_service.get_container(container_id)
+        container = await get_docker_service().get_container(container_id)
 
         # Get metrics
-        metrics = await resource_monitor.get_metrics(container_id)
+        metrics = await get_resource_monitor().get_metrics(container_id)
 
         return ContainerInfo(
             container_id=container.id,
@@ -185,7 +185,7 @@ async def start_container(container_id: str) -> dict:
         dict: Operation result
     """
     try:
-        await docker_service.start_container(container_id)
+        await get_docker_service().start_container(container_id)
         return {
             "container_id": container_id,
             "status": "started",
@@ -226,7 +226,7 @@ async def stop_container(
         dict: Operation result
     """
     try:
-        await docker_service.stop_container(container_id, timeout=timeout)
+        await get_docker_service().stop_container(container_id, timeout=timeout)
         return {
             "container_id": container_id,
             "status": "stopped",
@@ -267,7 +267,7 @@ async def restart_container(
         dict: Operation result
     """
     try:
-        await docker_service.restart_container(container_id, timeout=timeout)
+        await get_docker_service().restart_container(container_id, timeout=timeout)
         return {
             "container_id": container_id,
             "status": "restarted",
@@ -308,7 +308,7 @@ async def remove_container(
         dict: Operation result
     """
     try:
-        await docker_service.remove_container(container_id, force=force)
+        await get_docker_service().remove_container(container_id, force=force)
         return {
             "container_id": container_id,
             "status": "removed",
@@ -347,7 +347,7 @@ async def get_container_metrics(container_id: str):
     from app.models.responses import MetricsResponse
 
     try:
-        metrics = await resource_monitor.get_metrics(container_id)
+        metrics = await get_resource_monitor().get_metrics(container_id)
         return metrics
     except Exception as e:
         if "not found" in str(e).lower():

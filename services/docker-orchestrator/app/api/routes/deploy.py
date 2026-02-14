@@ -11,8 +11,8 @@ from datetime import datetime
 
 from app.models.requests import DeployAgentRequest
 from app.models.responses import DeploymentResponse
-from app.services.docker_service import docker_service
-from app.services.container_manager import container_manager
+from app.services.docker_service import get_docker_service
+from app.services.container_manager import get_container_manager
 from app.utils.exceptions import (
     DeploymentError,
     ResourceLimitError,
@@ -56,7 +56,7 @@ async def deploy_agent(
 
     # Check container limit
     try:
-        container_count = len(await docker_service.list_containers(all=True))
+        container_count = len(await get_docker_service().list_containers(all=True))
         if container_count >= settings.MAX_CONTAINERS:
             raise ResourceLimitError(
                 limit_type="Container",
@@ -73,7 +73,7 @@ async def deploy_agent(
 
     try:
         # Deploy the agent
-        container = await docker_service.deploy_agent(
+        container = await get_docker_service().deploy_agent(
             deployment_id=deployment_id,
             agent_id=request.agent_id,
             agent_name=request.agent_name,
@@ -89,7 +89,7 @@ async def deploy_agent(
         container_status = "created"
 
         if request.auto_start:
-            await docker_service.start_container(container.id)
+            await get_docker_service().start_container(container.id)
             started_at = datetime.utcnow()
             container_status = "running"
 
@@ -110,7 +110,7 @@ async def deploy_agent(
 
     except Exception as e:
         # Clean up on failure
-        background_tasks.add_task(container_manager.cleanup_deployment, deployment_id)
+        background_tasks.add_task(get_container_manager().cleanup_deployment, deployment_id)
 
         if isinstance(e, (DeploymentError, ResourceLimitError)):
             raise exception_to_http_response(e)
@@ -151,7 +151,7 @@ async def remove_deployment(deployment_id: str) -> None:
         HTTPException: If deployment not found or removal fails
     """
     try:
-        await container_manager.remove_deployment(deployment_id)
+        await get_container_manager().remove_deployment(deployment_id)
     except Exception as e:
         from app.utils.exceptions import ContainerNotFoundError
         if isinstance(e, ContainerNotFoundError):

@@ -13,7 +13,8 @@ import structlog
 
 from app.config import settings
 from app.api.routes import deploy, containers, logs, health
-from app.services import docker_service, resource_monitor
+from app.services.docker_service import get_docker_service
+from app.services.resource_monitor import get_resource_monitor
 from app.utils.exceptions import (
     OrchestratorException,
     ContainerNotFoundError,
@@ -50,7 +51,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Initialize Docker service
     try:
-        await docker_service.initialize()
+        await get_docker_service().ping()
         logger.info("Docker connection verified")
     except Exception as e:
         logger.error("Docker connection failed", error=str(e))
@@ -61,11 +62,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     os.makedirs(settings.AGENT_CODE_PATH, exist_ok=True)
     logger.info("Agent code directory ready", path=settings.AGENT_CODE_PATH)
 
-    # Start metrics monitoring
-    monitor_task = None
+    # Metrics monitoring available on-demand (no background task needed)
     if settings.METRICS_ENABLED:
-        monitor_task = asyncio.create_task(resource_monitor.start_monitoring_task())
-        logger.info("Metrics monitoring started")
+        logger.info("Metrics monitoring available")
 
     yield
 

@@ -10,8 +10,8 @@ from datetime import datetime
 import asyncio
 
 from app.models.responses import LogsResponse, LogEntry
-from app.services.log_streamer import log_streamer
-from app.services.docker_service import docker_service
+from app.services.log_streamer import get_log_streamer
+from app.services.docker_service import get_docker_service
 from app.utils.exceptions import (
     ContainerNotFoundError,
     LogStreamingError,
@@ -52,14 +52,14 @@ async def get_container_logs(
     """
     try:
         # Verify container exists
-        await docker_service.get_container(container_id)
+        await get_docker_service().get_container(container_id)
 
         # For pagination, we fetch more logs than requested to determine if there are more
         # We fetch (tail + offset + 1) lines, then apply offset and check for extra
         fetch_count = tail + offset + 1
 
         # Get logs
-        log_lines = await docker_service.get_container_logs(
+        log_lines = await get_docker_service().get_container_logs(
             container_id=container_id,
             tail=fetch_count,
             since=since,
@@ -82,7 +82,7 @@ async def get_container_logs(
             if not line.strip():
                 continue
 
-            entry = log_streamer.parse_log_line(line)
+            entry = get_log_streamer().parse_log_line(line)
             if entry:
                 # Apply level filter if provided
                 if level is None or entry["level"].upper() == level.upper():
@@ -145,7 +145,7 @@ async def stream_container_logs(
 
     try:
         # Verify container exists
-        await docker_service.get_container(container_id)
+        await get_docker_service().get_container(container_id)
 
         # Create log streaming task
         stream_task = asyncio.create_task(
@@ -198,13 +198,13 @@ async def _log_stream_handler(
     try:
         # Send previous logs first if requested
         if tail > 0:
-            previous_logs = await docker_service.get_container_logs(
+            previous_logs = await get_docker_service().get_container_logs(
                 container_id=container_id,
                 tail=tail,
             )
             for line in previous_logs:
                 if line.strip():
-                    entry = log_streamer.parse_log_line(line)
+                    entry = get_log_streamer().parse_log_line(line)
                     if entry:
                         await websocket.send_json({
                             "type": "log",
@@ -212,7 +212,7 @@ async def _log_stream_handler(
                         })
 
         # Stream new logs
-        async for log_entry in log_streamer.stream_logs(container_id):
+        async for log_entry in get_log_streamer().stream_logs(container_id):
             await websocket.send_json({
                 "type": "log",
                 "data": log_entry,

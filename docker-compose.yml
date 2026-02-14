@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ===========================================================================
   # INFRASTRUCTURE SERVICES
@@ -72,10 +70,18 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
       - REDIS_URL=redis://redis:6379/0
+      # LLM Provider API Keys
+      - ZAI_API_KEY=${ZAI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-openai}
-      - DEFAULT_MODEL=${DEFAULT_MODEL:-gpt-4o}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      # Composio Integration
+      - COMPOSIO_API_KEY=${COMPOSIO_API_KEY}
+      - COMPOSIO_BASE_URL=${COMPOSIO_BASE_URL}
+      - COMPOSIO_ACCESS_TOKEN=${COMPOSIO_ACCESS_TOKEN}
+      # Service Configuration
+      - LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-zai}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-glm-5}
       - SERVICE_PORT=8001
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     depends_on:
@@ -126,40 +132,41 @@ services:
       - laias-network
 
   # ===========================================================================
-  # FRONTEND SERVICES
+  # FRONTEND SERVICES (Phase 3 - BLOCKED)
+  # Uncomment when studio-ui and control-room are implemented
   # ===========================================================================
 
-  studio-ui:
-    build:
-      context: ./frontend/studio-ui
-      dockerfile: Dockerfile
-    image: laias/studio-ui:latest
-    container_name: laias-studio-ui
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
-      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
-    depends_on:
-      - agent-generator
-      - docker-orchestrator
-    networks:
-      - laias-network
+  # studio-ui:
+  #   build:
+  #     context: ./frontend/studio-ui
+  #     dockerfile: Dockerfile
+  #   image: laias/studio-ui:latest
+  #   container_name: laias-studio-ui
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
+  #     - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+  #   depends_on:
+  #     - agent-generator
+  #     - docker-orchestrator
+  #   networks:
+  #     - laias-network
 
-  control-room:
-    build:
-      context: ./frontend/control-room
-      dockerfile: Dockerfile
-    image: laias/control-room:latest
-    container_name: laias-control-room
-    ports:
-      - "3001:3001"
-    environment:
-      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
-    depends_on:
-      - docker-orchestrator
-    networks:
-      - laias-network
+  # control-room:
+  #   build:
+  #     context: ./frontend/control-room
+  #     dockerfile: Dockerfile
+  #   image: laias/control-room:latest
+  #   container_name: laias-control-room
+  #   ports:
+  #     - "3001:3001"
+  #   environment:
+  #     - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+  #   depends_on:
+  #     - docker-orchestrator
+  #   networks:
+  #     - laias-network
 
 networks:
   laias-network:
