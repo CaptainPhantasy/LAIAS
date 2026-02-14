@@ -1,0 +1,322 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   LAIAS Studio UI - Global Styles
+   ============================================================================ */
+
+/* Dark Theme (Default) */
+:root,
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-primary: #0B1020;
+  --bg-secondary: #111C36;
+  --bg-tertiary: #1E2746;
+  --bg-elevated: #2A3456;
+
+  /* Surfaces */
+  --surface: #111C36;
+  --surface-2: #1E2746;
+  --surface-3: rgba(255, 255, 255, 0.04);
+
+  /* Borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --text: #F4F7FF;
+  --text-2: #AAB3C5;
+  --text-3: #6F7A96;
+
+  /* Shadows */
+  --shadow: rgba(0, 0, 0, 0.4);
+
+  /* Brand Accents */
+  --accent-cyan: #2DE2FF;
+  --accent-purple: #8E5CFF;
+  --accent-pink: #FF4FA3;
+
+  /* Status Colors */
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #38BDF8;
+
+  /* Glows */
+  --glow-cyan-sm: 0 0 10px rgba(45, 226, 255, 0.25);
+  --glow-cyan-md: 0 0 20px rgba(45, 226, 255, 0.35);
+  --glow-cyan-lg: 0 0 40px rgba(45, 226, 255, 0.45);
+  --glow-purple-sm: 0 0 10px rgba(142, 92, 255, 0.25);
+  --glow-purple-md: 0 0 22px rgba(142, 92, 255, 0.35);
+}
+
+/* Light Theme */
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-primary: #F4F7FF;
+  --bg-secondary: #E6ECFF;
+  --bg-tertiary: #D8E2FF;
+  --bg-elevated: #FFFFFF;
+
+  /* Surfaces */
+  --surface: #FFFFFF;
+  --surface-2: #EAF0FF;
+  --surface-3: rgba(0, 0, 0, 0.03);
+
+  /* Borders */
+  --border: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-strong: rgba(0, 0, 0, 0.14);
+
+  /* Text */
+  --text: #0B1020;
+  --text-2: #334155;
+  --text-3: #64748B;
+
+  /* Shadows */
+  --shadow: rgba(15, 23, 42, 0.12);
+
+  /* Brand Accents (unchanged) */
+  --accent-cyan: #2DE2FF;
+  --accent-purple: #8E5CFF;
+  --accent-pink: #FF4FA3;
+
+  /* Status Colors (unchanged) */
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #38BDF8;
+}
+
+/* Base Styles */
+@layer base {
+  html {
+    @apply antialiased;
+    color-scheme: dark;
+  }
+
+  [data-theme="light"] html,
+  [data-theme="light"] {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-bg-primary text-text-primary;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-cyan ring-offset-2 ring-offset-bg-primary;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* User-overrideable reduced motion class */
+  [data-reduced-motion="true"] *,
+  [data-reduced-motion="true"] *::before,
+  [data-reduced-motion="true"] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* High contrast */
+  @media (prefers-contrast: high) {
+    :root,
+    [data-theme="dark"] {
+      --border: rgba(255, 255, 255, 0.5);
+      --border-strong: rgba(255, 255, 255, 0.75);
+      --text-3: #A0A0A0;
+    }
+
+    [data-theme="light"] {
+      --border: rgba(0, 0, 0, 0.5);
+      --border-strong: rgba(0, 0, 0, 0.75);
+    }
+
+    .button--primary,
+    .status-badge {
+      border: 2px solid currentColor;
+    }
+  }
+}
+
+/* Component Styles */
+@layer components {
+  /* Glass Surface */
+  .glass-surface {
+    background: rgba(17, 28, 54, 0.6);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    border: 1px solid var(--border);
+  }
+
+  /* Gradient Text */
+  .text-gradient-brand {
+    background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effects */
+  .glow-cyan {
+    box-shadow: var(--glow-cyan-md);
+  }
+
+  .glow-purple {
+    box-shadow: var(--glow-purple-md);
+  }
+
+  /* Ambient Light Effect */
+  .ambient-glow {
+    position: relative;
+  }
+
+  .ambient-glow::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(45, 226, 255, 0.08) 0%,
+      transparent 50%
+    );
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Elevation Classes */
+  .elevation-0 { box-shadow: var(--elevation-0); }
+  .elevation-1 { box-shadow: var(--elevation-1); }
+  .elevation-2 { box-shadow: var(--elevation-2); }
+  .elevation-3 { box-shadow: var(--elevation-3); }
+  .elevation-4 { box-shadow: var(--elevation-4); }
+  .elevation-5 { box-shadow: var(--elevation-5); }
+
+  /* Builder Canvas Layout */
+  .builder-canvas {
+    display: grid;
+    grid-template-columns: 240px 1fr 400px;
+    gap: var(--space-4);
+    flex: 1;
+    min-height: 0;
+  }
+
+  .builder-canvas > * {
+    min-height: 0;
+    overflow: auto;
+  }
+
+  @media (max-width: 1280px) {
+    .builder-canvas {
+      grid-template-columns: 200px 1fr 320px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .builder-canvas {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr auto;
+    }
+  }
+
+  /* App Shell Layout */
+  .app-shell {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "sidebar header"
+      "sidebar main";
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-shell--sidebar-collapsed {
+    grid-template-columns: var(--sidebar-collapsed-width) 1fr;
+  }
+
+  /* Animated shimmer for loading states */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--surface) 25%,
+      var(--surface-2) 50%,
+      var(--surface) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Section panel with accent line */
+  .section-panel {
+    @apply bg-surface border border-border rounded-lg;
+  }
+
+  .section-panel::before {
+    content: '';
+    @apply absolute left-0 top-0 bottom-0 w-0.5 bg-accent-cyan rounded-l-lg;
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Custom scrollbar for light areas */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--text-3);
+  }
+
+  /* Safe area padding for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

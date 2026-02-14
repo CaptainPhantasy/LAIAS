@@ -1,0 +1,53 @@
+/* Motion/Animation Tokens */
+:root {
+  /* Durations */
+  --duration-instant: 50ms;
+  --duration-fast: 100ms;
+  --duration-normal: 200ms;
+  --duration-slow: 350ms;
+  --duration-slower: 500ms;
+  --duration-slowest: 800ms;
+
+  /* Easings */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring-gentle: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring-snappy: cubic-bezier(0.68, -0.6, 0.32, 1.6);
+  --ease-mechanical: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-expressive: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Z-Index Scale */
+  --z-below: -1;
+  --z-base: 0;
+  --z-above: 1;
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1300;
+  --z-modal: 1400;
+  --z-popover: 1500;
+  --z-tooltip: 1600;
+  --z-toast: 1700;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed-width: 64px;
+  --top-bar-height: 56px;
+  --container-max-width: 1440px;
+
+  /* Spacing Scale (4px base) */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+}

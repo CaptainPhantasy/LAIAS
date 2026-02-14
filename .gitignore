@@ -67,5 +67,8 @@ logs/
 *.backup
 *.bak
 
-# Frontend (under construction - Phase 3)
-frontend/
+# Frontend build artifacts (keep source)
+frontend/studio-ui/.next/
+frontend/control-room/.next/
+frontend/*/node_modules/
+frontend/*/.env.local
