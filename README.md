@@ -9,21 +9,44 @@ A Dockerized platform for generating, deploying, and monitoring AI agents using 
 3. **Deploy and run** agents in isolated Docker containers
 4. **Monitor execution** via a dashboard
 
+## Current Status
+
+```
+┌────────────────────────┬─────────┬─────────────────────────────┐
+│ Service                │ Status  │ URL                         │
+├────────────────────────┼─────────┼─────────────────────────────┤
+│ Agent Generator        │ Healthy │ http://localhost:8001       │
+│ Docker Orchestrator    │ Healthy │ http://localhost:8002       │
+│ PostgreSQL             │ Healthy │ localhost:5432              │
+│ Redis                  │ Healthy │ localhost:6379              │
+│ Studio UI              │ WIP     │ http://localhost:3000       │
+│ Control Room           │ WIP     │ http://localhost:3001       │
+└────────────────────────┴─────────┴─────────────────────────────┘
+```
+
 ## Architecture
 
 ```
 LAIAS/
 ├── services/
-│   ├── agent-generator/     # FastAPI service for code generation
-│   └── docker-orchestrator/ # FastAPI service for container management
-├── frontend/
-│   ├── studio-ui/           # Chat-to-agent interface (Phase 3)
-│   └── control-room/        # Agent monitoring dashboard (Phase 3)
+│   ├── agent-generator/     # FastAPI service for code generation (8001)
+│   └── docker-orchestrator/ # FastAPI service for container management (8002)
+├── frontend/                # Phase 3 - In Development
+│   ├── studio-ui/           # Chat-to-agent interface
+│   └── control-room/        # Agent monitoring dashboard
 ├── infrastructure/
 │   ├── init.sql             # PostgreSQL schema
 │   └── redis.conf           # Redis configuration
 ├── templates/
-│   └── godzilla_reference.py # Gold standard agent template
+│   ├── godzilla_reference.py # Gold standard agent template
+│   └── agents/              # 126 production-ready agent configs
+│       ├── development/      # 30 agents
+│       ├── project_management/ # 20 agents
+│       ├── quality_assurance/ # 20 agents
+│       └── ...               # 7 more categories
+├── docs/
+│   ├── openapi-agent-generator.yaml  # API spec for Studio UI
+│   └── openapi-docker-orchestrator.yaml # API spec for Control Room
 └── docker-compose.yml       # Root orchestration
 ```
 
@@ -36,7 +59,11 @@ LAIAS/
 ### 1. Configure Environment
 ```bash
 cp .env.example .env
-# Edit .env with your API keys and configuration
+# Edit .env with your API keys:
+# - ZAI_API_KEY (default provider)
+# - OPENAI_API_KEY
+# - ANTHROPIC_API_KEY
+# - COMPOSIO_API_KEY (for MCP tools)
 ```
 
 ### 2. Start Services
@@ -50,25 +77,55 @@ curl http://localhost:8001/health  # Agent Generator
 curl http://localhost:8002/health  # Docker Orchestrator
 ```
 
+### 4. Access API Documentation
+- Agent Generator: http://localhost:8001/api/docs
+- Docker Orchestrator: http://localhost:8002/api/docs
+
 ## API Endpoints
 
 ### Agent Generator (Port 8001)
-- `POST /api/generate` - Generate agent code from description
-- `POST /api/validate` - Validate generated code
-- `GET /api/agents` - List generated agents
-- `GET /health` - Service health check
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/generate-agent` | POST | Generate agent code from description |
+| `/api/validate-code` | POST | Validate generated code |
+| `/api/agents` | GET | List saved agents |
+| `/api/agents/{id}` | GET/PUT/DELETE | Manage individual agents |
+| `/health` | GET | Service health check |
 
 ### Docker Orchestrator (Port 8002)
-- `POST /api/deploy` - Deploy an agent container
-- `GET /api/containers` - List running containers
-- `GET /api/logs/{id}` - Get container logs
-- `GET /health` - Service health check
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/deploy` | POST | Deploy agent to container |
+| `/api/containers` | GET | List running containers |
+| `/api/containers/{id}/start` | POST | Start container |
+| `/api/containers/{id}/stop` | POST | Stop container |
+| `/api/logs/{id}` | GET | Get container logs |
+| `/health` | GET | Service health check |
+
+## Agent Library
+
+126 production-ready CrewAI agent configurations organized by function:
+
+| Category | Count | Purpose |
+|----------|-------|---------|
+| `development/` | 30 | Code, APIs, implementation |
+| `project_management/` | 20 | Coordination, planning |
+| `quality_assurance/` | 20 | Testing, auditing |
+| `research_analysis/` | 12 | Intelligence, investigation |
+| `tools_integration/` | 11 | MCP, integrations |
+| `design_experience/` | 8 | UX/UI |
+| `data_analytics/` | 7 | Data analysis |
+| `documentation_knowledge/` | 7 | Knowledge management |
+| `business_strategy/` | 6 | Growth, support |
+| `security_compliance/` | 5 | Security, policy |
 
 ## Documentation
 
+- [Implementation Status](IMPLEMENTATION_STATUS.md) - Current progress tracker
 - [Master Plan](docs/MASTER_PLAN.md) - Project roadmap and phases
 - [Build Guide](docs/BUILD_GUIDE.md) - Detailed implementation guide
-- [Implementation Status](IMPLEMENTATION_STATUS.md) - Current progress tracker
+- [OpenAPI - Agent Generator](docs/openapi-agent-generator.yaml) - Studio UI API spec
+- [OpenAPI - Docker Orchestrator](docs/openapi-docker-orchestrator.yaml) - Control Room API spec
 
 ## Development
 
@@ -95,6 +152,19 @@ cd services/docker-orchestrator
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8002
 ```
+
+## LLM Providers
+
+LAIAS supports multiple LLM providers with ZAI GLM-5 as default:
+
+| Provider | Models | Status |
+|----------|--------|--------|
+| ZAI | GLM-5 | Default |
+| OpenAI | GPT-4o, GPT-4 | Verified |
+| Anthropic | Claude 3.5 | Verified |
+| OpenRouter | Multi-model | Supported |
+| Google | Gemini | Supported |
+| Mistral | Mistral | Supported |
 
 ## License
 
