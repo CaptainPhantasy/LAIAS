@@ -1,0 +1,175 @@
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # INFRASTRUCTURE SERVICES
+  # ===========================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: laias-postgres
+    environment:
+      POSTGRES_USER: laias
+      POSTGRES_PASSWORD: laias_secure_password
+      POSTGRES_DB: laias
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laias"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - laias-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: laias-redis
+    command: redis-server /etc/redis/redis.conf
+    volumes:
+      - redis_data:/data
+      - ./infrastructure/redis.conf:/etc/redis/redis.conf:ro
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - laias-network
+
+  # ===========================================================================
+  # AGENT RUNNER BASE IMAGE
+  # Build once, used for all agent deployments
+  # ===========================================================================
+
+  agent-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent-runner
+    image: laias/agent-runner:latest
+    profiles:
+      - build-only  # Only used for building, not running
+    networks:
+      - laias-network
+
+  # ===========================================================================
+  # BACKEND SERVICES
+  # ===========================================================================
+
+  agent-generator:
+    build:
+      context: ./services/agent-generator
+      dockerfile: Dockerfile
+    image: laias/agent-generator:latest
+    container_name: laias-agent-generator
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-openai}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-gpt-4o}
+      - SERVICE_PORT=8001
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - laias-network
+
+  docker-orchestrator:
+    build:
+      context: ./services/docker-orchestrator
+      dockerfile: Dockerfile
+    image: laias/docker-orchestrator:latest
+    container_name: laias-docker-orchestrator
+    ports:
+      - "8002:8002"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
+      - REDIS_URL=redis://redis:6379/1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - AGENT_IMAGE_BASE=laias/agent-runner:latest
+      - AGENT_CODE_PATH=/var/laias/agents
+      - SERVICE_PORT=8002
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      # CRITICAL: Access host Docker socket for sibling container spawning
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Store generated agent code (mounted into spawned containers)
+      - agent_code:/var/laias/agents
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - laias-network
+
+  # ===========================================================================
+  # FRONTEND SERVICES
+  # ===========================================================================
+
+  studio-ui:
+    build:
+      context: ./frontend/studio-ui
+      dockerfile: Dockerfile
+    image: laias/studio-ui:latest
+    container_name: laias-studio-ui
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
+      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+    depends_on:
+      - agent-generator
+      - docker-orchestrator
+    networks:
+      - laias-network
+
+  control-room:
+    build:
+      context: ./frontend/control-room
+      dockerfile: Dockerfile
+    image: laias/control-room:latest
+    container_name: laias-control-room
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+    depends_on:
+      - docker-orchestrator
+    networks:
+      - laias-network
+
+networks:
+  laias-network:
+    driver: bridge
+    name: laias-network
+
+volumes:
+  postgres_data:
+    name: laias-postgres-data
+  redis_data:
+    name: laias-redis-data
+  agent_code:
+    name: laias-agent-code
