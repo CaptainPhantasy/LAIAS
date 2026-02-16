@@ -40,7 +40,7 @@ All generated agents follow the **Godzilla architectural pattern**—a productio
 - **Full Observability**: Structured logging and analytics integration
 
 ```
-📄 Reference Implementation: /home/ubuntu/GODZILLA_TEMPLATE.py
+📄 Reference Implementation: `{PROJECT_ROOT}/templates/godzilla_reference.py`
 ```
 
 ### The "No-Build" Deployment Strategy
@@ -221,9 +221,9 @@ Connect all components and prepare for production.
 
 | File | Description |
 |------|-------------|
-| `/home/ubuntu/LAIAS_BUILD_GUIDE.md` | **Detailed technical specifications for all components** |
-| `/home/ubuntu/GODZILLA_TEMPLATE.py` | **Gold standard agent implementation pattern** |
-| `/home/ubuntu/LAIAS_MASTER_PLAN.md` | This document - project overview |
+| `{PROJECT_ROOT}/docs/BUILD_GUIDE.md` | **Detailed technical specifications for all components** |
+| `{PROJECT_ROOT}/templates/godzilla_reference.py` | **Gold standard agent implementation pattern** |
+| `{PROJECT_ROOT}/docs/MASTER_PLAN.md` | This document - project overview |
 
 ---
 
@@ -238,7 +238,9 @@ Connect all components and prepare for production.
 ### Environment Setup
 ```bash
 # Clone/create project directory
-mkdir -p /home/ubuntu/laias && cd /home/ubuntu/laias
+# Set PROJECT_ROOT to your LAIAS installation location
+export PROJECT_ROOT=/path/to/laias
+cd $PROJECT_ROOT
 
 # Copy environment template
 cp .env.example .env
@@ -291,7 +293,7 @@ The LAIAS platform is complete when:
 **Begin implementation by following the detailed specifications in:**
 
 ```
-📄 /home/ubuntu/LAIAS_BUILD_GUIDE.md
+📄 {PROJECT_ROOT}/docs/BUILD_GUIDE.md
 ```
 
 This guide provides:

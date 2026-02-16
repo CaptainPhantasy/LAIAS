@@ -1,9 +1,9 @@
 # LAIAS Build Guide
 ## Legacy AI Agent Studio - Complete Technical Specification
 
-> **Version**: 2.0  
-> **Last Updated**: February 13, 2026  
-> **Status**: Production-Ready Specification
+> **Version**: 2.1
+> **Last Updated**: February 16, 2026
+> **Status**: Production-Ready Specification (Phases 1-4 Complete)
 
 ---
 
@@ -99,7 +99,7 @@ graph TD
 
 #### Technical Specification
 
-**File**: `/home/ubuntu/laias/infrastructure/init.sql`
+**File**: `{PROJECT_ROOT}/infrastructure/init.sql`
 
 ```sql
 -- =============================================================================
@@ -270,7 +270,7 @@ CREATE TRIGGER update_agents_updated_at
 
 #### Technical Specification
 
-**File**: `/home/ubuntu/laias/docker-compose.yml`
+**File**: `{PROJECT_ROOT}/docker-compose.yml`
 
 ```yaml
 version: '3.8'
@@ -466,7 +466,7 @@ volumes:
 
 #### Technical Specification
 
-**File**: `/home/ubuntu/laias/Dockerfile.agent-runner`
+**File**: `{PROJECT_ROOT}/Dockerfile.agent-runner`
 
 ```dockerfile
 # =============================================================================
@@ -596,7 +596,7 @@ CMD ["python", "flow.py"]
 
 Redis configuration is included in Docker Compose. Additional configuration for production:
 
-**File**: `/home/ubuntu/laias/infrastructure/redis.conf`
+**File**: `{PROJECT_ROOT}/infrastructure/redis.conf`
 
 ```conf
 # =============================================================================
@@ -2174,9 +2174,9 @@ async def test_generate_and_deploy():
 
 | Document | Purpose |
 |----------|---------|
-| `/home/ubuntu/LAIAS_MASTER_PLAN.md` | Project overview and architecture |
-| `/home/ubuntu/GODZILLA_TEMPLATE.py` | Gold standard agent implementation |
-| `/home/ubuntu/LAIAS_BUILD_GUIDE.md` | This document - technical specifications |
+| `{PROJECT_ROOT}/docs/MASTER_PLAN.md` | Project overview and architecture |
+| `{PROJECT_ROOT}/templates/godzilla_reference.py` | Gold standard agent implementation |
+| `{PROJECT_ROOT}/docs/BUILD_GUIDE.md` | This document - technical specifications |
 
 ---
 
