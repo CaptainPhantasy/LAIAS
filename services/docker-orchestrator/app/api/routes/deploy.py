@@ -96,6 +96,15 @@ async def deploy_agent(
         # Build response
         base_url = "ws://localhost:8002" if settings.DEBUG else "wss://api.laias.platform"
 
+        # Record analytics event
+        from app.services.analytics_store import analytics_store
+        await analytics_store.add_event("deployment", {
+            "deployment_id": deployment_id,
+            "agent_id": request.agent_id,
+            "agent_name": request.agent_name,
+            "status": container_status,
+        })
+
         return DeploymentResponse(
             deployment_id=deployment_id,
             agent_id=request.agent_id,
@@ -132,6 +141,15 @@ async def deploy_agent(
                     "detail": str(e),
                 },
             )
+
+        # Record failed deployment analytics
+        from app.services.analytics_store import analytics_store
+        await analytics_store.add_event("deployment", {
+            "deployment_id": deployment_id,
+            "agent_id": request.agent_id,
+            "agent_name": request.agent_name,
+            "status": "error",
+        })
 
 
 @router.delete(

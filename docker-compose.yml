@@ -84,6 +84,9 @@ services:
       - DEFAULT_MODEL=${DEFAULT_MODEL:-glm-5}
       - SERVICE_PORT=8001
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TEMPLATES_DIR=/app/templates/presets
+    volumes:
+      - ./templates/presets:/app/templates/presets:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -132,41 +135,64 @@ services:
       - laias-network
 
   # ===========================================================================
-  # FRONTEND SERVICES (Phase 3 - BLOCKED)
-  # Uncomment when studio-ui and control-room are implemented
+  # FRONTEND SERVICES
   # ===========================================================================
 
-  # studio-ui:
-  #   build:
-  #     context: ./frontend/studio-ui
-  #     dockerfile: Dockerfile
-  #   image: laias/studio-ui:latest
-  #   container_name: laias-studio-ui
-  #   ports:
-  #     - "3000:3000"
-  #   environment:
-  #     - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
-  #     - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
-  #   depends_on:
-  #     - agent-generator
-  #     - docker-orchestrator
-  #   networks:
-  #     - laias-network
+  studio-ui:
+    build:
+      context: ./frontend
+      dockerfile: studio-ui/Dockerfile
+      args:
+        - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
+        - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+    image: laias/studio-ui:latest
+    container_name: laias-studio-ui
+    ports:
+      - "3000:3000"
+    environment:
+      # NOTE: NEXT_PUBLIC_ vars are baked into client-side JS at build time
+      # Browser needs localhost URLs, not Docker internal network names
+      - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
+      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+    depends_on:
+      agent-generator:
+        condition: service_healthy
+      docker-orchestrator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - laias-network
 
-  # control-room:
-  #   build:
-  #     context: ./frontend/control-room
-  #     dockerfile: Dockerfile
-  #   image: laias/control-room:latest
-  #   container_name: laias-control-room
-  #   ports:
-  #     - "3001:3001"
-  #   environment:
-  #     - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
-  #   depends_on:
-  #     - docker-orchestrator
-  #   networks:
-  #     - laias-network
+  control-room:
+    build:
+      context: ./frontend
+      dockerfile: control-room/Dockerfile
+      args:
+        - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+    image: laias/control-room:latest
+    container_name: laias-control-room
+    ports:
+      - "3001:3001"
+    environment:
+      # NOTE: NEXT_PUBLIC_ vars are baked into client-side JS at build time
+      # Browser needs localhost URLs, not Docker internal network names
+      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+    depends_on:
+      docker-orchestrator:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - laias-network
 
 networks:
   laias-network:

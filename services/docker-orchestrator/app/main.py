@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse
 import structlog
 
 from app.config import settings
-from app.api.routes import deploy, containers, logs, health
+from app.api.routes import deploy, containers, logs, health, analytics
 from app.services.docker_service import get_docker_service
 from app.services.resource_monitor import get_resource_monitor
 from app.utils.exceptions import (
@@ -136,6 +136,10 @@ app.include_router(
 
 app.include_router(
     health.router,
+)
+
+app.include_router(
+    analytics.router,
 )
 
 

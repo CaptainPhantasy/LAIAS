@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Link from 'next/link';
 import { AppShell } from '@/components/layout/app-shell';
 import { SectionPanel } from '@/components/agent-builder/section-panel';
 import { Input, Select } from '@/components/ui/input';
@@ -18,6 +19,19 @@ export default function SettingsPage() {
   return (
     <AppShell title="Settings">
       <div className="max-w-2xl space-y-6">
+        {/* Team Settings Link */}
+        <SectionPanel title="Team" accentColor="purple">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-white font-medium">Team Collaboration</h3>
+              <p className="text-sm text-gray-500">Manage team members and roles</p>
+            </div>
+            <Link href="/settings/team">
+              <Button variant="outline">Manage Team</Button>
+            </Link>
+          </div>
+        </SectionPanel>
+
         {/* API Configuration */}
         <SectionPanel title="API Configuration" accentColor="cyan">
           <div className="space-y-4">

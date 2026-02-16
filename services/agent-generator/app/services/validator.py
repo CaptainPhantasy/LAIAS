@@ -60,7 +60,7 @@ class CodeValidator:
                 return {
                     "is_valid": False,
                     "syntax_errors": syntax_errors,
-                    "pattern_compliance": 0.0,
+                    "pattern_compliance_score": 0.0,
                     "warnings": [],
                     "suggestions": [],
                     "missing_patterns": []
@@ -95,7 +95,7 @@ class CodeValidator:
         return {
             "is_valid": is_valid,
             "syntax_errors": [e for e in errors if "Syntax" in e],
-            "pattern_compliance": compliance_score,
+            "pattern_compliance_score": compliance_score,
             "warnings": warnings,
             "suggestions": suggestions,
             "missing_patterns": missing_patterns

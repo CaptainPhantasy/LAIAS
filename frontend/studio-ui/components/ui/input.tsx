@@ -11,6 +11,8 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   label?: string;
   error?: string;
   helperText?: string;
+  iconLeft?: React.ReactNode;
+  iconRight?: React.ReactNode;
 }
 
 export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -31,7 +33,7 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 // ============================================================================
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, helperText, id, ...props }, ref) => {
+  ({ className, label, error, helperText, id, iconLeft, iconRight, ...props }, ref) => {
     const generatedId = React.useId();
     const inputId = id || generatedId;
 
@@ -45,21 +47,35 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <input
-          ref={ref}
-          id={inputId}
-          className={cn(
-            'w-full px-3 py-2',
-            'bg-bg-tertiary border border-border rounded-md',
-            'text-text-primary placeholder:text-text-muted',
-            'transition-all duration-150',
-            'focus:outline-none focus:ring-2 focus:ring-accent-cyan/30 focus:border-accent-cyan',
-            'disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-error focus:ring-error/30 focus:border-error',
-            className
+        <div className="relative">
+          {iconLeft && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+              {iconLeft}
+            </div>
           )}
-          {...props}
-        />
+          <input
+            ref={ref}
+            id={inputId}
+            className={cn(
+              'w-full px-3 py-2',
+              'bg-bg-tertiary border border-border rounded-md',
+              'text-text-primary placeholder:text-text-muted',
+              'transition-all duration-150',
+              'focus:outline-none focus:ring-2 focus:ring-accent-cyan/30 focus:border-accent-cyan',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              iconLeft && 'pl-10',
+              iconRight && 'pr-10',
+              error && 'border-error focus:ring-error/30 focus:border-error',
+              className
+            )}
+            {...props}
+          />
+          {iconRight && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
+              {iconRight}
+            </div>
+          )}
+        </div>
         {error && (
           <p className="mt-1.5 text-sm text-error">{error}</p>
         )}

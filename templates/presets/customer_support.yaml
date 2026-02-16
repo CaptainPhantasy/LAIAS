@@ -1,0 +1,49 @@
+# Customer Support Agent Template
+# Specialized in support ticket handling
+
+id: customer_support
+name: Customer Support Agent
+description: Handles customer support inquiries, categorizes tickets, provides solutions, and escalates complex issues.
+
+category: support
+
+tags:
+  - support
+  - customer-service
+  - automation
+
+default_complexity: moderate
+
+default_tools:
+  - FileReadTool
+  - DirectoryReadTool
+
+sample_prompts:
+  - "Process incoming support tickets and categorize by urgency and type"
+  - "Draft responses to common customer questions about our billing process"
+  - "Analyze support ticket trends to identify common issues"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 3
+
+agent_structure:
+  agents:
+    - name: triage_agent
+      role: Ticket triage and categorization
+      backstory: "Support specialist experienced in quickly assessing and categorizing incoming issues."
+    - name: resolution_agent
+      role: Issue resolution specialist
+      backstory: "Technical support expert with deep product knowledge and problem-solving skills."
+    - name: escalation_agent
+      role: Complex issue escalation handler
+      backstory: "Senior support agent who handles escalated cases and coordinates with specialized teams."
+
+expected_outputs:
+  - Categorized tickets
+  - Response drafts
+  - Resolution suggestions
+  - Escalation summaries
+  - Trend analysis

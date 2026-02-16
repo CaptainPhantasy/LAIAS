@@ -148,3 +148,77 @@ CREATE TRIGGER update_agents_updated_at
     BEFORE UPDATE ON agents
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================================================
+-- TEAM COLLABORATION TABLES
+-- =============================================================================
+
+-- Users table
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255),
+    password_hash VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_login TIMESTAMP WITH TIME ZONE
+);
+
+-- Teams table
+CREATE TABLE IF NOT EXISTS teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(100) UNIQUE NOT NULL,
+    owner_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Team membership
+CREATE TABLE IF NOT EXISTS team_members (
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'member',
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    PRIMARY KEY (team_id, user_id),
+    CONSTRAINT valid_role CHECK (role IN ('owner', 'admin', 'member', 'viewer'))
+);
+
+-- Update agents table with team associations
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'agents' AND column_name = 'owner_id'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN owner_id UUID REFERENCES users(id);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'agents' AND column_name = 'team_id'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN team_id UUID REFERENCES teams(id);
+    END IF;
+END $$;
+
+-- Update deployments table with team association
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'deployments' AND column_name = 'team_id'
+    ) THEN
+        ALTER TABLE deployments ADD COLUMN team_id UUID REFERENCES teams(id);
+    END IF;
+END $$;
+
+-- =============================================================================
+-- INDEXES FOR TEAM TABLES
+-- =============================================================================
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_teams_slug ON teams(slug);
+CREATE INDEX IF NOT EXISTS idx_teams_owner ON teams(owner_id);
+CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(team_id);
+CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_id);
+CREATE INDEX IF NOT EXISTS idx_agents_team ON agents(team_id);
+CREATE INDEX IF NOT EXISTS idx_deployments_team ON deployments(team_id);

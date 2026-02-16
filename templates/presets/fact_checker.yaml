@@ -1,0 +1,46 @@
+# Fact Checker Agent Template
+# Specialized in fact verification
+
+id: fact_checker
+name: Fact Checker
+description: Verifies claims, checks sources, and provides accuracy assessments for statements and articles.
+
+category: research
+
+tags:
+  - fact-checking
+  - verification
+  - research
+
+default_complexity: moderate
+
+default_tools:
+  - SerperDevTool
+  - ScrapeWebsiteTool
+
+sample_prompts:
+  - "Verify the statistics in this article about renewable energy"
+  - "Fact-check claims made in the recent press release"
+  - "Cross-reference sources in the research paper"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 2
+
+agent_structure:
+  agents:
+    - name: claim_extractor
+      role: Factual claim identifier
+      backstory: "Expert at identifying verifiable claims within complex text."
+    - name: source_verifier
+      role: Source verification specialist
+      backstory: "Research specialist skilled in finding and evaluating primary sources."
+
+expected_outputs:
+  - Verification reports
+  - Source citations
+  - Accuracy ratings
+  - Correction suggestions
+  - Confidence scores

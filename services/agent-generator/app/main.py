@@ -8,14 +8,30 @@ Author: LAIAS Production Team
 Version: 1.0.0
 """
 
+# =============================================================================
+# CRITICAL: Load .env into os.environ BEFORE importing settings
+# =============================================================================
+# pydantic-settings loads .env into model fields but does NOT export to os.environ
+# LLMProvider uses os.getenv() which requires vars in actual environment
+from pathlib import Path
+from dotenv import load_dotenv
+
+_CONFIG_DIR = Path(__file__).parent.parent  # app/main.py -> services/agent-generator
+_ENV_FILE = _CONFIG_DIR / ".env"
+load_dotenv(_ENV_FILE)  # Export .env to os.environ
+
+# Now safe to import settings (which will also read from the now-loaded env)
+from app.config import settings
+
+# =============================================================================
+# Remaining imports
+# =============================================================================
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import structlog
 from time import time
-
-from app.config import settings
 from app import __version__
 
 # =============================================================================
@@ -111,11 +127,19 @@ def create_app() -> FastAPI:
     from app.api.routes.validate import router as validate_router
     from app.api.routes.health import router as health_router
     from app.api.routes.agents import router as agents_router
+    from app.api.routes.tools import router as tools_router
+    from app.api.routes.users import router as users_router
+    from app.api.routes.teams import router as teams_router
+    from app.api.routes.templates import router as templates_router
 
     app.include_router(generate_router)
     app.include_router(validate_router)
     app.include_router(health_router)
     app.include_router(agents_router)
+    app.include_router(tools_router)
+    app.include_router(users_router)
+    app.include_router(teams_router)
+    app.include_router(templates_router)
 
     # =============================================================================
     # Root Endpoint

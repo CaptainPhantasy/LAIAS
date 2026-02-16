@@ -2,32 +2,136 @@
 # LAIAS Agent Generator Service - Python Dependencies
 # =============================================================================
 # Generated 2026-02-14
+# Updated for Python 3.13 (CrewAI compatibility)
 
 # === Core Framework ===
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.5.3
+pydantic-settings>=2.1.0
 
 # === LLM Providers ===
-openai==1.12.0
-anthropic==0.18.0
+openai>=1.12.0
+anthropic>=0.18.0
+portkey-ai>=1.10.0
 
 # === Database ===
-sqlalchemy==2.0.25
-asyncpg==0.29.0
+sqlalchemy>=2.0.25
+asyncpg>=0.29.0
 
 # === Caching ===
-redis==5.0.1
+redis>=5.0.1
 
 # === Utilities ===
-python-dotenv==1.0.0
-httpx==0.26.0
-tenacity==8.2.3
-structlog==24.1.0
+python-dotenv>=1.0.0
+httpx>=0.26.0
+tenacity>=8.2.3
+structlog>=24.1.0
+pyyaml>=6.0.0
 
-# === Optional: Testing ===
-# pytest==7.4.3
-# pytest-asyncio==0.21.1
-# pytest-cov==4.1.0
-# httpx==0.26.0  # For mocking
+# =============================================================================
+# CrewAI Tools Integration
+# =============================================================================
+
+# === Core CrewAI (use available versions) ===
+crewai>=0.11.0
+crewai-tools>=0.0.1
+
+# === MCP Support (Model Context Protocol) ===
+mcp>=1.0.0
+
+# =============================================================================
+# File & Document Tools
+# =============================================================================
+pypdf>=4.0.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
+python-pptx>=0.6.23
+lxml>=5.0.0
+markdown>=3.5.0
+beautifulsoup4>=4.12.0
+html2text>=2020.1.16
+
+# =============================================================================
+# Web Scraping & Browsing Tools
+# =============================================================================
+requests>=2.31.0
+aiohttp>=3.9.0
+fake-useragent>=1.4.0
+
+# =============================================================================
+# Search & Research Tools
+# =============================================================================
+duckduckgo-search>=4.2.0
+wikipedia>=1.4.0
+arxiv>=2.1.0
+
+# =============================================================================
+# Database & Data Tools
+# =============================================================================
+# SQL Databases
+psycopg2-binary>=2.9.9
+pymongo>=4.6.0
+
+# Vector Databases
+chromadb>=0.4.22
+
+# Data Processing
+pandas>=2.2.0
+numpy>=1.26.0
+
+# =============================================================================
+# AI & Machine Learning Tools
+# =============================================================================
+# Embeddings
+sentence-transformers>=2.3.0
+tiktoken>=0.5.2
+
+# RAG (already installed via crewai)
+langchain>=0.1.0
+langchain-community>=0.0.20
+langchain-openai>=0.0.5
+
+# Model Hubs
+huggingface-hub>=0.20.0
+
+# =============================================================================
+# Cloud & Storage Tools
+# =============================================================================
+# AWS
+boto3>=1.34.0
+
+# Azure
+azure-storage-blob>=12.19.0
+azure-identity>=1.15.0
+
+# Google Cloud
+google-cloud-storage>=2.14.0
+
+# =============================================================================
+# Automation Tools
+# =============================================================================
+apify-client>=1.6.0
+
+# =============================================================================
+# Integration Tools
+# =============================================================================
+# Communication
+slack-sdk>=3.26.0
+
+# Email
+sendgrid>=6.11.0
+
+# Documentation
+notion-client>=2.2.0
+
+# Developer Tools
+PyGithub>=2.1.0
+docker>=7.0.0
+
+# =============================================================================
+# Development Tools
+# =============================================================================
+ruff>=0.2.0
+mypy>=1.8.0
+black>=24.1.0

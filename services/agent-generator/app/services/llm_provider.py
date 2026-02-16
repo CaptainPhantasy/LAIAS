@@ -29,6 +29,7 @@ logger = structlog.get_logger()
 class ProviderType(str, Enum):
     """Supported LLM provider types."""
     ZAI = "zai"
+    PORTKEY = "portkey"  # Portkey gateway for ZhipuAI and others
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     OPENROUTER = "openrouter"
@@ -126,12 +127,25 @@ class LLMProvider:
     # Provider-specific configurations
     PROVIDER_CONFIGS: Dict[ProviderType, Dict[str, Any]] = {
         ProviderType.ZAI: {
-            "base_url": "https://open.bigmodel.cn/api/paas/v4",
+            "base_url": "https://api.z.ai/api/coding/paas/v4",
             "default_model": "glm-5",
             "api_key_env": "ZAI_API_KEY",
             "header_prefix": "Bearer",
             "supports_streaming": True,
             "format": "openai",
+            "thinking_disabled": True,  # Disable reasoning mode for direct content
+        },
+        ProviderType.PORTKEY: {
+            "base_url": "https://api.portkey.ai/v1",
+            "default_model": "@zhipu/glm-4.7-flashx",  # GLM-4.7 via Portkey
+            "api_key_env": "PORTKEY_API_KEY",
+            "header_prefix": "",  # Uses x-portkey-api-key header
+            "supports_streaming": True,
+            "format": "openai",
+            "extra_headers": {
+                "x-portkey-api-key": "{api_key}",  # Portkey uses custom header
+                "x-portkey-provider": "zhipu",  # Route to ZhipuAI
+            }
         },
         ProviderType.OPENAI: {
             "base_url": "https://api.openai.com/v1",
@@ -200,6 +214,7 @@ class LLMProvider:
         provider_env = os.getenv("LLM_PROVIDER", "zai").lower()
         provider_map = {
             "zai": ProviderType.ZAI,
+            "portkey": ProviderType.PORTKEY,
             "openai": ProviderType.OPENAI,
             "anthropic": ProviderType.ANTHROPIC,
             "openrouter": ProviderType.OPENROUTER,
@@ -369,9 +384,13 @@ class LLMProvider:
         else:
             headers["Authorization"] = self._api_key
 
-        # Add extra headers (e.g., OpenRouter)
+        # Add extra headers (e.g., OpenRouter, Portkey)
         for key, value in provider_config.get("extra_headers", {}).items():
-            headers[key] = value
+            # Support {api_key} placeholder in header values
+            if "{api_key}" in str(value):
+                headers[key] = value.replace("{api_key}", self._api_key)
+            else:
+                headers[key] = value
 
         # Build request payload
         payload = {
@@ -380,6 +399,10 @@ class LLMProvider:
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
+
+        # Add thinking parameter for ZAI provider to disable reasoning mode
+        if self.config.provider == ProviderType.ZAI and provider_config.get("thinking_disabled"):
+            payload["thinking"] = {"type": "disabled"}
 
         # Add any extra options
         payload.update(self.config.extra)
@@ -390,7 +413,11 @@ class LLMProvider:
         response.raise_for_status()
         data = response.json()
 
+        # Debug log the response
+        logger.debug("LLM API response", provider=self.config.provider.value, response_keys=list(data.keys()), choices_count=len(data.get("choices", [])))
+
         content = data["choices"][0]["message"]["content"]
+        logger.debug("LLM content extracted", content_length=len(content) if content else 0, content_preview=(content[:100] if content else "None")[:100])
         tokens_used = data.get("usage", {}).get("total_tokens")
         finish_reason = data["choices"][0].get("finish_reason")
 
@@ -603,6 +630,11 @@ class LLMProvider:
             "max_tokens": max_tokens,
             "stream": True,
         }
+
+        # Add thinking parameter for ZAI provider to disable reasoning mode
+        if self.config.provider == ProviderType.ZAI and provider_config.get("thinking_disabled"):
+            payload["thinking"] = {"type": "disabled"}
+
         payload.update(self.config.extra)
 
         url = f"{self._base_url}/chat/completions"

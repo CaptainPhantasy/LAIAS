@@ -61,8 +61,8 @@ class GenerateAgentRequest(BaseModel):
         examples=[["SerperDevTool", "ScrapeWebsiteTool"]]
     )
 
-    llm_provider: Literal["openai", "anthropic"] = Field(
-        default="openai",
+    llm_provider: Literal["zai", "openai", "anthropic", "openrouter", "google", "mistral"] = Field(
+        default="zai",
         description="LLM provider for code generation"
     )
 

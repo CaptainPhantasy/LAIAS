@@ -1,0 +1,46 @@
+# API Tester Agent Template
+# Specialized in API testing
+
+id: api_tester
+name: API Tester
+description: Tests REST APIs, generates test cases, validates responses, and documents API behavior.
+
+category: development
+
+tags:
+  - testing
+  - api
+  - development
+
+default_complexity: moderate
+
+default_tools:
+  - CodeInterpreterTool
+  - FileReadTool
+
+sample_prompts:
+  - "Generate test cases for the user authentication endpoints"
+  - "Validate API responses against the OpenAPI specification"
+  - "Document the API endpoints and create example requests"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 2
+
+agent_structure:
+  agents:
+    - name: test_case_generator
+      role: API test case creator
+      backstory: "QA specialist with expertise in API testing methodologies."
+    - name: response_validator
+      role: Response validation specialist
+      backstory: "Expert in validating API responses, schemas, and error handling."
+
+expected_outputs:
+  - Test case suites
+  - API documentation
+  - Validation reports
+  - Example requests/responses
+  - Coverage analysis

@@ -1,0 +1,45 @@
+# Translation Agent Template
+# Specialized in multi-language translation
+
+id: translation_agent
+name: Translation Agent
+description: Translates content between multiple languages while preserving context, tone, and cultural nuances.
+
+category: productivity
+
+tags:
+  - translation
+  - localization
+  - languages
+
+default_complexity: simple
+
+default_tools:
+  - FileReadTool
+  - DirectoryReadTool
+
+sample_prompts:
+  - "Translate our product documentation from English to Spanish"
+  - "Localize our marketing content for the Japanese market"
+  - "Translate and adapt our website for German audiences"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: false
+  max_agents: 2
+
+agent_structure:
+  agents:
+    - name: translator
+      role: Professional translator
+      backstory: "Professional translator with expertise in multiple languages and cultural contexts."
+    - name: localization_specialist
+      role: Cultural adaptation specialist
+      backstory: "Localization expert ensuring content resonates with target audiences."
+
+expected_outputs:
+  - Translated documents
+  - Localized content
+  - Cultural adaptation notes
+  - Glossary maintenance

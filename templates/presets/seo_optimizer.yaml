@@ -1,0 +1,47 @@
+# SEO Optimizer Agent Template
+# Specialized in SEO analysis and optimization
+
+id: seo_optimizer
+name: SEO Optimizer
+description: Analyzes content for SEO opportunities, suggests keywords, and provides optimization recommendations.
+
+category: marketing
+
+tags:
+  - seo
+  - marketing
+  - analytics
+
+default_complexity: moderate
+
+default_tools:
+  - SerperDevTool
+  - ScrapeWebsiteTool
+  - FileReadTool
+
+sample_prompts:
+  - "Analyze our landing page for SEO improvements"
+  - "Generate keyword suggestions for a blog post about remote work"
+  - "Review competitor content strategies and suggest improvements"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 2
+
+agent_structure:
+  agents:
+    - name: keyword_researcher
+      role: Keyword research specialist
+      backstory: "SEO expert with deep knowledge of keyword research and search intent analysis."
+    - name: content_optimizer
+      role: On-page SEO optimizer
+      backstory: "Specialist in on-page optimization, meta tags, and content structure."
+
+expected_outputs:
+  - Keyword suggestions
+  - SEO audit reports
+  - Meta tag recommendations
+  - Content optimization suggestions
+  - Competitor analysis

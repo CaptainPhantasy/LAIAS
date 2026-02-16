@@ -7,9 +7,10 @@ SQLAlchemy models for persistent storage of agents and generations.
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import Column, String, Text, Integer, Float, Boolean, DateTime, JSON
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, String, Text, Integer, Float, Boolean, DateTime, JSON, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
+from uuid import UUID as UUIDType
 
 Base = declarative_base()
 
@@ -57,6 +58,10 @@ class Agent(Base):
     deployed_count = Column(Integer, default=0)
     last_deployed = Column(DateTime)
 
+    # === Team / Ownership ===
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    team_id = Column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+
     # === Timestamps ===
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -82,6 +87,8 @@ class Agent(Base):
             "last_deployed": self.last_deployed.isoformat() if self.last_deployed else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "owner_id": str(self.owner_id) if self.owner_id else None,
+            "team_id": str(self.team_id) if self.team_id else None,
         }
 
 

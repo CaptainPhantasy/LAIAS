@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, Suspense } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   Sparkles,
   ArrowRight,
@@ -28,6 +29,9 @@ import { SectionPanel, ToolTile, PromptSuggestions } from '@/components/agent-bu
 import { CodePanel } from '@/components/code-editor';
 import { cn, debounce } from '@/lib/utils';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+const FETCH_TIMEOUT = 8000; // 8 second timeout for template loading
+
 // ============================================================================
 // Form Schema
 // ============================================================================
@@ -48,9 +52,16 @@ type FormValues = z.infer<typeof formSchema>;
 // Page Component
 // ============================================================================
 
-export default function CreateAgentPage() {
+function CreateAgentPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateId = searchParams.get('template');
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [templateError, setTemplateError] = useState<string | null>(null);
+  const [templateName, setTemplateName] = useState<string | null>(null);
 
   const {
     generationState,
@@ -90,6 +101,71 @@ export default function CreateAgentPage() {
   const watchedDescription = watch('description');
   const watchedTools = watch('tools_requested');
   const watchedProvider = watch('provider');
+
+  // Load template data if coming from templates page
+  useEffect(() => {
+    const loadTemplate = async () => {
+      if (!templateId) {
+        setTemplateError(null);
+        setTemplateName(null);
+        return;
+      }
+
+      setLoadingTemplate(true);
+      setTemplateError(null);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/templates/${templateId}`, {
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error(`Template "${templateId}" not found. It may have been removed or renamed.`);
+          }
+          throw new Error(`Failed to load template: HTTP ${response.status}`);
+        }
+
+        const template = await response.json();
+        setTemplateName(template.name || templateId);
+
+        // Pre-fill form with template data
+        if (template.sample_prompts?.[0]) {
+          setValue('description', template.sample_prompts[0]);
+        }
+        if (template.default_complexity) {
+          setValue('complexity', template.default_complexity);
+        }
+        if (template.category) {
+          setValue('task_type', template.category as any);
+        }
+        if (template.default_tools?.length) {
+          setValue('tools_requested', template.default_tools);
+        }
+        if (template.suggested_config?.llm_provider) {
+          setValue('provider', template.suggested_config.llm_provider as any);
+        }
+        if (template.suggested_config?.max_agents) {
+          setValue('max_agents', template.suggested_config.max_agents);
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          setTemplateError('Loading template timed out. Please check your connection and try again.');
+        } else {
+          setTemplateError(err instanceof Error ? err.message : 'Failed to load template');
+        }
+      } finally {
+        setLoadingTemplate(false);
+      }
+    };
+
+    loadTemplate();
+  }, [templateId, setValue]);
 
   // Debounced validation for description field (500ms per blueprint E.3)
   const debouncedValidate = useRef(
@@ -198,6 +274,11 @@ export default function CreateAgentPage() {
     console.log('Deploy triggered');
   };
 
+  // Clear template error and start fresh
+  const handleClearTemplate = () => {
+    router.push('/create');
+  };
+
   // Page actions
   const pageActions = (
     <>
@@ -221,6 +302,65 @@ export default function CreateAgentPage() {
 
   return (
     <AppShell title="Create Agent" actions={pageActions} fullWidth>
+      {/* Template indicator with loading and error states */}
+      {templateId && (
+        <div className={cn(
+          "border rounded-lg px-4 py-3 flex items-center justify-between",
+          templateError
+            ? "bg-error/10 border-error/30"
+            : loadingTemplate
+            ? "bg-surface-2 border-border"
+            : "bg-accent-cyan/10 border-accent-cyan/30"
+        )}>
+          <div className="flex items-center gap-3">
+            {loadingTemplate ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-accent-cyan border-t-transparent"></div>
+                <span className="text-text-secondary">Loading template: {templateId}...</span>
+              </>
+            ) : templateError ? (
+              <>
+                <svg className="w-5 h-5 text-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <span className="text-error font-medium">Template Error</span>
+                  <span className="text-text-secondary text-sm ml-2">{templateError}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5 text-accent-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <span className="text-accent-cyan">Using template:</span>
+                  <span className="text-text-primary font-medium ml-2">{templateName || templateId}</span>
+                </div>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {templateError && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.reload()}
+              >
+                Retry
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={templateError ? handleClearTemplate : () => router.push('/templates')}
+            >
+              {templateError ? 'Start Fresh' : 'Change Template'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Builder Canvas - CSS Grid per blueprint */}
       <div className="builder-canvas grid grid-cols-1 lg:grid-cols-[240px_1fr_400px] xl:grid-cols-[240px_1fr_400px] gap-4 p-4 pt-2">
         {/* Left: Section Nav */}
@@ -265,6 +405,7 @@ export default function CreateAgentPage() {
               render={({ field }) => (
                 <Textarea
                   {...field}
+                  disabled={loadingTemplate}
                   placeholder="Describe your AI agent in natural language. Be specific about what it should do, what tools it needs, and how it should behave."
                   rows={6}
                   error={errors.description?.message}
@@ -295,6 +436,7 @@ export default function CreateAgentPage() {
                   <Select
                     label="Complexity"
                     {...field}
+                    disabled={loadingTemplate}
                     options={[
                       { value: 'simple', label: 'Simple' },
                       { value: 'moderate', label: 'Moderate' },
@@ -310,6 +452,7 @@ export default function CreateAgentPage() {
                   <Select
                     label="Task Type"
                     {...field}
+                    disabled={loadingTemplate}
                     options={[
                       { value: 'general', label: 'General' },
                       { value: 'research', label: 'Research' },
@@ -330,6 +473,7 @@ export default function CreateAgentPage() {
                     min={1}
                     max={10}
                     {...field}
+                    disabled={loadingTemplate}
                     onChange={(e) => field.onChange(parseInt(e.target.value, 10) || 1)}
                   />
                 )}
@@ -348,6 +492,7 @@ export default function CreateAgentPage() {
                   description={tool.description}
                   selected={watchedTools?.includes(tool.id) || false}
                   onSelect={handleToolToggle}
+                  disabled={loadingTemplate}
                 />
               ))}
             </div>
@@ -368,6 +513,7 @@ export default function CreateAgentPage() {
                   <Select
                     label="LLM Provider"
                     {...field}
+                    disabled={loadingTemplate}
                     options={[
                       { value: 'zai', label: 'ZAI (Default)' },
                       { value: 'openai', label: 'OpenAI' },
@@ -379,6 +525,7 @@ export default function CreateAgentPage() {
               />
               <Select
                 label="Model"
+                disabled={loadingTemplate}
                 options={MODELS_BY_PROVIDER[watchedProvider]?.map((m) => ({
                   value: m,
                   label: m,
@@ -394,10 +541,12 @@ export default function CreateAgentPage() {
               variant="primary"
               size="lg"
               fullWidth
-              disabled={isGenerating}
+              disabled={isGenerating || loadingTemplate}
               iconLeft={isGenerating ? undefined : <Sparkles className="w-5 h-5" />}
             >
-              {isGenerating ? (
+              {loadingTemplate ? (
+                <span className="animate-pulse">Loading Template...</span>
+              ) : isGenerating ? (
                 <span className="animate-pulse">
                   {generationState === 'analyzing' && 'Analyzing...'}
                   {generationState === 'generating' && 'Generating...'}
@@ -428,5 +577,17 @@ export default function CreateAgentPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function CreateAgentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent-cyan"></div>
+      </div>
+    }>
+      <CreateAgentPageContent />
+    </Suspense>
   );
 }

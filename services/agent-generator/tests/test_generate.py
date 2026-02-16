@@ -4,7 +4,7 @@ Tests for agent generation endpoint.
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.main import create_app
 from app.models.requests import GenerateAgentRequest
@@ -17,28 +17,28 @@ def client():
 
 
 @pytest.fixture
-def mock_llm_service():
-    """Mock LLM service fixture."""
-    with patch("app.services.llm_service.AsyncOpenAI") as mock_openai:
-        mock_response = type('MockResponse', (), {
-            'choices': [type('MockChoice', (), {
-                'message': type('MockMessage', (), {
-                    'content': '''{
-                        "flow_code": "class TestFlow(Flow[AgentState]):\\n    @start()\\n    async def begin(self):\\n        pass",
-                        "state_class": "class AgentState(BaseModel):\\n    task_id: str = ''",
-                        "agents_yaml": "agents:\\n  test:",
-                        "requirements": ["crewai[tools]>=0.80.0"],
-                        "flow_diagram": "graph TD\\n    A[Start]",
-                        "agents_info": []
-                    }'''
-                })()
-            })()],
-            'usage': type('MockUsage', (), {
-                'total_tokens': 1000
-            })()
-        })
-        mock_openai.return_value.chat.completions.create = AsyncMock(return_value=mock_response)
-        yield mock_openai
+def mock_llm_provider():
+    """Mock LLM provider fixture."""
+    mock_response = MagicMock()
+    mock_response.content = '''{
+        "flow_code": "class TestFlow(Flow[AgentState]):\\n    @start()\\n    async def begin(self):\\n        pass",
+        "state_class": "class AgentState(BaseModel):\\n    task_id: str = ''",
+        "agents_yaml": "agents:\\n  test:",
+        "requirements": ["crewai[tools]>=0.80.0"],
+        "flow_diagram": "graph TD\\n    A[Start]",
+        "agents_info": []
+    }'''
+    mock_response.tokens_used = 1000
+    mock_response.model = "glm-5"
+    mock_response.provider = MagicMock(value="zai")
+
+    with patch("app.services.llm_provider.LLMProvider") as mock_provider_class:
+        mock_provider = AsyncMock()
+        mock_provider.complete = AsyncMock(return_value=mock_response)
+        mock_provider.__aenter__ = AsyncMock(return_value=mock_provider)
+        mock_provider.__aexit__ = AsyncMock(return_value=None)
+        mock_provider_class.return_value = mock_provider
+        yield mock_provider
 
 
 def test_root_endpoint(client):
@@ -51,7 +51,7 @@ def test_root_endpoint(client):
 
 
 @pytest.mark.asyncio
-async def test_generate_agent_success(client, mock_llm_service):
+async def test_generate_agent_success(client, mock_llm_provider):
     """Test successful agent generation."""
     request_data = {
         "description": "Create a research agent that searches the web",

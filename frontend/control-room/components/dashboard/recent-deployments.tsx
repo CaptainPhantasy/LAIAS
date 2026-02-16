@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Clock, ArrowRight } from 'lucide-react';
+import { Clock, ArrowRight, Box } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/status';
 import { formatRelativeTime, truncateId } from '@/lib/formatters';
@@ -50,8 +50,12 @@ export function RecentDeployments({ containers, maxItems = 5, className }: Recen
       </div>
 
       {recentContainers.length === 0 ? (
-        <div className="text-center py-8 text-text-muted text-sm">
-          <p className="font-medium">No containers deployed yet</p>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mb-3">
+            <Box className="w-6 h-6 text-text-muted" />
+          </div>
+          <p className="text-sm font-medium text-text-primary mb-1">No containers deployed yet</p>
+          <p className="text-xs text-text-muted">Generate and deploy agents from Studio UI</p>
         </div>
       ) : (
         <div className="space-y-2">

@@ -1,0 +1,49 @@
+# Research Agent Template
+# Specialized in web research and information synthesis
+
+id: research_agent
+name: Research Agent
+description: Conducts comprehensive web research on any topic, gathering information from multiple sources and synthesizing findings into coherent reports.
+
+category: research
+
+tags:
+  - research
+  - web-scraper
+  - analysis
+
+default_complexity: moderate
+
+default_tools:
+  - SerperDevTool
+  - ScrapeWebsiteTool
+  - FileReadTool
+
+sample_prompts:
+  - "Research the latest developments in quantum computing and summarize key breakthroughs"
+  - "Compare pricing strategies of top 5 SaaS competitors in the project management space"
+  - "Gather information about renewable energy adoption rates across European countries"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 3
+
+agent_structure:
+  agents:
+    - name: lead_researcher
+      role: Lead researcher who coordinates research efforts
+      backstory: "An experienced research analyst with 10 years of experience in information gathering and synthesis."
+    - name: web_scraper
+      role: Web scraper who collects data from websites
+      backstory: "Specialist in extracting relevant information from web sources efficiently."
+    - name: synthesis_expert
+      role: Expert who synthesizes findings into coherent reports
+      backstory: "Expert at organizing information and creating clear, actionable summaries."
+
+expected_outputs:
+  - Comprehensive research reports
+  - Source citations
+  - Key findings summary
+  - Recommendations based on research

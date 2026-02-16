@@ -19,6 +19,8 @@ from app.models.responses import (
     AgentListResponse,
     AgentDetailResponse
 )
+from app.models.team import User, Team, TeamMember
+from app.models.database import Base
 
 __all__ = [
     # Requests
@@ -34,4 +36,9 @@ __all__ = [
     "HealthResponse",
     "AgentListResponse",
     "AgentDetailResponse",
+    # Database Models
+    "Base",
+    "User",
+    "Team",
+    "TeamMember",
 ]

@@ -1,0 +1,3 @@
+# CrewAI core
+crewai>=0.11.0
+crewai-tools>=0.0.1

@@ -1,9 +1,9 @@
 # LAIAS Master Plan
 ## Legacy AI Agent Studio - Architecture & Project Overview
 
-> **Version**: 2.0  
-> **Last Updated**: February 13, 2026  
-> **Status**: Production-Ready Specification
+> **Version**: 2.1
+> **Last Updated**: February 16, 2026
+> **Status**: Production-Ready Specification (Phases 1-4 Complete)
 
 ---
 
@@ -162,14 +162,14 @@ Connect all components and prepare for production.
 | End-to-End Testing | Full workflow validation |
 | Production Configuration | Environment setup |
 
-### Phase 5: Advanced Features
-Enhance the platform with additional capabilities.
+### Phase 5: Advanced Features (FUTURE WORK)
+> **Note**: Phase 5 features are planned for future releases and are not included in the current v1.0 implementation.
 
-| Component | Purpose |
-|-----------|---------|
-| Agent Templates | Pre-built agent configurations |
-| Analytics Dashboard | Usage and cost tracking |
-| Team Collaboration | Multi-user support |
+| Component | Purpose | Status |
+|-----------|---------|--------|
+| Agent Templates | Pre-built agent configurations | PLANNED |
+| Analytics Dashboard | Usage and cost tracking | PLANNED |
+| Team Collaboration | Multi-user support | PLANNED |
 
 ---
 
@@ -207,9 +207,13 @@ Enhance the platform with additional capabilities.
 ### AI/LLM
 | Technology | Purpose |
 |------------|---------|
-| OpenAI API | Primary LLM provider |
+| ZAI GLM-5 | **Primary LLM provider (default)** |
+| OpenAI API | Alternative LLM provider |
 | Anthropic API | Alternative LLM provider |
+| OpenRouter | Multi-model gateway |
 | CrewAI Tools | Agent capabilities |
+| Portkey AI | LLM gateway abstraction |
+| Composio MCP | Tool integration platform |
 
 ---
 
@@ -229,7 +233,7 @@ Enhance the platform with additional capabilities.
 - Docker & Docker Compose
 - Node.js 18+
 - Python 3.11+
-- OpenAI API key and/or Anthropic API key
+- ZAI API key (default provider) **or** OpenAI API key **or** Anthropic API key
 
 ### Environment Setup
 ```bash
@@ -239,9 +243,11 @@ mkdir -p /home/ubuntu/laias && cd /home/ubuntu/laias
 # Copy environment template
 cp .env.example .env
 
-# Add API keys to .env
+# Add API keys to .env (at least one provider required)
+echo "ZAI_API_KEY=your-zai-key" >> .env
 echo "OPENAI_API_KEY=sk-..." >> .env
 echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env
+echo "OPENROUTER_API_KEY=sk-or-..." >> .env
 
 # Build and start infrastructure
 docker-compose up -d postgres redis

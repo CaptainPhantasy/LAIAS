@@ -139,3 +139,101 @@ class ErrorResponse(BaseModel):
         json_encoders = {
             datetime: lambda v: v.isoformat(),
         }
+
+
+# ============================================================================
+# Analytics Response Models
+# ============================================================================
+
+class UsageDataPoint(BaseModel):
+    """Single data point for usage over time."""
+    date: str = Field(..., description="Date in ISO format")
+    api_calls: int = Field(..., description="Number of API calls")
+    tokens_used: int = Field(..., description="Number of tokens used")
+    cost_usd: float = Field(..., description="Cost in USD")
+
+
+class UsageStatsResponse(BaseModel):
+    """Usage statistics response."""
+    period_days: int = Field(..., description="Period covered in days")
+    total_api_calls: int = Field(..., description="Total API calls in period")
+    total_tokens_used: int = Field(..., description="Total tokens used")
+    total_cost_usd: float = Field(..., description="Total estimated cost in USD")
+    cost_by_provider: Dict[str, float] = Field(..., description="Cost breakdown by provider")
+    tokens_by_provider: Dict[str, Dict[str, int]] = Field(
+        ..., description="Token breakdown by provider (input/output)"
+    )
+    api_calls_by_endpoint: Dict[str, int] = Field(
+        ..., description="API call count by endpoint"
+    )
+    daily_timeseries: List[UsageDataPoint] = Field(
+        ..., description="Daily usage data"
+    )
+
+
+class DeploymentDataPoint(BaseModel):
+    """Single data point for deployments over time."""
+    date: str = Field(..., description="Date in ISO format")
+    total: int = Field(..., description="Total deployments")
+    successful: int = Field(..., description="Successful deployments")
+    failed: int = Field(..., description="Failed deployments")
+    success_rate: float = Field(..., description="Success rate percentage")
+
+
+class DeploymentEvent(BaseModel):
+    """A deployment event record."""
+    deployment_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    agent_name: Optional[str] = None
+    status: str = Field(..., description="Deployment status")
+    created_at: Optional[datetime] = None
+
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+        }
+
+
+class DeploymentStatsResponse(BaseModel):
+    """Deployment statistics response."""
+    period_days: int = Field(..., description="Period covered in days")
+    total_deployments: int = Field(..., description="Total deployments")
+    successful_deployments: int = Field(..., description="Successful deployments")
+    failed_deployments: int = Field(..., description="Failed deployments")
+    success_rate: float = Field(..., description="Success rate percentage")
+    deployments_by_status: Dict[str, int] = Field(
+        ..., description="Deployment count by status"
+    )
+    daily_timeseries: List[DeploymentDataPoint] = Field(
+        ..., description="Daily deployment data"
+    )
+    recent_deployments: List[DeploymentEvent] = Field(
+        ..., description="Recent deployment events"
+    )
+
+
+class PerformanceDataPoint(BaseModel):
+    """Single data point for performance over time."""
+    date: str = Field(..., description="Date in ISO format")
+    avg_response_time_ms: float = Field(..., description="Average response time")
+    request_count: int = Field(..., description="Number of requests")
+
+
+class PerformanceMetricsResponse(BaseModel):
+    """Performance metrics response."""
+    period_days: int = Field(..., description="Period covered in days")
+    avg_response_time_ms: float = Field(..., description="Average response time")
+    p50_response_time_ms: float = Field(..., description="50th percentile response time")
+    p95_response_time_ms: float = Field(..., description="95th percentile response time")
+    p99_response_time_ms: float = Field(..., description="99th percentile response time")
+    total_requests: int = Field(..., description="Total requests measured")
+    daily_timeseries: List[PerformanceDataPoint] = Field(
+        ..., description="Daily performance data"
+    )
+
+
+class AnalyticsResponse(BaseModel):
+    """Comprehensive analytics response."""
+    usage: UsageStatsResponse = Field(..., description="Usage statistics")
+    deployments: DeploymentStatsResponse = Field(..., description="Deployment statistics")
+    performance: PerformanceMetricsResponse = Field(..., description="Performance metrics")

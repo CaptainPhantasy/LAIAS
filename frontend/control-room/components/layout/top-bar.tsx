@@ -37,37 +37,50 @@ export const TopBar = memo(function TopBar({
       )}
       style={{ height: `${TOP_BAR_HEIGHT}px` }}
     >
-      {/* Left: Brand/Logo */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-cyan to-accent-purple md:hidden">
+      {/* Left: Brand/Logo - only show on mobile (sidebar hidden) */}
+      <div className="flex items-center gap-3 md:hidden">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-cyan to-accent-purple">
           <span className="text-sm font-bold text-white">L</span>
         </div>
-        <span className="text-lg font-semibold text-gradient-brand hidden md:inline-block">
+        <span className="text-lg font-semibold text-gradient-brand">
           LAIAS
         </span>
       </div>
+      
+      {/* Desktop: Breadcrumb/Context area */}
+      <div className="hidden md:flex items-center gap-2 text-text-2">
+        {/* Intentionally empty on desktop - sidebar has branding */}
+      </div>
 
-      {/* Center: Page Title */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <h1 className="text-base font-semibold text-text md:text-lg">
+      {/* Center: Page context - only show on mobile */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:hidden">
+        <h1 className="text-base font-semibold text-text">
           {title}
         </h1>
       </div>
+      
+      {/* Desktop: Show connection status centered as context */}
+      <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-2">
+        <span
+          className={cn('connection-dot', STATUS_CLASSES[connectionStatus])}
+          aria-hidden="true"
+        />
+        <span className="text-sm font-medium text-text-2">
+          {STATUS_LABELS[connectionStatus]}
+        </span>
+      </div>
 
-      {/* Right: Connection Status & Actions */}
-      <div className="flex items-center gap-4">
-        {/* Connection Status */}
-        <div className="flex items-center gap-2">
+      {/* Right: Actions */}
+      <div className="flex items-center gap-3">
+        {/* Connection Status - only show on mobile (desktop shows in center) */}
+        <div className="flex items-center gap-2 md:hidden">
           <span
             className={cn('connection-dot', STATUS_CLASSES[connectionStatus])}
             aria-hidden="true"
           />
-          <span className="text-sm font-medium text-text-2 hidden sm:inline">
-            {STATUS_LABELS[connectionStatus]}
-          </span>
         </div>
 
-        {/* Theme Toggle (Placeholder) */}
+        {/* Theme Toggle */}
         <button
           className={cn(
             'rounded-lg p-2 text-text-3 transition-colors',

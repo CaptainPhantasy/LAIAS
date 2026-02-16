@@ -62,6 +62,7 @@ class LLMService:
         provider_str = settings.LLM_PROVIDER.lower()
         provider_map = {
             "zai": ProviderType.ZAI,
+            "portkey": ProviderType.PORTKEY,
             "openai": ProviderType.OPENAI,
             "anthropic": ProviderType.ANTHROPIC,
             "openrouter": ProviderType.OPENROUTER,
@@ -97,6 +98,7 @@ class LLMService:
         if provider:
             provider_map = {
                 "zai": ProviderType.ZAI,
+                "portkey": ProviderType.PORTKEY,
                 "openai": ProviderType.OPENAI,
                 "anthropic": ProviderType.ANTHROPIC,
                 "openrouter": ProviderType.OPENROUTER,
@@ -199,7 +201,7 @@ class LLMService:
         )
 
         try:
-            llm = self._get_provider(provider=provider, model=model)
+            llm = self._get_provider(provider=provider, model=model_name)
             response = await llm.complete(messages)
 
             logger.info(
@@ -225,13 +227,14 @@ class LLMService:
         """Get default model for a provider."""
         provider_map = {
             "zai": "glm-5",
+            "portkey": "@zhipu/glm-4.7-flashx",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
             "openrouter": "anthropic/claude-sonnet-4",
             "google": "gemini-2.0-flash-exp",
             "mistral": "mistral-large-latest",
         }
-        return provider_map.get(provider.lower(), "glm-5")
+        return provider_map.get(provider.lower(), "@zhipu/glm-4.7-flashx")
 
     def _get_system_prompt(self) -> str:
         """Get the system prompt for code generation."""
@@ -300,7 +303,8 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
         """
         status = {}
         providers_to_check = [
-            ("zai", ProviderType.ZAI, "glm-4"),
+            ("portkey", ProviderType.PORTKEY, "@zhipu/glm-4.7-flashx"),
+            ("zai", ProviderType.ZAI, "glm-4.7-flashx"),
             ("openai", ProviderType.OPENAI, "gpt-4o-mini"),
             ("anthropic", ProviderType.ANTHROPIC, "claude-3-haiku-20240307"),
         ]

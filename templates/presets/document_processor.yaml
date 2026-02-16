@@ -1,0 +1,47 @@
+# Document Processor Agent Template
+# Specialized in PDF/DOC processing
+
+id: document_processor
+name: Document Processor
+description: Extracts, analyzes, and processes content from PDFs, Word documents, and other file formats.
+
+category: analysis
+
+tags:
+  - documents
+  - processing
+  - extraction
+
+default_complexity: moderate
+
+default_tools:
+  - FileReadTool
+  - DirectoryReadTool
+  - CodeInterpreterTool
+
+sample_prompts:
+  - "Extract key data from invoices in the documents folder"
+  - "Summarize the contents of the uploaded PDF reports"
+  - "Convert document format and extract structured data"
+
+suggested_config:
+  llm_provider: zai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 2
+
+agent_structure:
+  agents:
+    - name: document_reader
+      role: Document content extractor
+      backstory: "Specialist in extracting text and data from various document formats."
+    - name: data_extractor
+      role: Structured data extraction specialist
+      backstory: "Expert at identifying and extracting structured information from unstructured documents."
+
+expected_outputs:
+  - Extracted text
+  - Structured data
+  - Document summaries
+  - Metadata extraction
+  - Format conversion
