@@ -45,16 +45,16 @@ def sanitize_agent_name(name: str) -> str:
 
 def extract_code_from_markdown(content: str) -> str:
     """
-    Extract Python code from markdown code blocks.
+    Extract code from markdown code blocks.
 
     Args:
         content: Content possibly containing markdown code blocks
 
     Returns:
-        Extracted Python code
+        Extracted code (supports python, json, or plain code blocks)
     """
-    # Match ```python ... ``` or ``` ... ``` blocks
-    pattern = r"```(?:python)?\s*\n?(.*?)\n?```"
+    # Match ```python ... ```, ```json ... ```, or ``` ... ``` blocks
+    pattern = r"```(?:python|json)?\s*\n?(.*?)\n?```"
     matches = re.findall(pattern, content, re.DOTALL)
 
     if matches:

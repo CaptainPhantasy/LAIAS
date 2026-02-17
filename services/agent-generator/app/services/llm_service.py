@@ -234,7 +234,7 @@ class LLMService:
             "google": "gemini-2.0-flash-exp",
             "mistral": "mistral-large-latest",
         }
-        return provider_map.get(provider.lower(), "@zhipu/glm-4.7-flashx")
+        return provider_map.get(provider.lower(), "glm-5")
 
     def _get_system_prompt(self) -> str:
         """Get the system prompt for code generation."""
@@ -291,7 +291,7 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
             extracted = extract_code_from_markdown(content)
             try:
                 return json.loads(extracted)
-            except:
+            except json.JSONDecodeError:
                 raise ValueError(f"Invalid JSON response from LLM")
 
     async def check_health(self) -> Dict[str, str]:
@@ -304,7 +304,7 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
         status = {}
         providers_to_check = [
             ("portkey", ProviderType.PORTKEY, "@zhipu/glm-4.7-flashx"),
-            ("zai", ProviderType.ZAI, "glm-4.7-flashx"),
+            ("zai", ProviderType.ZAI, "glm-5"),
             ("openai", ProviderType.OPENAI, "gpt-4o-mini"),
             ("anthropic", ProviderType.ANTHROPIC, "claude-3-haiku-20240307"),
         ]

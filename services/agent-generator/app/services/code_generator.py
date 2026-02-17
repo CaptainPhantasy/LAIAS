@@ -169,7 +169,7 @@ class CodeGenerator:
             "Agent generation complete",
             agent_id=response.agent_id,
             is_valid=validation["is_valid"],
-            compliance=validation["pattern_compliance"]
+            compliance=validation["pattern_compliance_score"]
         )
 
         return response
