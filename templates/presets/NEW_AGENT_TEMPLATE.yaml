@@ -1,0 +1,31 @@
+id: NEW_AGENT_TEMPLATE
+name: New Agent Template — Zero Tolerance Enforcement
+description: '[SYSTEM ROLE: [AGENT_NAME] — [SPECIALIST_ROLE]]'
+category: analysis
+tags:
+- analysis
+- new_agent_template
+- security
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- SerperDevTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: New Agent Template — Zero Tolerance Enforcement specialist
+    backstory: Expert new agent template — zero tolerance enforcement with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

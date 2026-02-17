@@ -1,0 +1,32 @@
+id: mit_ai_scaffolding_mcp_expert_v1
+name: Mit-Ai-Scaffolding-Mcp-Expert-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: research
+tags:
+- expert
+- web
+- orchestration
+- scaffolding
+- research
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Mit-Ai-Scaffolding-Mcp-Expert-V1 specialist
+    backstory: Expert mit-ai-scaffolding-mcp-expert-v1 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

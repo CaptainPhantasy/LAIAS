@@ -1,0 +1,33 @@
+id: data_flow_cartographer_system_behavior_mapper
+name: Data-Flow-Cartographer-System-Behavior-Mapper
+description: 'tools: ["Question", "Task", "Bash"]'
+category: research
+tags:
+- behavior
+- testing
+- system
+- code
+- web
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Data-Flow-Cartographer-System-Behavior-Mapper specialist
+    backstory: Expert data-flow-cartographer-system-behavior-mapper with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

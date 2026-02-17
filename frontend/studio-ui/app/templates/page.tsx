@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-const FETCH_TIMEOUT = 5000; // 5 second timeout
+const API_BASE = typeof window !== 'undefined'
+  ? (window.location.hostname.includes('ngrok') ? 'https://laias-api.ngrok-free.app' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'))
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001');
+const FETCH_TIMEOUT = 10000; // 10 second timeout for ngrok
 
 // ============================================================================
 // Types

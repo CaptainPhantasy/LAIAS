@@ -1,0 +1,32 @@
+id: manus_file_system_as_state_orchestrator
+name: Manus-File-System-As-State-Orchestrator
+description: 'tools: ["Question", "Task", "Bash"]'
+category: management
+tags:
+- manus
+- orchestrator
+- testing
+- system
+- code
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Manus-File-System-As-State-Orchestrator specialist
+    backstory: Expert manus-file-system-as-state-orchestrator with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

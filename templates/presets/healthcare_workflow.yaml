@@ -1,0 +1,35 @@
+id: healthcare_workflow
+name: Healthcare Patient Care Coordination Workflow
+description: '**Industry**: Healthcare, Hospitals, Clinics **Purpose**: Multi-agent
+  patient care coordination **Top Companies**: Mayo Clinic, Cleveland Clinic, Johns
+  Hopkins **Performance**: 30% better outcomes, 25% cost reduction'
+category: research
+tags:
+- testing
+- workflow
+- documentation
+- healthcare
+- research
+default_complexity: complex
+default_tools:
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 5
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Healthcare Patient Care Coordination Workflow specialist
+    backstory: Expert healthcare patient care coordination workflow with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

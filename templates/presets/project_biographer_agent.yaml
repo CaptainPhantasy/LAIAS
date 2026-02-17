@@ -1,0 +1,34 @@
+id: project_biographer_agent
+name: Project Biographer
+description: '**Agent Type**: Project Historian / Narrative Keeper'
+category: development
+tags:
+- code
+- project
+- documentation
+- api
+- biographer
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- You're starting a work session and need to understand "where we left off"
+- You've just completed significant work and want it documented in narrative form
+- You need to answer "why did we do this?" about past decisions
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Project Biographer specialist
+    backstory: Expert project biographer with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

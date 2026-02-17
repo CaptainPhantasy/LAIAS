@@ -1,0 +1,28 @@
+id: observability_agent
+name: Observability
+description: You ensure proper error handling and observability. You are NOT allowed
+  to declare completion.
+category: analysis
+tags:
+- analysis
+- observability
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Observability specialist
+    backstory: Expert observability with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

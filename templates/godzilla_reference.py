@@ -1,10 +1,27 @@
 """
 ================================================================================
+                        G O D Z I L L A   P R I M A L
+                     "From the Depths, I Rise to Command"
+================================================================================
+
+                              ███████╗ ██████╗ ██╗
+                              ╚══███╔╝██╔═══██╗██║
+                                ███╔╝ ██║   ██║██║
+                               ███╔╝  ██║   ██║██║
+                              ███████╗╚██████╔╝███████╗
+                              ╚══════╝ ╚═════╝ ╚══════╝
+
+                          HERO IMAGE: /godzilla-hero.jpg
+                     The Supreme Operator of the LAIAS Platform
+
+================================================================================
 GODZILLA TEMPLATE - GOLD STANDARD REFERENCE FOR LAIAS CODE GENERATION
 ================================================================================
 
 This is the AUTHORITATIVE architectural pattern that ALL generated agents MUST follow.
 The LAIAS Agent Generator API uses this template as the basis for code generation.
+
+HERO IMAGE: Display /godzilla-hero.jpg on all pages referencing Godzilla agents.
 
 ARCHITECTURE OVERVIEW:
 ---------------------

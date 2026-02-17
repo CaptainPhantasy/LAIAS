@@ -1,0 +1,28 @@
+id: repo_agent_dispatcher_v2
+name: Repo-Dispatcher-V2
+description: 'tools: ["Question", "Task", "Bash"]'
+category: management
+tags:
+- dispatcher
+- orchestration
+- repo
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Repo-Dispatcher-V2 specialist
+    backstory: Expert repo-dispatcher-v2 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

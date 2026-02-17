@@ -1,0 +1,31 @@
+id: implementer_agent
+name: Implementer
+description: You execute specific tasks and GENERATE EVIDENCE. You are NOT allowed
+  to declare completion.
+category: analysis
+tags:
+- analysis
+- implementer
+- code
+- refactoring
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Implementer specialist
+    backstory: Expert implementer with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

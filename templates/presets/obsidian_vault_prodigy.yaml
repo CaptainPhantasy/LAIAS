@@ -1,0 +1,30 @@
+id: obsidian_vault_prodigy
+name: Obsidian-Vault-Prodigy
+description: 'tools: ["Question", "Task", "Bash"]'
+category: research
+tags:
+- orchestration
+- research
+- vault
+- prodigy
+- obsidian
+default_complexity: simple
+default_tools:
+- ScrapeWebsiteTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Obsidian-Vault-Prodigy specialist
+    backstory: Expert obsidian-vault-prodigy with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

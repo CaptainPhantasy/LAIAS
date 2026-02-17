@@ -12,6 +12,7 @@ interface ToolTileProps {
   id: string;
   name: string;
   description: string;
+  category?: string;
   icon?: React.ReactNode;
   selected: boolean;
   disabled?: boolean;
@@ -26,6 +27,7 @@ export const ToolTile: React.FC<ToolTileProps> = ({
   id,
   name,
   description,
+  category,
   icon,
   selected,
   disabled = false,
@@ -99,7 +101,14 @@ export const ToolTile: React.FC<ToolTileProps> = ({
       )}
 
       {/* Content */}
-      <h4 className="text-sm font-semibold text-text-primary mb-1 pr-6">{name}</h4>
+      <div className="flex items-center gap-2 mb-1">
+        <h4 className="text-sm font-semibold text-text-primary pr-6">{name}</h4>
+        {category && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 text-text-muted uppercase">
+            {category}
+          </span>
+        )}
+      </div>
       <p className="text-xs text-text-secondary line-clamp-2">{description}</p>
     </button>
   );

@@ -3,680 +3,2314 @@
  * Do not make direct changes to the file.
  */
 
+
 export interface paths {
-    "/api/generate-agent": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Generate agent from description
-         * @description Generate a complete CrewAI agent from a natural language description.
-         *     Returns Python code following the Godzilla pattern, agent configuration,
-         *     and estimated complexity.
-         */
-        post: operations["generateAgent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/regenerate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Regenerate agent with modifications
-         * @description Regenerate an agent with specific modifications or different parameters
-         */
-        post: operations["regenerateAgent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/validate-code": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Validate generated code
-         * @description Validate Python code against the Godzilla pattern requirements.
-         *     Checks syntax, structure, and best practices.
-         */
-        post: operations["validateCode"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/validation-rules": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get validation rules
-         * @description Returns the list of validation rules used for code checking
-         */
-        get: operations["getValidationRules"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/agents": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List saved agents
-         * @description Retrieve a paginated list of all saved agents
-         */
-        get: operations["listAgents"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/agents/{agent_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get agent details */
-        get: operations["getAgent"];
-        /** Update agent */
-        put: operations["updateAgent"];
-        post?: never;
-        /** Delete agent */
-        delete: operations["deleteAgent"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/health": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Health check
-         * @description Returns the health status of the service and its dependencies
-         */
-        get: operations["healthCheck"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/readiness": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Readiness check
-         * @description Returns whether the service is ready to accept requests
-         */
-        get: operations["readinessCheck"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/liveness": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Liveness check
-         * @description Returns whether the service is alive
-         */
-        get: operations["livenessCheck"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
+  "/api/generate-agent": {
+    /**
+     * Generate Agent
+     * @description Generate a CrewAI agent from natural language description.
+     *
+     * This endpoint uses LLMs to generate production-ready agent code
+     * following the Godzilla architectural pattern.
+     *
+     * - **description**: Natural language description of what the agent should do
+     * - **agent_name**: Valid Python class name for the generated flow
+     * - **complexity**: Controls number of agents and flow complexity
+     * - **task_type**: Optimizes generation for specific task categories
+     * - **tools_requested**: Optional specific tools to include
+     * - **llm_provider**: Choose between OpenAI and Anthropic
+     * - **model**: Optional specific model override
+     *
+     * Returns complete generated code, configuration, and validation results.
+     */
+    post: operations["generate_agent_api_generate_agent_post"];
+  };
+  "/api/regenerate": {
+    /**
+     * Regenerate Agent
+     * @description Regenerate an agent based on feedback.
+     *
+     * - **agent_id**: Original agent ID
+     * - **feedback**: User feedback for improvement
+     * - **previous_code**: Previous code to improve
+     */
+    post: operations["regenerate_agent_api_regenerate_post"];
+  };
+  "/api/validate-code": {
+    /**
+     * Validate Code
+     * @description Validate Python code against Godzilla pattern.
+     *
+     * This endpoint performs:
+     * - Python syntax validation
+     * - Pattern compliance checking
+     * - Quality assessment
+     * - Improvement suggestions
+     *
+     * - **code**: Python source code to validate
+     * - **check_pattern_compliance**: Enable Godzilla pattern checking
+     * - **check_syntax**: Enable Python syntax validation
+     */
+    post: operations["validate_code_api_validate_code_post"];
+  };
+  "/api/validation-rules": {
+    /**
+     * Get Validation Rules
+     * @description Get Godzilla pattern validation rules.
+     *
+     * Returns the rules used for pattern validation.
+     */
+    get: operations["get_validation_rules_api_validation_rules_get"];
+  };
+  "/health": {
+    /**
+     * Health Check
+     * @description Health check endpoint.
+     *
+     * Returns service status including:
+     * - Overall health status
+     * - Component status (LLM providers, database, Redis)
+     * - Service metrics
+     * - Version information
+     */
+    get: operations["health_check_health_get"];
+  };
+  "/readiness": {
+    /**
+     * Readiness Check
+     * @description Readiness check for Kubernetes/liveness probes.
+     *
+     * Returns 200 if service is ready to accept requests.
+     */
+    get: operations["readiness_check_readiness_get"];
+  };
+  "/liveness": {
+    /**
+     * Liveness Check
+     * @description Liveness check for Kubernetes/liveness probes.
+     *
+     * Returns 200 if service is alive.
+     */
+    get: operations["liveness_check_liveness_get"];
+  };
+  "/api/agents": {
+    /**
+     * List Agents
+     * @description List saved agents with optional filtering.
+     *
+     * Query parameters:
+     * - **limit**: Maximum results to return (default: 50, max: 200)
+     * - **offset**: Results offset for pagination (default: 0)
+     * - **task_type**: Filter by task type
+     * - **complexity**: Filter by complexity
+     * - **search**: Search in description and name
+     * - **team_id**: Filter by team ID (only agents shared with this team)
+     */
+    get: operations["list_agents_api_agents_get"];
+  };
+  "/api/agents/{agent_id}": {
+    /**
+     * Get Agent
+     * @description Get a saved agent by ID.
+     *
+     * Path parameters:
+     * - **agent_id**: Unique agent identifier
+     */
+    get: operations["get_agent_api_agents__agent_id__get"];
+    /**
+     * Update Agent
+     * @description Update a saved agent.
+     *
+     * Path parameters:
+     * - **agent_id**: Unique agent identifier
+     *
+     * Request body:
+     * - **description**: Updated description
+     * - **is_active**: Whether agent is active
+     * - **tags**: Updated tags
+     * - **version_notes**: Notes about this version
+     */
+    put: operations["update_agent_api_agents__agent_id__put"];
+    /**
+     * Delete Agent
+     * @description Delete a saved agent.
+     *
+     * Path parameters:
+     * - **agent_id**: Unique agent identifier
+     */
+    delete: operations["delete_agent_api_agents__agent_id__delete"];
+  };
+  "/api/agents/{agent_id}/share": {
+    /**
+     * Share Agent With Team
+     * @description Share an agent with a team.
+     *
+     * Only the agent owner can share it.
+     * Path parameters:
+     * - **agent_id**: Unique agent identifier
+     * Request body:
+     * - **team_id**: Team ID to share with (as query param or body)
+     */
+    post: operations["share_agent_with_team_api_agents__agent_id__share_post"];
+    /**
+     * Unshare Agent From Team
+     * @description Unshare an agent from any team (make it private).
+     *
+     * Only the agent owner can unshare it.
+     */
+    delete: operations["unshare_agent_from_team_api_agents__agent_id__share_delete"];
+  };
+  "/tools/": {
+    /**
+     * List Tools
+     * @description List all available tools with their status.
+     *
+     * Returns categorized tools with availability information.
+     */
+    get: operations["list_tools_tools__get"];
+  };
+  "/tools/categories": {
+    /**
+     * List Categories
+     * @description List all tool categories with counts.
+     */
+    get: operations["list_categories_tools_categories_get"];
+  };
+  "/tools/category/{category}": {
+    /**
+     * Get Tools In Category
+     * @description Get all tools in a specific category.
+     *
+     * Args:
+     *     category: Category name (file_document, web_scraping, etc.)
+     */
+    get: operations["get_tools_in_category_tools_category__category__get"];
+  };
+  "/tools/available": {
+    /**
+     * List Available
+     * @description List only tools that are available with current configuration.
+     */
+    get: operations["list_available_tools_available_get"];
+  };
+  "/tools/unavailable": {
+    /**
+     * List Unavailable
+     * @description List tools that are unavailable due to missing configuration.
+     *
+     * Returns tool names with their missing environment variables.
+     */
+    get: operations["list_unavailable_tools_unavailable_get"];
+  };
+  "/tools/{tool_name}": {
+    /**
+     * Get Tool Info
+     * @description Get detailed information about a specific tool.
+     */
+    get: operations["get_tool_info_tools__tool_name__get"];
+  };
+  "/tools/instantiate": {
+    /**
+     * Instantiate Tool
+     * @description Instantiate a tool with the given configuration.
+     *
+     * Returns the tool instance information.
+     */
+    post: operations["instantiate_tool_tools_instantiate_post"];
+  };
+  "/tools/mcp/servers": {
+    /**
+     * List Mcp Servers
+     * @description List all registered MCP servers.
+     */
+    get: operations["list_mcp_servers_tools_mcp_servers_get"];
+  };
+  "/tools/mcp/presets": {
+    /**
+     * List Mcp Server Presets
+     * @description List available MCP server presets with configuration requirements.
+     */
+    get: operations["list_mcp_server_presets_tools_mcp_presets_get"];
+  };
+  "/tools/mcp/available": {
+    /**
+     * List Available Mcp Servers
+     * @description List MCP servers that can be connected to with current configuration.
+     */
+    get: operations["list_available_mcp_servers_tools_mcp_available_get"];
+  };
+  "/tools/mcp/connect": {
+    /**
+     * Connect Mcp Server
+     * @description Connect to an MCP server.
+     *
+     * Args:
+     *     request: Server connection request
+     */
+    post: operations["connect_mcp_server_tools_mcp_connect_post"];
+  };
+  "/tools/mcp/disconnect": {
+    /**
+     * Disconnect Mcp Server
+     * @description Disconnect from an MCP server.
+     *
+     * Args:
+     *     request: Server disconnection request
+     */
+    post: operations["disconnect_mcp_server_tools_mcp_disconnect_post"];
+  };
+  "/tools/mcp/{server_name}/tools": {
+    /**
+     * Get Mcp Server Tools
+     * @description Get tools from a connected MCP server.
+     */
+    get: operations["get_mcp_server_tools_tools_mcp__server_name__tools_get"];
+  };
+  "/tools/mcp/connect-all": {
+    /**
+     * Connect All Mcp Servers
+     * @description Connect to all available MCP servers.
+     */
+    post: operations["connect_all_mcp_servers_tools_mcp_connect_all_post"];
+  };
+  "/api/users/me": {
+    /**
+     * Get Current User Info
+     * @description Get current user information.
+     *
+     * In dev mode, returns user from X-User-Id header or default dev user.
+     */
+    get: operations["get_current_user_info_api_users_me_get"];
+    /**
+     * Update Current User
+     * @description Update current user information.
+     *
+     * In dev mode, updates the in-memory user.
+     * In production, would update database record.
+     */
+    put: operations["update_current_user_api_users_me_put"];
+  };
+  "/api/teams": {
+    /**
+     * List Teams
+     * @description List all teams the current user is a member of.
+     */
+    get: operations["list_teams_api_teams_get"];
+    /**
+     * Create Team
+     * @description Create a new team. User becomes owner.
+     */
+    post: operations["create_team_api_teams_post"];
+  };
+  "/api/teams/{team_id}": {
+    /**
+     * Get Team
+     * @description Get team details with member list.
+     *
+     * User must be a member of the team.
+     */
+    get: operations["get_team_api_teams__team_id__get"];
+    /**
+     * Update Team
+     * @description Update team name. Only owner/admin can update.
+     */
+    put: operations["update_team_api_teams__team_id__put"];
+    /**
+     * Delete Team
+     * @description Delete a team. Only owner can delete.
+     */
+    delete: operations["delete_team_api_teams__team_id__delete"];
+  };
+  "/api/teams/{team_id}/members": {
+    /**
+     * Add Team Member
+     * @description Add a member to the team. Owner/admin only.
+     */
+    post: operations["add_team_member_api_teams__team_id__members_post"];
+  };
+  "/api/teams/{team_id}/members/{user_id}": {
+    /**
+     * Update Member Role
+     * @description Update a member's role. Owner only.
+     *
+     * Owner cannot change their own role.
+     */
+    put: operations["update_member_role_api_teams__team_id__members__user_id__put"];
+    /**
+     * Remove Team Member
+     * @description Remove a member from the team. Owner/admin only.
+     *
+     * Owner cannot remove themselves.
+     */
+    delete: operations["remove_team_member_api_teams__team_id__members__user_id__delete"];
+  };
+  "/api/teams/{team_id}/transfer-ownership/{user_id}": {
+    /**
+     * Transfer Ownership
+     * @description Transfer team ownership to another member. Current owner becomes admin.
+     *
+     * Only the current owner can transfer ownership.
+     * The new owner must already be a team member.
+     */
+    post: operations["transfer_ownership_api_teams__team_id__transfer_ownership__user_id__post"];
+  };
+  "/api/templates": {
+    /**
+     * List Templates
+     * @description List all available agent templates.
+     *
+     * Query parameters:
+     * - **category**: Filter by category
+     * - **search**: Search in name and description
+     */
+    get: operations["list_templates_api_templates_get"];
+  };
+  "/api/templates/categories": {
+    /**
+     * List Categories
+     * @description List all available template categories.
+     */
+    get: operations["list_categories_api_templates_categories_get"];
+  };
+  "/api/templates/{template_id}": {
+    /**
+     * Get Template
+     * @description Get a specific template by ID.
+     *
+     * Path parameters:
+     * - **template_id**: Template identifier (e.g., 'research_agent')
+     */
+    get: operations["get_template_api_templates__template_id__get"];
+  };
+  "/api/templates/{template_id}/apply": {
+    /**
+     * Apply Template
+     * @description Apply a template to create a new agent generation request.
+     *
+     * This endpoint pre-fills a GenerateAgentRequest with template defaults,
+     * which can then be customized before submission to /api/generate.
+     *
+     * Path parameters:
+     * - **template_id**: Template identifier
+     *
+     * Request body:
+     * - **agent_name**: Name for the new agent
+     * - **customizations**: Optional overrides for template defaults
+     */
+    post: operations["apply_template_api_templates__template_id__apply_post"];
+  };
+  "/": {
+    /**
+     * Root
+     * @description Root endpoint with service information.
+     */
+    get: operations["root__get"];
+  };
 }
+
 export type webhooks = Record<string, never>;
+
 export interface components {
-    schemas: {
-        GenerateAgentRequest: {
-            /**
-             * @description Natural language description of the agent
-             * @example Create a web research agent that searches for information and summarizes findings
-             */
-            description: string;
-            /**
-             * @description Desired complexity level
-             * @default moderate
-             * @enum {string}
-             */
-            complexity: "simple" | "moderate" | "complex";
-            /**
-             * @description Type of task the agent will perform
-             * @default general
-             * @enum {string}
-             */
-            task_type: "research" | "development" | "automation" | "analysis" | "general";
-            /**
-             * @description Maximum number of agents to generate
-             * @default 3
-             */
-            max_agents: number;
-            /**
-             * @description Specific tools to include
-             * @example [
-             *       "web_search",
-             *       "file_read",
-             *       "code_execution"
-             *     ]
-             */
-            tools_requested?: string[];
-            /**
-             * @description LLM provider to use for generation
-             * @default zai
-             * @enum {string}
-             */
-            provider: "zai" | "openai" | "anthropic" | "openrouter";
-            /**
-             * @description Whether to save the generated agent
-             * @default true
-             */
-            save_agent: boolean;
-        };
-        GenerateAgentResponse: {
-            /**
-             * Format: uuid
-             * @description Unique identifier for the generated agent
-             */
-            agent_id?: string;
-            /**
-             * @description Generated Python code following Godzilla pattern
-             * @example from crewai import Agent, Task, Crew, Process
-             *     from crewai.flow.flow import Flow, listen, start
-             *     ...
-             */
-            flow_code?: string;
-            /** @description YAML configuration for agents */
-            agents_config?: Record<string, never>;
-            /** @description Original description */
-            description?: string;
-            /** @enum {string} */
-            complexity?: "simple" | "moderate" | "complex";
-            task_type?: string;
-            /** @description Number of agents generated */
-            agent_count?: number;
-            tools_included?: string[];
-            validation_passed?: boolean;
-            warnings?: string[];
-            /** Format: date-time */
-            created_at?: string;
-        };
-        ValidateCodeRequest: {
-            /** @description Python code to validate */
-            code: string;
-            /**
-             * @description Enable strict validation
-             * @default false
-             */
-            strict_mode: boolean;
-        };
-        ValidateCodeResponse: {
-            is_valid?: boolean;
-            errors?: {
-                line?: number;
-                column?: number;
-                message?: string;
-                /** @enum {string} */
-                severity?: "error" | "warning" | "info";
-            }[];
-            warnings?: {
-                line?: number;
-                message?: string;
-            }[];
-            /**
-             * Format: float
-             * @description Quality score (0-100)
-             */
-            score?: number;
-            suggestions?: string[];
-        };
-        AgentListResponse: {
-            agents?: components["schemas"]["AgentSummary"][];
-            total?: number;
-            limit?: number;
-            offset?: number;
-        };
-        AgentSummary: {
-            /** Format: uuid */
-            agent_id?: string;
-            description?: string;
-            complexity?: string;
-            task_type?: string;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-        };
-        AgentDetailResponse: {
-            /** Format: uuid */
-            agent_id?: string;
-            description?: string;
-            flow_code?: string;
-            agents_config?: Record<string, never>;
-            complexity?: string;
-            task_type?: string;
-            tools_included?: string[];
-            validation_passed?: boolean;
-            /** Format: date-time */
-            created_at?: string;
-            /** Format: date-time */
-            updated_at?: string;
-            deployment_count?: number;
-        };
-        AgentUpdateRequest: {
-            description?: string;
-            flow_code?: string;
-            agents_config?: Record<string, never>;
-        };
-        HealthResponse: {
-            /** @enum {string} */
-            status?: "healthy" | "degraded" | "unhealthy";
-            version?: string;
-            /** Format: date-time */
-            timestamp?: string;
-            checks?: {
-                database?: components["schemas"]["HealthCheck"];
-                redis?: components["schemas"]["HealthCheck"];
-                llm_provider?: components["schemas"]["HealthCheck"];
-            };
-            metrics?: {
-                total_agents?: number;
-                cache_hits?: number;
-                cache_misses?: number;
-            };
-        };
-        HealthCheck: {
-            /** @enum {string} */
-            status?: "healthy" | "unhealthy";
-            latency_ms?: number;
-            message?: string;
-        };
-        ErrorResponse: {
-            /** @description Error type */
-            error?: string;
-            /** @description Human-readable error message */
-            message?: string;
-            /** @description Additional details */
-            detail?: string;
-            /** @description Machine-readable error code */
-            error_code?: string;
-            /** Format: date-time */
-            timestamp?: string;
-        };
-        RegenerateRequest: {
-            /** Format: uuid */
-            agent_id: string;
-            /** @description Description of modifications to make */
-            modifications?: string;
-            /** @enum {string} */
-            new_complexity?: "simple" | "moderate" | "complex";
-            add_tools?: string[];
-            remove_tools?: string[];
-        };
+  schemas: {
+    /**
+     * AddMemberRequest
+     * @description Add team member request.
+     */
+    AddMemberRequest: {
+      /** User Id */
+      user_id: string;
+      /**
+       * Role
+       * @default member
+       */
+      role?: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /**
+     * AgentDetailResponse
+     * @description Detailed response for a single agent.
+     */
+    AgentDetailResponse: {
+      /**
+       * Agent Id
+       * @description Unique identifier
+       */
+      agent_id: string;
+      /**
+       * Agent Name
+       * @description Flow class name
+       */
+      agent_name: string;
+      /**
+       * Description
+       * @description Original description
+       */
+      description: string;
+      /**
+       * Flow Code
+       * @description Generated flow code
+       */
+      flow_code: string;
+      /**
+       * Agents Yaml
+       * @description Agents configuration
+       */
+      agents_yaml: string;
+      /**
+       * Complexity
+       * @description Complexity level
+       */
+      complexity: string;
+      /**
+       * Task Type
+       * @description Task category
+       */
+      task_type: string;
+      /**
+       * Llm Provider
+       * @description LLM used for generation
+       */
+      llm_provider: string;
+      /**
+       * Model
+       * @description Model used
+       */
+      model: string;
+      /**
+       * Is Active
+       * @description Whether agent is active
+       * @default true
+       */
+      is_active?: boolean;
+      /**
+       * Deployed Count
+       * @description Times deployed
+       * @default 0
+       */
+      deployed_count?: number;
+      /**
+       * Last Deployed
+       * @description Last deployment time
+       */
+      last_deployed?: string | null;
+      /**
+       * Created At
+       * Format: date-time
+       * @description Creation time
+       */
+      created_at: string;
+      /**
+       * Updated At
+       * @description Last update time
+       */
+      updated_at?: string | null;
+    };
+    /**
+     * AgentInfo
+     * @description Information about a generated agent.
+     */
+    AgentInfo: {
+      /**
+       * Role
+       * @description Agent role (e.g., 'Senior Research Analyst')
+       */
+      role: string;
+      /**
+       * Goal
+       * @description Agent's primary goal
+       */
+      goal: string;
+      /**
+       * Tools
+       * @description Tools assigned to this agent
+       */
+      tools?: string[];
+      /**
+       * Llm Config
+       * @description LLM configuration
+       */
+      llm_config?: {
+        [key: string]: unknown;
+      };
+      /**
+       * Backstory
+       * @description Agent backstory
+       */
+      backstory?: string | null;
+    };
+    /**
+     * AgentListResponse
+     * @description Response listing saved agents.
+     */
+    AgentListResponse: {
+      /**
+       * Agents
+       * @description List of agents
+       */
+      agents?: {
+          [key: string]: unknown;
+        }[];
+      /**
+       * Total
+       * @description Total count
+       */
+      total: number;
+      /**
+       * Limit
+       * @description Results limit
+       */
+      limit: number;
+      /**
+       * Offset
+       * @description Results offset
+       */
+      offset: number;
+    };
+    /**
+     * AgentUpdateRequest
+     * @description Request to update a saved agent.
+     */
+    AgentUpdateRequest: {
+      /**
+       * Description
+       * @description Updated description
+       */
+      description?: string | null;
+      /**
+       * Is Active
+       * @description Whether agent is active
+       */
+      is_active?: boolean | null;
+      /**
+       * Tags
+       * @description Updated tags
+       */
+      tags?: string[] | null;
+      /**
+       * Version Notes
+       * @description Notes about this version
+       */
+      version_notes?: string | null;
+    };
+    /**
+     * ConnectMCPServerRequest
+     * @description Request to connect to an MCP server.
+     */
+    ConnectMCPServerRequest: {
+      /** Server Name */
+      server_name: string;
+    };
+    /**
+     * GenerateAgentRequest
+     * @description Request to generate a CrewAI agent from natural language.
+     *
+     * Attributes:
+     *     description: Natural language description of agent
+     *     agent_name: Valid Python class name for the flow
+     *     complexity: Complexity level affecting agent count and structure
+     *     task_type: Primary task category for optimized generation
+     *     tools_requested: Specific tools to include
+     *     llm_provider: LLM provider to use
+     *     model: Specific model override
+     *     include_memory: Enable agent memory
+     *     include_analytics: Include analytics service
+     *     max_agents: Maximum number of specialized agents
+     */
+    GenerateAgentRequest: {
+      /**
+       * Description
+       * @description Natural language description of agent's purpose and behavior
+       */
+      description: string;
+      /**
+       * Agent Name
+       * @description Valid Python class name for the generated flow
+       */
+      agent_name: string;
+      /**
+       * Complexity
+       * @description Complexity level affecting agent count and flow structure
+       * @default moderate
+       * @enum {string}
+       */
+      complexity?: "simple" | "moderate" | "complex";
+      /**
+       * Task Type
+       * @description Primary task category for optimized generation
+       * @default general
+       * @enum {string}
+       */
+      task_type?: "research" | "development" | "analysis" | "automation" | "general";
+      /**
+       * Tools Requested
+       * @description Specific tools to include (SerperDevTool, ScrapeWebsiteTool, etc.)
+       */
+      tools_requested?: string[] | null;
+      /**
+       * Llm Provider
+       * @description LLM provider for code generation
+       * @default zai
+       * @enum {string}
+       */
+      llm_provider?: "zai" | "openai" | "anthropic" | "openrouter" | "google" | "mistral";
+      /**
+       * Model
+       * @description Specific model override (gpt-4o, claude-3-5-sonnet, etc.)
+       */
+      model?: string | null;
+      /**
+       * Include Memory
+       * @description Enable agent memory for context retention
+       * @default true
+       */
+      include_memory?: boolean;
+      /**
+       * Include Analytics
+       * @description Include AnalyticsService for monitoring
+       * @default true
+       */
+      include_analytics?: boolean;
+      /**
+       * Max Agents
+       * @description Maximum number of specialized agents to create
+       * @default 4
+       */
+      max_agents?: number;
+    };
+    /**
+     * GenerateAgentResponse
+     * @description Response from agent generation endpoint.
+     *
+     * Contains complete generated code, configuration, and metadata.
+     */
+    GenerateAgentResponse: {
+      /**
+       * Agent Id
+       * @description Unique identifier for this generation
+       */
+      agent_id: string;
+      /**
+       * Agent Name
+       * @description Name of generated flow class
+       */
+      agent_name: string;
+      /**
+       * Version
+       * @description Generated code version
+       * @default 1.0.0
+       */
+      version?: string;
+      /**
+       * Flow Code
+       * @description Complete flow.py content
+       */
+      flow_code: string;
+      /**
+       * Agents Yaml
+       * @description agents.yaml configuration
+       */
+      agents_yaml: string;
+      /**
+       * State Class
+       * @description AgentState class definition
+       */
+      state_class: string;
+      /**
+       * Requirements
+       * @description Python packages needed
+       */
+      requirements?: string[];
+      /**
+       * Estimated Cost Per Run
+       * @description Estimated LLM cost in USD per run
+       */
+      estimated_cost_per_run: number;
+      /**
+       * Complexity Score
+       * @description Complexity score (1-10)
+       */
+      complexity_score: number;
+      /**
+       * Agents Created
+       * @description Details of created agents
+       */
+      agents_created?: components["schemas"]["AgentInfo"][];
+      /**
+       * Tools Included
+       * @description Tools included in the flow
+       */
+      tools_included?: string[];
+      /**
+       * Flow Diagram
+       * @description Mermaid diagram showing the flow
+       */
+      flow_diagram?: string | null;
+      /** @description Code validation results */
+      validation_status?: components["schemas"]["ValidationResult"];
+      /**
+       * Created At
+       * Format: date-time
+       * @description Generation timestamp
+       */
+      created_at?: string;
+      /**
+       * Expires At
+       * @description Cache expiration
+       */
+      expires_at?: string | null;
+    };
+    /** HTTPValidationError */
+    HTTPValidationError: {
+      /** Detail */
+      detail?: components["schemas"]["ValidationError"][];
+    };
+    /**
+     * HealthResponse
+     * @description Health check response.
+     */
+    HealthResponse: {
+      /**
+       * Status
+       * @description Overall service health status
+       * @enum {string}
+       */
+      status: "healthy" | "degraded" | "unhealthy";
+      /**
+       * Version
+       * @description Service version
+       */
+      version: string;
+      /**
+       * Uptime Seconds
+       * @description Service uptime in seconds
+       */
+      uptime_seconds: number;
+      /**
+       * Llm Status
+       * @description LLM provider status (openai, anthropic)
+       */
+      llm_status?: {
+        [key: string]: string;
+      };
+      /**
+       * Database Status
+       * @description Database connection status
+       */
+      database_status: string;
+      /**
+       * Redis Status
+       * @description Redis connection status
+       */
+      redis_status: string;
+      /**
+       * Total Generated
+       * @description Total agents generated
+       * @default 0
+       */
+      total_generated?: number;
+      /**
+       * Cache Hit Rate
+       * @description Cache hit rate
+       * @default 0
+       */
+      cache_hit_rate?: number;
+      /**
+       * Checked At
+       * Format: date-time
+       */
+      checked_at?: string;
+    };
+    /**
+     * InstantiateToolRequest
+     * @description Request to instantiate a tool.
+     */
+    InstantiateToolRequest: {
+      /** Tool Name */
+      tool_name: string;
+      /** Config */
+      config?: {
+        [key: string]: unknown;
+      };
+    };
+    /**
+     * TeamCreate
+     * @description Create team request.
+     */
+    TeamCreate: {
+      /** Name */
+      name: string;
+      /** Slug */
+      slug?: string | null;
+    };
+    /**
+     * TeamDetailResponse
+     * @description Team detail with members.
+     */
+    TeamDetailResponse: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+      /** Owner Id */
+      owner_id?: string | null;
+      /** Created At */
+      created_at: string;
+      /**
+       * Members Count
+       * @default 0
+       */
+      members_count?: number;
+      /**
+       * Members
+       * @default []
+       */
+      members?: components["schemas"]["TeamMemberResponse"][];
+    };
+    /**
+     * TeamMemberResponse
+     * @description Team member response.
+     */
+    TeamMemberResponse: {
+      /** User Id */
+      user_id: string;
+      /** Email */
+      email: string;
+      /** Name */
+      name?: string | null;
+      /** Role */
+      role: string;
+      /** Joined At */
+      joined_at: string;
+    };
+    /**
+     * TeamResponse
+     * @description Team response.
+     */
+    TeamResponse: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Slug */
+      slug: string;
+      /** Owner Id */
+      owner_id?: string | null;
+      /** Created At */
+      created_at: string;
+      /**
+       * Members Count
+       * @default 0
+       */
+      members_count?: number;
+    };
+    /**
+     * TeamUpdate
+     * @description Update team request.
+     */
+    TeamUpdate: {
+      /** Name */
+      name?: string | null;
+    };
+    /**
+     * Template
+     * @description Agent template model.
+     */
+    Template: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Description */
+      description: string;
+      /** Category */
+      category: string;
+      /** Tags */
+      tags: string[];
+      /** Default Complexity */
+      default_complexity: string;
+      /** Default Tools */
+      default_tools: string[];
+      /** Sample Prompts */
+      sample_prompts: string[];
+      /** Suggested Config */
+      suggested_config: {
+        [key: string]: unknown;
+      };
+      /** Agent Structure */
+      agent_structure: {
+        [key: string]: unknown;
+      };
+      /** Expected Outputs */
+      expected_outputs: string[];
+    };
+    /**
+     * TemplateApplyRequest
+     * @description Request to apply a template.
+     */
+    TemplateApplyRequest: {
+      /** Template Id */
+      template_id: string;
+      /** Agent Name */
+      agent_name: string;
+      /** Customizations */
+      customizations?: {
+        [key: string]: unknown;
+      } | null;
+    };
+    /**
+     * TemplateListResponse
+     * @description Response model for template list.
+     */
+    TemplateListResponse: {
+      /** Templates */
+      templates: components["schemas"]["Template"][];
+      /** Total */
+      total: number;
+      /** Categories */
+      categories: string[];
+    };
+    /**
+     * ToolCategorySummary
+     * @description Summary of tools in a category.
+     */
+    ToolCategorySummary: {
+      /** Category */
+      category: string;
+      /** Total Tools */
+      total_tools: number;
+      /** Available Tools */
+      available_tools: number;
+    };
+    /**
+     * ToolInfo
+     * @description Information about a tool.
+     */
+    ToolInfo: {
+      /** Name */
+      name: string;
+      /** Category */
+      category: string;
+      /** Description */
+      description: string;
+      /** Available */
+      available: boolean;
+      /** Missing Config */
+      missing_config: string[];
+      /** Dependencies */
+      dependencies: string[];
+    };
+    /**
+     * UpdateMemberRoleRequest
+     * @description Update member role request.
+     */
+    UpdateMemberRoleRequest: {
+      /** Role */
+      role: string;
+    };
+    /**
+     * UserResponse
+     * @description User response schema.
+     */
+    UserResponse: {
+      /** Id */
+      id: string;
+      /** Email */
+      email: string;
+      /** Name */
+      name?: string | null;
+    };
+    /**
+     * UserUpdate
+     * @description User update schema.
+     */
+    UserUpdate: {
+      /** Name */
+      name?: string | null;
+      /** Email */
+      email?: string | null;
+    };
+    /**
+     * ValidateCodeRequest
+     * @description Request to validate Python code against Godzilla pattern.
+     *
+     * Attributes:
+     *     code: Python code to validate
+     *     check_pattern_compliance: Enable pattern compliance checking
+     *     check_syntax: Enable syntax validation
+     */
+    ValidateCodeRequest: {
+      /**
+       * Code
+       * @description Python code to validate
+       */
+      code: string;
+      /**
+       * Check Pattern Compliance
+       * @description Check compliance with Godzilla architectural pattern
+       * @default true
+       */
+      check_pattern_compliance?: boolean;
+      /**
+       * Check Syntax
+       * @description Perform Python syntax validation
+       * @default true
+       */
+      check_syntax?: boolean;
+    };
+    /**
+     * ValidateCodeResponse
+     * @description Response from code validation endpoint.
+     */
+    ValidateCodeResponse: {
+      /**
+       * Is Valid
+       * @description Whether code passes validation
+       */
+      is_valid: boolean;
+      /**
+       * Syntax Errors
+       * @description Syntax errors found
+       */
+      syntax_errors?: string[];
+      /**
+       * Pattern Compliance Score
+       * @description Pattern compliance score
+       */
+      pattern_compliance_score: number;
+      /**
+       * Missing Patterns
+       * @description Required patterns not found
+       */
+      missing_patterns?: string[];
+      /**
+       * Suggestions
+       * @description Improvement suggestions
+       */
+      suggestions?: string[];
+      /**
+       * Warnings
+       * @description Non-critical warnings
+       */
+      warnings?: string[];
+      /**
+       * Validated At
+       * Format: date-time
+       */
+      validated_at?: string;
+    };
+    /** ValidationError */
+    ValidationError: {
+      /** Location */
+      loc: (string | number)[];
+      /** Message */
+      msg: string;
+      /** Error Type */
+      type: string;
+      /** Input */
+      input?: unknown;
+      /** Context */
+      ctx?: Record<string, never>;
+    };
+    /**
+     * ValidationResult
+     * @description Validation result for generated code.
+     */
+    ValidationResult: {
+      /**
+       * Is Valid
+       * @description Whether code passes validation
+       */
+      is_valid: boolean;
+      /**
+       * Syntax Errors
+       * @description Syntax errors found
+       */
+      syntax_errors?: string[];
+      /**
+       * Pattern Compliance
+       * @description Pattern compliance score (0.0 to 1.0)
+       * @default 0
+       */
+      pattern_compliance?: number;
+      /**
+       * Warnings
+       * @description Non-critical warnings
+       */
+      warnings?: string[];
+      /**
+       * Suggestions
+       * @description Improvement suggestions
+       */
+      suggestions?: string[];
+      /**
+       * Missing Patterns
+       * @description Required patterns not found
+       */
+      missing_patterns?: string[];
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
+
 export type $defs = Record<string, never>;
+
+export type external = Record<string, never>;
+
 export interface operations {
-    generateAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GenerateAgentRequest"];
-            };
-        };
-        responses: {
-            /** @description Agent generated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GenerateAgentResponse"];
-                };
-            };
-            /** @description Invalid request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Generation failed */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
+
+  /**
+   * Generate Agent
+   * @description Generate a CrewAI agent from natural language description.
+   *
+   * This endpoint uses LLMs to generate production-ready agent code
+   * following the Godzilla architectural pattern.
+   *
+   * - **description**: Natural language description of what the agent should do
+   * - **agent_name**: Valid Python class name for the generated flow
+   * - **complexity**: Controls number of agents and flow complexity
+   * - **task_type**: Optimizes generation for specific task categories
+   * - **tools_requested**: Optional specific tools to include
+   * - **llm_provider**: Choose between OpenAI and Anthropic
+   * - **model**: Optional specific model override
+   *
+   * Returns complete generated code, configuration, and validation results.
+   */
+  generate_agent_api_generate_agent_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GenerateAgentRequest"];
+      };
     };
-    regenerateAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["GenerateAgentResponse"];
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegenerateRequest"];
-            };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
-        responses: {
-            /** @description Agent regenerated successfully */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["GenerateAgentResponse"];
-                };
-            };
-        };
+      };
     };
-    validateCode: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ValidateCodeRequest"];
-            };
-        };
-        responses: {
-            /** @description Validation complete */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ValidateCodeResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Regenerate Agent
+   * @description Regenerate an agent based on feedback.
+   *
+   * - **agent_id**: Original agent ID
+   * - **feedback**: User feedback for improvement
+   * - **previous_code**: Previous code to improve
+   */
+  regenerate_agent_api_regenerate_post: {
+    parameters: {
+      query: {
+        agent_id: string;
+        feedback: string;
+        previous_code: string;
+      };
     };
-    getValidationRules: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["GenerateAgentResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description List of validation rules */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        rules?: {
-                            name?: string;
-                            description?: string;
-                            /** @enum {string} */
-                            severity?: "error" | "warning" | "info";
-                        }[];
-                    };
-                };
-            };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    listAgents: {
-        parameters: {
-            query?: {
-                limit?: number;
-                offset?: number;
-                task_type?: string;
-                complexity?: "simple" | "moderate" | "complex";
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description List of agents */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentListResponse"];
-                };
-            };
-        };
+  };
+  /**
+   * Validate Code
+   * @description Validate Python code against Godzilla pattern.
+   *
+   * This endpoint performs:
+   * - Python syntax validation
+   * - Pattern compliance checking
+   * - Quality assessment
+   * - Improvement suggestions
+   *
+   * - **code**: Python source code to validate
+   * - **check_pattern_compliance**: Enable Godzilla pattern checking
+   * - **check_syntax**: Enable Python syntax validation
+   */
+  validate_code_api_validate_code_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ValidateCodeRequest"];
+      };
     };
-    getAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ValidateCodeResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Agent details */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDetailResponse"];
-                };
-            };
-            /** @description Agent not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
         };
+      };
     };
-    updateAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Get Validation Rules
+   * @description Get Godzilla pattern validation rules.
+   *
+   * Returns the rules used for pattern validation.
+   */
+  get_validation_rules_api_validation_rules_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AgentUpdateRequest"];
-            };
-        };
-        responses: {
-            /** @description Agent updated */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AgentDetailResponse"];
-                };
-            };
-        };
+      };
     };
-    deleteAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                agent_id: string;
-            };
-            cookie?: never;
+  };
+  /**
+   * Health Check
+   * @description Health check endpoint.
+   *
+   * Returns service status including:
+   * - Overall health status
+   * - Component status (LLM providers, database, Redis)
+   * - Service metrics
+   * - Version information
+   */
+  health_check_health_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["HealthResponse"];
         };
-        requestBody?: never;
-        responses: {
-            /** @description Agent deleted */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Agent not found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    healthCheck: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Readiness Check
+   * @description Readiness check for Kubernetes/liveness probes.
+   *
+   * Returns 200 if service is ready to accept requests.
+   */
+  readiness_check_readiness_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Service is healthy */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-            /** @description Service is unhealthy */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HealthResponse"];
-                };
-            };
-        };
+      };
     };
-    readinessCheck: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+  };
+  /**
+   * Liveness Check
+   * @description Liveness check for Kubernetes/liveness probes.
+   *
+   * Returns 200 if service is alive.
+   */
+  liveness_check_liveness_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
         };
-        requestBody?: never;
-        responses: {
-            /** @description Service is ready */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Service is not ready */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+      };
     };
-    livenessCheck: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Service is alive */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
+  };
+  /**
+   * List Agents
+   * @description List saved agents with optional filtering.
+   *
+   * Query parameters:
+   * - **limit**: Maximum results to return (default: 50, max: 200)
+   * - **offset**: Results offset for pagination (default: 0)
+   * - **task_type**: Filter by task type
+   * - **complexity**: Filter by complexity
+   * - **search**: Search in description and name
+   * - **team_id**: Filter by team ID (only agents shared with this team)
+   */
+  list_agents_api_agents_get: {
+    parameters: {
+      query?: {
+        limit?: number;
+        offset?: number;
+        task_type?: string | null;
+        complexity?: string | null;
+        search?: string | null;
+        team_id?: string | null;
+      };
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
     };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Agent
+   * @description Get a saved agent by ID.
+   *
+   * Path parameters:
+   * - **agent_id**: Unique agent identifier
+   */
+  get_agent_api_agents__agent_id__get: {
+    parameters: {
+      path: {
+        agent_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["AgentDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Agent
+   * @description Update a saved agent.
+   *
+   * Path parameters:
+   * - **agent_id**: Unique agent identifier
+   *
+   * Request body:
+   * - **description**: Updated description
+   * - **is_active**: Whether agent is active
+   * - **tags**: Updated tags
+   * - **version_notes**: Notes about this version
+   */
+  update_agent_api_agents__agent_id__put: {
+    parameters: {
+      path: {
+        agent_id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AgentUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Agent
+   * @description Delete a saved agent.
+   *
+   * Path parameters:
+   * - **agent_id**: Unique agent identifier
+   */
+  delete_agent_api_agents__agent_id__delete: {
+    parameters: {
+      path: {
+        agent_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Share Agent With Team
+   * @description Share an agent with a team.
+   *
+   * Only the agent owner can share it.
+   * Path parameters:
+   * - **agent_id**: Unique agent identifier
+   * Request body:
+   * - **team_id**: Team ID to share with (as query param or body)
+   */
+  share_agent_with_team_api_agents__agent_id__share_post: {
+    parameters: {
+      query: {
+        team_id: string;
+      };
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        agent_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Unshare Agent From Team
+   * @description Unshare an agent from any team (make it private).
+   *
+   * Only the agent owner can unshare it.
+   */
+  unshare_agent_from_team_api_agents__agent_id__share_delete: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        agent_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Tools
+   * @description List all available tools with their status.
+   *
+   * Returns categorized tools with availability information.
+   */
+  list_tools_tools__get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  /**
+   * List Categories
+   * @description List all tool categories with counts.
+   */
+  list_categories_tools_categories_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ToolCategorySummary"][];
+        };
+      };
+    };
+  };
+  /**
+   * Get Tools In Category
+   * @description Get all tools in a specific category.
+   *
+   * Args:
+   *     category: Category name (file_document, web_scraping, etc.)
+   */
+  get_tools_in_category_tools_category__category__get: {
+    parameters: {
+      path: {
+        category: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ToolInfo"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Available
+   * @description List only tools that are available with current configuration.
+   */
+  list_available_tools_available_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ToolInfo"][];
+        };
+      };
+    };
+  };
+  /**
+   * List Unavailable
+   * @description List tools that are unavailable due to missing configuration.
+   *
+   * Returns tool names with their missing environment variables.
+   */
+  list_unavailable_tools_unavailable_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: string[];
+          };
+        };
+      };
+    };
+  };
+  /**
+   * Get Tool Info
+   * @description Get detailed information about a specific tool.
+   */
+  get_tool_info_tools__tool_name__get: {
+    parameters: {
+      path: {
+        tool_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["ToolInfo"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Instantiate Tool
+   * @description Instantiate a tool with the given configuration.
+   *
+   * Returns the tool instance information.
+   */
+  instantiate_tool_tools_instantiate_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["InstantiateToolRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Mcp Servers
+   * @description List all registered MCP servers.
+   */
+  list_mcp_servers_tools_mcp_servers_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+              [key: string]: unknown;
+            }[];
+        };
+      };
+    };
+  };
+  /**
+   * List Mcp Server Presets
+   * @description List available MCP server presets with configuration requirements.
+   */
+  list_mcp_server_presets_tools_mcp_presets_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: {
+              [key: string]: unknown;
+            };
+          };
+        };
+      };
+    };
+  };
+  /**
+   * List Available Mcp Servers
+   * @description List MCP servers that can be connected to with current configuration.
+   */
+  list_available_mcp_servers_tools_mcp_available_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  /**
+   * Connect Mcp Server
+   * @description Connect to an MCP server.
+   *
+   * Args:
+   *     request: Server connection request
+   */
+  connect_mcp_server_tools_mcp_connect_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConnectMCPServerRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Disconnect Mcp Server
+   * @description Disconnect from an MCP server.
+   *
+   * Args:
+   *     request: Server disconnection request
+   */
+  disconnect_mcp_server_tools_mcp_disconnect_post: {
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConnectMCPServerRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Mcp Server Tools
+   * @description Get tools from a connected MCP server.
+   */
+  get_mcp_server_tools_tools_mcp__server_name__tools_get: {
+    parameters: {
+      path: {
+        server_name: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Connect All Mcp Servers
+   * @description Connect to all available MCP servers.
+   */
+  connect_all_mcp_servers_tools_mcp_connect_all_post: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  /**
+   * Get Current User Info
+   * @description Get current user information.
+   *
+   * In dev mode, returns user from X-User-Id header or default dev user.
+   */
+  get_current_user_info_api_users_me_get: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UserResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Current User
+   * @description Update current user information.
+   *
+   * In dev mode, updates the in-memory user.
+   * In production, would update database record.
+   */
+  update_current_user_api_users_me_put: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UserUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["UserResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Teams
+   * @description List all teams the current user is a member of.
+   */
+  list_teams_api_teams_get: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamResponse"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Create Team
+   * @description Create a new team. User becomes owner.
+   */
+  create_team_api_teams_post: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TeamCreate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": components["schemas"]["TeamResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Get Team
+   * @description Get team details with member list.
+   *
+   * User must be a member of the team.
+   */
+  get_team_api_teams__team_id__get: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamDetailResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Team
+   * @description Update team name. Only owner/admin can update.
+   */
+  update_team_api_teams__team_id__put: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TeamUpdate"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete Team
+   * @description Delete a team. Only owner can delete.
+   */
+  delete_team_api_teams__team_id__delete: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Add Team Member
+   * @description Add a member to the team. Owner/admin only.
+   */
+  add_team_member_api_teams__team_id__members_post: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["AddMemberRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        content: {
+          "application/json": components["schemas"]["TeamMemberResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Update Member Role
+   * @description Update a member's role. Owner only.
+   *
+   * Owner cannot change their own role.
+   */
+  update_member_role_api_teams__team_id__members__user_id__put: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+        user_id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateMemberRoleRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamMemberResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Remove Team Member
+   * @description Remove a member from the team. Owner/admin only.
+   *
+   * Owner cannot remove themselves.
+   */
+  remove_team_member_api_teams__team_id__members__user_id__delete: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+        user_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        content: never;
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Transfer Ownership
+   * @description Transfer team ownership to another member. Current owner becomes admin.
+   *
+   * Only the current owner can transfer ownership.
+   * The new owner must already be a team member.
+   */
+  transfer_ownership_api_teams__team_id__transfer_ownership__user_id__post: {
+    parameters: {
+      header?: {
+        "X-User-Id"?: string | null;
+        "X-User-Email"?: string | null;
+        "X-User-Name"?: string | null;
+      };
+      path: {
+        team_id: string;
+        user_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TeamResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Templates
+   * @description List all available agent templates.
+   *
+   * Query parameters:
+   * - **category**: Filter by category
+   * - **search**: Search in name and description
+   */
+  list_templates_api_templates_get: {
+    parameters: {
+      query?: {
+        /** @description Filter by category */
+        category?: string | null;
+        /** @description Search in name and description */
+        search?: string | null;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["TemplateListResponse"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * List Categories
+   * @description List all available template categories.
+   */
+  list_categories_api_templates_categories_get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  /**
+   * Get Template
+   * @description Get a specific template by ID.
+   *
+   * Path parameters:
+   * - **template_id**: Template identifier (e.g., 'research_agent')
+   */
+  get_template_api_templates__template_id__get: {
+    parameters: {
+      path: {
+        template_id: string;
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Template"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Apply Template
+   * @description Apply a template to create a new agent generation request.
+   *
+   * This endpoint pre-fills a GenerateAgentRequest with template defaults,
+   * which can then be customized before submission to /api/generate.
+   *
+   * Path parameters:
+   * - **template_id**: Template identifier
+   *
+   * Request body:
+   * - **agent_name**: Name for the new agent
+   * - **customizations**: Optional overrides for template defaults
+   */
+  apply_template_api_templates__template_id__apply_post: {
+    parameters: {
+      path: {
+        template_id: string;
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TemplateApplyRequest"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["GenerateAgentRequest"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  /**
+   * Root
+   * @description Root endpoint with service information.
+   */
+  root__get: {
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
 }

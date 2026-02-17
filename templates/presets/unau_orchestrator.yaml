@@ -1,0 +1,33 @@
+id: unau_orchestrator
+name: Unau-Orchestrator
+description: You spawn ONE specialized agent per cycle to move toward SHIP status.
+  You are NOT allowed to declare completion.
+category: management
+tags:
+- orchestrator
+- testing
+- code
+- unau
+- documentation
+default_complexity: complex
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 5
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Unau-Orchestrator specialist
+    backstory: Expert unau-orchestrator with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

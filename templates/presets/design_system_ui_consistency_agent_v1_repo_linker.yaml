@@ -1,0 +1,32 @@
+id: design_system_ui_consistency_agent_v1_repo_linker
+name: Design-System-Ui-Consistency-V1-Repo-Linker
+description: 'tools: ["Question", "Task", "Bash"]'
+category: development
+tags:
+- system
+- code
+- linker
+- automation
+- orchestration
+default_complexity: simple
+default_tools:
+- FileReadTool
+- PDFSearchTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Design-System-Ui-Consistency-V1-Repo-Linker specialist
+    backstory: Expert design-system-ui-consistency-v1-repo-linker with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

@@ -1,0 +1,33 @@
+id: code_archaeologist_agent
+name: Code Archaeologist
+description: '**Agent Type**: Codebase Historian / Semantic Index Maintainer'
+category: development
+tags:
+- analysis
+- archaeologist
+- code
+- api
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- APIRequestTool
+- CodeInterpreterTool
+sample_prompts:
+- You need to understand the full impact of a proposed change
+- You want to know "why was this written this way?"
+- You need to trace where a piece of code originated
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Code Archaeologist specialist
+    backstory: Expert code archaeologist with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

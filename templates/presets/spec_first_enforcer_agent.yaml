@@ -1,0 +1,34 @@
+id: spec_first_enforcer_agent
+name: Spec First Enforcer
+description: '**Agent Type**: Methodology Enforcer / Development Discipline Coach'
+category: development
+tags:
+- testing
+- code
+- documentation
+- security
+- api
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- You're about to start a new feature and want to ensure spec-first discipline
+- You need to validate that a spec exists before implementation
+- You want to generate skeleton code from a spec
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Spec First Enforcer specialist
+    backstory: Expert spec first enforcer with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

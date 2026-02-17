@@ -15,12 +15,14 @@ export type {
   AgentListResponse,
   AgentDetailResponse,
   AgentUpdateRequest,
-  RegenerateRequest,
-  AgentSummary,
-  ErrorResponse,
+  AgentInfo,
+  HTTPValidationError,
   AgentComplexity,
   AgentTaskType,
   LLMProvider,
+  // Docker Orchestrator types
+  DeployAgentRequest,
+  DeploymentResponse,
 } from '../../shared/types';
 
 export { AVAILABLE_TOOLS, DEFAULT_AGENT_FORM } from '../../shared/types';
@@ -46,7 +48,7 @@ export type BuilderSection = 'description' | 'type' | 'tools' | 'advanced' | 'de
 /**
  * Code editor file tabs
  */
-export type CodeTab = 'flow.py' | 'agents.yaml' | 'requirements.txt';
+export type CodeTab = 'flow.py' | 'agents.yaml' | 'requirements.txt' | 'state.py';
 
 /**
  * Generation state for the builder
@@ -140,6 +142,38 @@ export const DEFAULT_ADVANCED_OPTIONS: AdvancedOptions = {
   memoryType: 'none',
   analyticsEnabled: false,
 };
+
+/**
+ * Agent summary for list views
+ * Used by the /agents page to display saved agents
+ */
+export interface AgentSummary {
+  agent_id: string;
+  agent_name: string;
+  description: string;
+  complexity: string;
+  task_type: string;
+  created_at: string;
+  updated_at?: string;
+  is_active?: boolean;
+  tags?: string[];
+}
+
+/**
+ * Regenerate request for agent modification
+ */
+export interface RegenerateRequest {
+  agent_id: string;
+  feedback: string;
+  previous_code: string;
+}
+
+/**
+ * Generic error response
+ */
+export interface ErrorResponse {
+  detail: string | { message: string } | Array<{ msg: string; loc: string[] }>;
+}
 
 /**
  * Model options by provider

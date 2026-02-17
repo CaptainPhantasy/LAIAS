@@ -1,0 +1,36 @@
+id: synthetic_user_horde_agent
+name: Synthetic User Horde
+description: '**Agent Type**: QA Orchestrator / Multi-Agent Coordinator'
+category: analysis
+tags:
+- horde
+- testing
+- code
+- web
+- documentation
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+sample_prompts:
+- You've just completed a feature, API endpoint, or CLI command and need comprehensive
+  testing
+- You want to find edge cases and friction points before users do
+- You need to simulate different user types (impatient, malicious, enterprise legacy,
+  etc.)
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Synthetic User Horde specialist
+    backstory: Expert synthetic user horde with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

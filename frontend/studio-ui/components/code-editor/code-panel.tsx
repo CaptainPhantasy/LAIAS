@@ -32,6 +32,7 @@ interface CodePanelProps {
   flowCode: string;
   agentsYaml: string;
   requirements: string;
+  stateCode: string;
   onCodeChange: (tab: CodeTab, content: string) => void;
   validationStatus: ValidationStatus | null;
   generationState: GenerationState;
@@ -249,6 +250,7 @@ export const CodePanel: React.FC<CodePanelProps> = ({
   flowCode,
   agentsYaml,
   requirements,
+  stateCode,
   onCodeChange,
   validationStatus,
   generationState,
@@ -268,6 +270,8 @@ export const CodePanel: React.FC<CodePanelProps> = ({
         return agentsYaml;
       case 'requirements.txt':
         return requirements;
+      case 'state.py':
+        return stateCode;
     }
   };
 
@@ -279,6 +283,8 @@ export const CodePanel: React.FC<CodePanelProps> = ({
         return 'yaml';
       case 'requirements.txt':
         return 'text';
+      case 'state.py':
+        return 'python';
     }
   };
 
@@ -296,6 +302,7 @@ export const CodePanel: React.FC<CodePanelProps> = ({
           <TabsList className="bg-bg-tertiary">
             <TabsTrigger value="flow.py">flow.py</TabsTrigger>
             <TabsTrigger value="agents.yaml">agents.yaml</TabsTrigger>
+            <TabsTrigger value="state.py">state.py</TabsTrigger>
             <TabsTrigger value="requirements.txt">requirements.txt</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -305,7 +312,7 @@ export const CodePanel: React.FC<CodePanelProps> = ({
 
       {/* Editor */}
       <div className="flex-1 min-h-0">
-        {flowCode || agentsYaml || requirements ? (
+        {flowCode || agentsYaml || requirements || stateCode ? (
           <MonacoEditor
             height="100%"
             language={getLanguageForTab(activeTab)}

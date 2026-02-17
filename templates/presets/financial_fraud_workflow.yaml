@@ -1,0 +1,34 @@
+id: financial_fraud_workflow
+name: Financial Fraud Detection Workflow
+description: '**Industry**: Banking, Finance, Insurance **Purpose**: Real-time fraud
+  detection using multi-agent systems **Top Companies**: JPMorgan, PayPal, Visa, Mastercard
+  **Performance**: 99% detection rate, 85% false positive reduction'
+category: research
+tags:
+- testing
+- automation
+- fraud
+- workflow
+- documentation
+default_complexity: complex
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 5
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Financial Fraud Detection Workflow specialist
+    backstory: Expert financial fraud detection workflow with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

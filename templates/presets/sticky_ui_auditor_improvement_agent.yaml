@@ -1,0 +1,31 @@
+id: sticky_ui_auditor_improvement_agent
+name: Sticky-Ui-Auditor-Improvement
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- auditor
+- code
+- sticky
+- analysis
+- improvement
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Sticky-Ui-Auditor-Improvement specialist
+    backstory: Expert sticky-ui-auditor-improvement with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, ArrowRight, Bot, Code, Rocket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,9 @@ export default function HomePage() {
           </Link>
         </div>
         <nav className="flex items-center gap-4">
+          <Link href="/templates" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
+            Templates
+          </Link>
           <Link href="/agents" className="text-sm text-text-secondary hover:text-text-primary transition-colors">
             Agents
           </Link>
@@ -28,9 +32,21 @@ export default function HomePage() {
         </nav>
       </header>
 
-      {/* Hero Section */}
-      <main className="flex-1 flex flex-col items-center justify-center px-6 py-20">
-        <div className="text-center max-w-3xl mx-auto">
+      {/* Hero Section with Godzilla */}
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+        {/* Godzilla Hero Image Background */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/godzilla-hero.jpg"
+            alt="Godzilla - The Supreme Operator"
+            fill
+            className="object-cover opacity-20"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-bg-primary/80 via-bg-primary/60 to-bg-primary" />
+        </div>
+
+        <div className="text-center max-w-3xl mx-auto relative z-10">
           {/* Badge */}
           <Badge variant="cyan" size="md" className="mb-6">
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
@@ -46,7 +62,7 @@ export default function HomePage() {
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
             Describe what you want, and let LAIAS generate production-ready
-            CrewAI agents. No boilerplate, just results.
+            CrewAI agents following the Godzilla pattern. No boilerplate, just results.
           </p>
 
           {/* CTAs */}
@@ -57,16 +73,16 @@ export default function HomePage() {
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
-            <Link href="/agents">
+            <Link href="/templates">
               <Button variant="secondary" size="lg">
-                View Agents
+                Browse Templates
               </Button>
             </Link>
           </div>
         </div>
 
         {/* Features */}
-        <div className="grid md:grid-cols-3 gap-6 mt-20 max-w-4xl mx-auto w-full">
+        <div className="grid md:grid-cols-3 gap-6 mt-16 max-w-4xl mx-auto w-full relative z-10">
           <FeatureCard
             icon={<Bot className="w-6 h-6" />}
             title="Describe Your Agent"
@@ -85,10 +101,10 @@ export default function HomePage() {
         </div>
 
         {/* Stats or Trust */}
-        <div className="flex items-center gap-8 mt-16 text-text-muted">
+        <div className="flex items-center gap-8 mt-16 text-text-muted relative z-10">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-accent-cyan" />
-            <span className="text-sm">Pattern-compliant code</span>
+            <span className="text-sm">Godzilla pattern</span>
           </div>
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-accent-cyan" />
@@ -106,6 +122,9 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto flex justify-between items-center text-sm text-text-muted">
           <span>LAIAS Studio</span>
           <div className="flex gap-6">
+            <Link href="/templates" className="hover:text-text-secondary transition-colors">
+              Templates
+            </Link>
             <Link href="/agents" className="hover:text-text-secondary transition-colors">
               Agents
             </Link>

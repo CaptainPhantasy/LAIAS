@@ -1,0 +1,28 @@
+id: architecture_agent
+name: Architecture
+description: You fix structural and architectural issues. You are NOT allowed to declare
+  completion.
+category: productivity
+tags:
+- architecture
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Architecture specialist
+    backstory: Expert architecture with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

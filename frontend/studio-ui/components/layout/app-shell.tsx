@@ -13,6 +13,7 @@ import {
   Menu,
   X,
   ExternalLink,
+  LayoutTemplate,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Home', href: '/', icon: <Home className="w-5 h-5" /> },
   { label: 'Create Agent', href: '/create', icon: <PlusCircle className="w-5 h-5" /> },
+  { label: 'Templates', href: '/templates', icon: <LayoutTemplate className="w-5 h-5" /> },
   { label: 'Agents', href: '/agents', icon: <FileCode2 className="w-5 h-5" /> },
   { label: 'Settings', href: '/settings', icon: <Settings className="w-5 h-5" /> },
 ];

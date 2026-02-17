@@ -1,0 +1,27 @@
+{
+  "agent_id": "prompt_cache_manager_v1",
+  "agent_name": "PromptCacheManager",
+  "version": "1.0.0",
+  "description": "Assesses, implements and monitors prompt caching for long-running agentic projects using Anthropic-style ephemeral caching",
+  "task_type": "automation",
+  "complexity": "moderate",
+  "llm_provider": "anthropic",
+  "tags": ["caching", "optimization", "cost-reduction", "anthropic", "prompt-caching"],
+  "features": {
+    "sliding_checkpoint": "Places cache_control blocks on Assistant messages to checkpoint conversation history",
+    "static_prefix_rule": "Enforces static content first, dynamic content last to prevent cache invalidation",
+    "ttl_management": "Heartbeat requests every 4 minutes to keep 5-minute TTL cache alive",
+    "multi_tier_caching": "Supports ephemeral (5-min), session (24hr), and persistent cache tiers",
+    "metrics_dashboard": "Tracks cache hits/misses, token savings, and cost reduction"
+  },
+  "cost_benefits": {
+    "accuracy": "Perfect (raw data preserved vs lossy summarization)",
+    "input_cost": "10% of tokens after first write (vs 100%)",
+    "latency": "Up to 80% faster (instant cache load)",
+    "agent_behavior": "Maintains full active memory (vs forgetting nuances)"
+  },
+  "entry_point": "agent.py",
+  "dependencies": [],
+  "created_at": "2026-02-17T09:00:00Z",
+  "author": "LAIAS Generator"
+}

@@ -1,0 +1,33 @@
+id: agent_live_demo_planner_unblock_orchestrator
+name: Agent-Live-Demo-Planner-Unblock-Orchestrator
+description: 'tools: ["Question", "Task", "Bash"]'
+category: management
+tags:
+- live
+- orchestrator
+- code
+- web
+- orchestration
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Agent-Live-Demo-Planner-Unblock-Orchestrator specialist
+    backstory: Expert agent-live-demo-planner-unblock-orchestrator with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

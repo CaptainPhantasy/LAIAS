@@ -1,0 +1,33 @@
+id: repo_structure_architect_migration_planner
+name: Repo-Structure-Architect-Migration-Planner
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- migration
+- testing
+- code
+- architect
+- web
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Repo-Structure-Architect-Migration-Planner specialist
+    backstory: Expert repo-structure-architect-migration-planner with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

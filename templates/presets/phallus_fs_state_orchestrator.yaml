@@ -1,0 +1,32 @@
+id: phallus_fs_state_orchestrator
+name: Phallus-Fs-State-Orchestrator
+description: 'tools: ["Question", "Task", "Bash"]'
+category: management
+tags:
+- orchestrator
+- testing
+- code
+- orchestration
+- state
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Phallus-Fs-State-Orchestrator specialist
+    backstory: Expert phallus-fs-state-orchestrator with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

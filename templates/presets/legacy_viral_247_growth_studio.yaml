@@ -1,0 +1,29 @@
+id: legacy_viral_247_growth_studio
+name: Legacy-Viral-247-Growth-Studio
+description: 'tools: ["Question", "Task", "Bash"]'
+category: content
+tags:
+- legacy
+- growth
+- studio
+- viral
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Legacy-Viral-247-Growth-Studio specialist
+    backstory: Expert legacy-viral-247-growth-studio with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

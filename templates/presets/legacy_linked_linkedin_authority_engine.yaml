@@ -1,0 +1,32 @@
+id: legacy_linked_linkedin_authority_engine
+name: Legacy-Linked-Linkedin-Authority-Engine
+description: 'tools: ["Question", "Task", "Bash"]'
+category: development
+tags:
+- linked
+- code
+- engine
+- legacy
+- api
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- FileReadTool
+- SerperDevTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Legacy-Linked-Linkedin-Authority-Engine specialist
+    backstory: Expert legacy-linked-linkedin-authority-engine with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

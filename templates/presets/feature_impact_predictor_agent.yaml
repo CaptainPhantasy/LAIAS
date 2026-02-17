@@ -1,0 +1,34 @@
+id: feature_impact_predictor_agent
+name: Feature Impact Predictor
+description: '**Agent Type**: Senior Engineering Manager / Impact Analyst'
+category: research
+tags:
+- testing
+- code
+- web
+- feature
+- predictor
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+sample_prompts:
+- You're planning a new feature and want to understand the impact
+- You need to estimate how long a feature will really take
+- You want to identify hidden dependencies before starting
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Feature Impact Predictor specialist
+    backstory: Expert feature impact predictor with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

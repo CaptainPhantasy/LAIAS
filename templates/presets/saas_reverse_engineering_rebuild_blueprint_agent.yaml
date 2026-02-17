@@ -1,0 +1,33 @@
+id: saas_reverse_engineering_rebuild_blueprint_agent
+name: Saas-Reverse-Engineering-Rebuild-Blueprint
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- blueprint
+- code
+- web
+- automation
+- reverse
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Saas-Reverse-Engineering-Rebuild-Blueprint specialist
+    backstory: Expert saas-reverse-engineering-rebuild-blueprint with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

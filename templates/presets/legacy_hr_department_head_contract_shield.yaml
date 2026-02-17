@@ -1,0 +1,32 @@
+id: legacy_hr_department_head_contract_shield
+name: Legacy-Hr-Department-Head-Contract-Shield
+description: 'tools: ["Question", "Task", "Bash"]'
+category: research
+tags:
+- shield
+- legacy
+- research
+- head
+- contract
+default_complexity: simple
+default_tools:
+- FileReadTool
+- ScrapeWebsiteTool
+- SerperDevTool
+- PDFSearchTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Legacy-Hr-Department-Head-Contract-Shield specialist
+    backstory: Expert legacy-hr-department-head-contract-shield with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

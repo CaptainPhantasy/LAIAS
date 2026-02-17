@@ -1,0 +1,34 @@
+id: concept_weaver_agent
+name: Concept Weaver
+description: '**Agent Type**: Knowledge Synthesizer / Memory Architect'
+category: development
+tags:
+- code
+- web
+- orchestration
+- weaver
+- database
+default_complexity: simple
+default_tools:
+- ScrapeWebsiteTool
+- FileReadTool
+- SerperDevTool
+- CodeInterpreterTool
+sample_prompts:
+- You need to connect related concepts across your work
+- You want to allocate computational resources intelligently
+- You need to maintain episodic memory of your work
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Concept Weaver specialist
+    backstory: Expert concept weaver with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

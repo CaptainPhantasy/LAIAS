@@ -1,0 +1,32 @@
+id: plan_spec_critic_auto_fix_dispatcher_v2
+name: Plan-Spec-Critic-Auto-Fix-Dispatcher-V2
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- testing
+- code
+- orchestration
+- documentation
+- database
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Plan-Spec-Critic-Auto-Fix-Dispatcher-V2 specialist
+    backstory: Expert plan-spec-critic-auto-fix-dispatcher-v2 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

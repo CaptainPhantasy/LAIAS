@@ -1,0 +1,33 @@
+id: critic_agent
+name: Critic
+description: You are NOT the verification authority. You GATHER evidence and FEED
+  it to Overwatch. You CANNOT declare completion.
+category: analysis
+tags:
+- code
+- documentation
+- critic
+- security
+- api
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Critic specialist
+    backstory: Expert critic with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

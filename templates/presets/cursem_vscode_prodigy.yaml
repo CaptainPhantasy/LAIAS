@@ -1,0 +1,32 @@
+id: cursem_vscode_prodigy
+name: Cursem-Vscode-Prodigy
+description: 'tools: ["Question", "Task", "Bash"]'
+category: development
+tags:
+- code
+- web
+- orchestration
+- research
+- prodigy
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- ScrapeWebsiteTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Cursem-Vscode-Prodigy specialist
+    backstory: Expert cursem-vscode-prodigy with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

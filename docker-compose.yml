@@ -70,6 +70,8 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
       - REDIS_URL=redis://redis:6379/0
+      # CORS Configuration
+      - ALLOWED_ORIGINS=["http://localhost:3000", "http://localhost:5173", "https://laias-studio.ngrok-free.app", "https://laias-api.ngrok-free.app"]
       # LLM Provider API Keys
       - ZAI_API_KEY=${ZAI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}

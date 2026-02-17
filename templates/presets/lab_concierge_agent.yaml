@@ -1,0 +1,32 @@
+id: lab_concierge_agent
+name: Lab Concierge
+description: '**Agent Type**: Resource Facilitator / Lab Manager'
+category: analysis
+tags:
+- testing
+- code
+- concierge
+- analysis
+- development
+default_complexity: simple
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- You need to know what tools and agents are available
+- You want to find the right tool for a task
+- You need to spawn a new agent instance
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Lab Concierge specialist
+    backstory: Expert lab concierge with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

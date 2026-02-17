@@ -1,0 +1,31 @@
+id: unau_phase_2_agent_selector_v1
+name: Unau-Phase-2-Selector-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- selector
+- code
+- orchestration
+- unau
+- phase
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Unau-Phase-2-Selector-V1 specialist
+    backstory: Expert unau-phase-2-selector-v1 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

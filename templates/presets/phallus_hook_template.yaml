@@ -1,0 +1,29 @@
+id: phallus_hook_template
+name: Phallus Integration Hook
+description: 'Before starting any task: 1. Read .phallus/progress.md 2. Check current
+  gate status 3. Load master_plan.md context'
+category: productivity
+tags:
+- template
+- phallus
+- hook
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- PDFSearchTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Phallus Integration Hook specialist
+    backstory: Expert phallus integration hook with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

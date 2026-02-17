@@ -1,0 +1,31 @@
+id: dream_team_meta_orchestrator_health_monitor_v1
+name: Dream-Team-Meta-Orchestrator-Health-Monitor-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: management
+tags:
+- orchestrator
+- orchestration
+- meta
+- dream
+- health
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Dream-Team-Meta-Orchestrator-Health-Monitor-V1 specialist
+    backstory: Expert dream-team-meta-orchestrator-health-monitor-v1 with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

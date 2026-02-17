@@ -1,0 +1,30 @@
+id: metacognitive_reasoner_agent
+name: Metacognitive Reasoner
+description: '**Agent Type**: Reflective Thinker / Self-Improving Philosopher'
+category: analysis
+tags:
+- analysis
+- metacognitive
+- reasoner
+default_complexity: simple
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- You need deep, multi-step reasoning on a complex problem
+- You want multiple perspectives on a question
+- You need to build consensus across different reasoning approaches
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Metacognitive Reasoner specialist
+    backstory: Expert metacognitive reasoner with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

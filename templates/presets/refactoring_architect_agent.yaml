@@ -1,0 +1,34 @@
+id: refactoring_architect_agent
+name: Refactoring Architect
+description: '**Agent Type**: Code Transformation Specialist / Safety-First Refactor'
+category: analysis
+tags:
+- code
+- architect
+- refactoring
+- api
+- analysis
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- You need to refactor code safely with full verification
+- You want to simulate changes before applying them
+- You need to apply complex patches with confidence
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Refactoring Architect specialist
+    backstory: Expert refactoring architect with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

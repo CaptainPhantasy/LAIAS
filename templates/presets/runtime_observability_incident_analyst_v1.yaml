@@ -1,0 +1,30 @@
+id: runtime_observability_incident_analyst_v1
+name: Runtime-Observability-Incident-Analyst-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- incident
+- runtime
+- observability
+- analyst
+- analysis
+default_complexity: simple
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Runtime-Observability-Incident-Analyst-V1 specialist
+    backstory: Expert runtime-observability-incident-analyst-v1 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

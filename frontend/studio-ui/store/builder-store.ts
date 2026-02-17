@@ -17,6 +17,7 @@ interface GeneratedCode {
   flowCode: string;
   agentsYaml: string;
   requirements: string;
+  stateCode: string;
 }
 
 interface BuilderState {
@@ -71,6 +72,7 @@ const initialCodeFiles: Record<CodeTab, { content: string; isDirty: boolean }> =
   'flow.py': { content: '', isDirty: false },
   'agents.yaml': { content: '', isDirty: false },
   'requirements.txt': { content: '', isDirty: false },
+  'state.py': { content: '', isDirty: false },
 };
 
 // ============================================================================
@@ -118,6 +120,7 @@ export const useBuilderStore = create<BuilderState>()(
               'flow.py': { content: code.flowCode, isDirty: false },
               'agents.yaml': { content: code.agentsYaml, isDirty: false },
               'requirements.txt': { content: code.requirements, isDirty: false },
+              'state.py': { content: code.stateCode, isDirty: false },
             },
           });
         } else {
@@ -157,7 +160,9 @@ export const useBuilderStore = create<BuilderState>()(
             ? generatedCode?.flowCode || ''
             : tab === 'agents.yaml'
               ? generatedCode?.agentsYaml || ''
-              : generatedCode?.requirements || '';
+              : tab === 'state.py'
+                ? generatedCode?.stateCode || ''
+                : generatedCode?.requirements || '';
 
         set((state) => ({
           codeFiles: {
@@ -174,6 +179,7 @@ export const useBuilderStore = create<BuilderState>()(
             'flow.py': { content: generatedCode?.flowCode || '', isDirty: false },
             'agents.yaml': { content: generatedCode?.agentsYaml || '', isDirty: false },
             'requirements.txt': { content: generatedCode?.requirements || '', isDirty: false },
+            'state.py': { content: generatedCode?.stateCode || '', isDirty: false },
           },
         });
       },

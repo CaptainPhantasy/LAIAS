@@ -1,0 +1,31 @@
+id: supabase_senior_architect_v2
+name: Supabase-Senior-Architect-V2
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- code
+- architect
+- senior
+- security
+- analysis
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Supabase-Senior-Architect-V2 specialist
+    backstory: Expert supabase-senior-architect-v2 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

@@ -1,0 +1,34 @@
+id: TOP_20_WORKFLOWS
+name: Top 20 Multi-Agent Workflow Examples
+description: 'This folder contains 20 industry-standard multi-agent workflow examples
+  demonstrating bleeding-edge practices from top industry professionals. Each example
+  includes: - Complete workflow specification - Agent roles and responsibilities'
+category: research
+tags:
+- automation
+- orchestration
+- documentation
+- research
+- security
+default_complexity: complex
+default_tools:
+- ScrapeWebsiteTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 5
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Top 20 Multi-Agent Workflow Examples specialist
+    backstory: Expert top 20 multi-agent workflow examples with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

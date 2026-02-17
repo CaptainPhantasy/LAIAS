@@ -1,0 +1,31 @@
+id: powershell_vs_code_gentle_teacher_v1
+name: Powershell-Vs-Code-Gentle-Teacher-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: development
+tags:
+- gentle
+- code
+- powershell
+- teacher
+- analysis
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Powershell-Vs-Code-Gentle-Teacher-V1 specialist
+    backstory: Expert powershell-vs-code-gentle-teacher-v1 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

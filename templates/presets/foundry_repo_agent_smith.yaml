@@ -1,0 +1,31 @@
+id: foundry_repo_agent_smith
+name: Foundry-Repo-Smith
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- code
+- smith
+- foundry
+- repo
+- analysis
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Foundry-Repo-Smith specialist
+    backstory: Expert foundry-repo-smith with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

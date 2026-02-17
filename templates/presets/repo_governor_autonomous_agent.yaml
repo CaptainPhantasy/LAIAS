@@ -1,0 +1,32 @@
+id: repo_governor_autonomous_agent
+name: Repo-Governor-Autonomous
+description: 'tools: ["Question", "Task", "Bash"]'
+category: development
+tags:
+- testing
+- code
+- orchestration
+- governor
+- documentation
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Repo-Governor-Autonomous specialist
+    backstory: Expert repo-governor-autonomous with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

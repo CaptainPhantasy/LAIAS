@@ -1,0 +1,33 @@
+id: context_engineering_scaffolding_guru_for_swarm_age
+name: Context-Engineering-Scaffolding-Guru-For-Swarm-Age
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- swarm
+- code
+- orchestration
+- guru
+- scaffolding
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- PDFSearchTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Context-Engineering-Scaffolding-Guru-For-Swarm-Age specialist
+    backstory: Expert context-engineering-scaffolding-guru-for-swarm-age with deep
+      domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

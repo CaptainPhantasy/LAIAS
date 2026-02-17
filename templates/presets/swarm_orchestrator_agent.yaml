@@ -1,0 +1,33 @@
+id: swarm_orchestrator_agent
+name: Swarm Orchestrator
+description: '**Agent Type**: Multi-Agent Coordinator / Task Distribution Manager'
+category: management
+tags:
+- orchestrator
+- code
+- orchestration
+- swarm
+- monitoring
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- You need to distribute work across multiple agents
+- You want to track task completion across a swarm
+- You need to build consensus among multiple agents
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Swarm Orchestrator specialist
+    backstory: Expert swarm orchestrator with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

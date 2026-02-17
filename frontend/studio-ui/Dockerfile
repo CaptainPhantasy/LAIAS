@@ -57,6 +57,7 @@ RUN adduser --system --uid 1001 nextjs
 # Copy necessary files from builder
 COPY --from=builder /app/studio-ui/.next/standalone ./
 COPY --from=builder /app/studio-ui/.next/static ./.next/static
+COPY --from=builder /app/studio-ui/public ./public
 
 # Set correct ownership
 RUN chown -R nextjs:nodejs /app

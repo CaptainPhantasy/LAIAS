@@ -104,16 +104,69 @@ class GenerateAgentRequest(BaseModel):
     @field_validator("tools_requested")
     @classmethod
     def validate_tools(cls, v: Optional[list[str]]) -> Optional[list[str]]:
-        """Validate tool names against known tools."""
+        """Validate tool names against known CrewAI tools."""
         if v is None:
             return v
 
+        # Complete list of CrewAI-compatible tools supported by the frontend
         known_tools = {
+            # Web & Search Tools
             "SerperDevTool",
+            "DuckDuckGoSearchRun",
             "ScrapeWebsiteTool",
-            "DirectoryReadTool",
+            "WebsiteSearchTool",
+            "SeleniumScrapingTool",
+            "FirecrawlScrapeWebsiteTool",
+            "EXASearchTool",
+            # File & Document Tools
             "FileReadTool",
+            "DirectoryReadTool",
+            "DirectorySearchTool",
+            "CSVSearchTool",
+            "JSONSearchTool",
+            "XMLSearchTool",
+            "PDFSearchTool",
+            "DOCXSearchTool",
+            "GithubSearchTool",
+            # Code & Development Tools
             "CodeInterpreterTool",
+            "CodeDocsSearchTool",
+            "CodeSearchTool",
+            "VBCodeInterpreterTool",
+            # Database Tools
+            "PostgreSQLTool",
+            "MySQLTool",
+            "SQLiteTool",
+            "SnowflakeTool",
+            # Communication Tools
+            "EmailTool",
+            "SlackTool",
+            "DiscordTool",
+            "TelegramTool",
+            "WhatsAppTool",
+            # AI & LLM Tools
+            "AzureAiSearchTool",
+            "ChatOllama",
+            "LlamaIndexTool",
+            # Cloud & Infrastructure Tools
+            "AWSTool",
+            "GCSTool",
+            "AzureStorageTool",
+            "S3Tool",
+            "CloudTool",
+            # Data & Analytics Tools
+            "PandasTool",
+            "NL2SQLTool",
+            "DatabricksTool",
+            # Browser Automation Tools
+            "BrowserbaseLoadTool",
+            "PlaywrightTool",
+            "ScrapflyScrapeWebsiteTool",
+            # Content & Media Tools
+            "YoutubeVideoSearchTool",
+            "YoutubeChannelSearchTool",
+            # Utility Tools
+            "BaseTool",
         }
 
         unknown = set(v) - known_tools

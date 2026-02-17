@@ -1,0 +1,32 @@
+id: git_steward_reputation_guardian_v1
+name: Git-Steward-Reputation-Guardian-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: development
+tags:
+- steward
+- code
+- reputation
+- documentation
+- database
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Git-Steward-Reputation-Guardian-V1 specialist
+    backstory: Expert git-steward-reputation-guardian-v1 with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

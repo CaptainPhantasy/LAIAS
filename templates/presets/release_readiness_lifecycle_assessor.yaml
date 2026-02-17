@@ -1,0 +1,32 @@
+id: release_readiness_lifecycle_assessor
+name: Release-Readiness-Lifecycle-Assessor
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- lifecycle
+- testing
+- assessor
+- code
+- analysis
+default_complexity: simple
+default_tools:
+- DirectoryReadTool
+- PDFSearchTool
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Release-Readiness-Lifecycle-Assessor specialist
+    backstory: Expert release-readiness-lifecycle-assessor with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

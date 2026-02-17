@@ -1,0 +1,30 @@
+id: legacy_social_shorts_reels_firestarter
+name: Legacy-Social-Shorts-Reels-Firestarter
+description: 'tools: ["Question", "Task", "Bash"]'
+category: content
+tags:
+- shorts
+- firestarter
+- legacy
+- social
+- reels
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Legacy-Social-Shorts-Reels-Firestarter specialist
+    backstory: Expert legacy-social-shorts-reels-firestarter with deep domain knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations

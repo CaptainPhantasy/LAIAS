@@ -64,7 +64,44 @@ def load_template(template_id: str) -> dict:
 
     try:
         with open(template_path, "r") as f:
-            return yaml.safe_load(f)
+            template_data = yaml.safe_load(f)
+
+            # Validate and sanitize to prevent validation errors
+            if not isinstance(template_data, dict):
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Invalid template format in {template_id}"
+                )
+
+            # Fix None or invalid values
+            if not template_data.get("description") or template_data["description"] == "None":
+                template_data["description"] = f"Agent template: {template_data.get('name', template_id)}"
+
+            if not template_data.get("name") or template_data["name"] == "None":
+                template_data["name"] = template_id
+
+            if not template_data.get("sample_prompts"):
+                template_data["sample_prompts"] = [f"Use the {template_data['name']} template"]
+
+            if not template_data.get("tags"):
+                template_data["tags"] = ["agent"]
+
+            if not template_data.get("agent_structure"):
+                template_data["agent_structure"] = {
+                    "agents": [{
+                        "name": "primary_agent",
+                        "role": "AI Agent",
+                        "backstory": "Specialized AI agent"
+                    }]
+                }
+
+            if not template_data.get("expected_outputs"):
+                template_data["expected_outputs"] = ["Task completion"]
+
+            return template_data
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Failed to load template", template_id=template_id, error=str(e))
         raise HTTPException(
@@ -85,6 +122,47 @@ def load_all_templates() -> list[dict]:
         try:
             with open(template_file, "r") as f:
                 template_data = yaml.safe_load(f)
+
+                # Validate and sanitize template data to prevent 500 errors
+                if not isinstance(template_data, dict):
+                    logger.warning("Invalid template format (not a dict)", file=str(template_file))
+                    continue
+
+                # Ensure required fields exist with valid values
+                if not template_data.get("id"):
+                    logger.warning("Template missing id", file=str(template_file))
+                    continue
+
+                # Fix None or invalid description
+                if not template_data.get("description") or template_data["description"] == "None":
+                    template_data["description"] = f"Agent template: {template_data.get('name', template_data['id'])}"
+
+                # Fix None or invalid name
+                if not template_data.get("name") or template_data["name"] == "None":
+                    template_data["name"] = template_data["id"]
+
+                # Fix None sample_prompts
+                if not template_data.get("sample_prompts"):
+                    template_data["sample_prompts"] = [f"Use the {template_data['name']} template"]
+
+                # Fix None tags
+                if not template_data.get("tags"):
+                    template_data["tags"] = ["agent"]
+
+                # Fix None agent_structure
+                if not template_data.get("agent_structure"):
+                    template_data["agent_structure"] = {
+                        "agents": [{
+                            "name": "primary_agent",
+                            "role": "AI Agent",
+                            "backstory": "Specialized AI agent"
+                        }]
+                    }
+
+                # Fix None expected_outputs
+                if not template_data.get("expected_outputs"):
+                    template_data["expected_outputs"] = ["Task completion"]
+
                 templates.append(template_data)
         except Exception as e:
             logger.error("Failed to load template file", file=str(template_file), error=str(e))

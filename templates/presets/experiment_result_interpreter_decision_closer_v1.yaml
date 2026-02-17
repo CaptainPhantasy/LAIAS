@@ -1,0 +1,31 @@
+id: experiment_result_interpreter_decision_closer_v1
+name: Experiment-Result-Interpreter-Decision-Closer-V1
+description: 'tools: ["Question", "Task", "Bash"]'
+category: analysis
+tags:
+- interpreter
+- result
+- decision
+- testing
+- closer
+default_complexity: simple
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Run this agent for specialized task execution.
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  max_agents: 1
+agent_structure:
+  agents:
+  - name: primary_agent
+    role: Experiment-Result-Interpreter-Decision-Closer-V1 specialist
+    backstory: Expert experiment-result-interpreter-decision-closer-v1 with deep domain
+      knowledge.
+expected_outputs:
+- Task completion report
+- Analysis summary
+- Recommendations
