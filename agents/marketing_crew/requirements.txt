@@ -1,3 +1,4 @@
 crewai[tools]>=0.80.0
-pydantic>=1.10.2
-structlog>=21.1.0
+pydantic>=2.5.0
+structlog>=24.1.0
+pyyaml>=6.0
