@@ -22,10 +22,7 @@ class Settings(BaseSettings):
     """Application settings with environment variable support."""
 
     model_config = SettingsConfigDict(
-        env_file=str(ENV_FILE_PATH),
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=str(ENV_FILE_PATH), env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # === Application ===
@@ -55,7 +52,7 @@ class Settings(BaseSettings):
     # === Database ===
     database_url: str = Field(
         default="postgresql+asyncpg://laias:laias@localhost:5432/laias",
-        description="Database connection URL"
+        description="Database connection URL",
     )
     database_pool_size: int = Field(default=10, description="Database pool size")
     database_max_overflow: int = Field(default=20, description="Database max overflow")
@@ -67,7 +64,9 @@ class Settings(BaseSettings):
 
     # === LLM Settings ===
     default_llm_provider: str = Field(default="zai", description="Default LLM provider")
-    default_model: str = Field(default="glm-5", description="Default model")
+    default_model: str = Field(
+        default="GLM-5", description="Default model (ZAI requires exact case)"
+    )
     max_tokens: int = Field(default=8000, description="Max tokens for generation")
     temperature: float = Field(default=0.7, description="Default temperature")
     timeout_seconds: int = Field(default=120, description="LLM timeout in seconds")
@@ -81,7 +80,7 @@ class Settings(BaseSettings):
     # === Security ===
     allowed_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:5173"],
-        description="CORS allowed origins"
+        description="CORS allowed origins",
     )
     api_key_header: str = Field(default="X-API-Key", description="API key header name")
     require_api_key: bool = Field(default=False, description="Require API key for all endpoints")
@@ -127,8 +126,12 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str = Field(default="", description="AWS access key ID")
     AWS_SECRET_ACCESS_KEY: str = Field(default="", description="AWS secret access key")
     AWS_REGION: str = Field(default="us-east-1", description="AWS region")
-    AZURE_STORAGE_CONNECTION_STRING: str = Field(default="", description="Azure storage connection string")
-    GOOGLE_APPLICATION_CREDENTIALS: str = Field(default="", description="Google Cloud credentials path")
+    AZURE_STORAGE_CONNECTION_STRING: str = Field(
+        default="", description="Azure storage connection string"
+    )
+    GOOGLE_APPLICATION_CREDENTIALS: str = Field(
+        default="", description="Google Cloud credentials path"
+    )
 
     # Automation Tools
     APIFY_API_KEY: str = Field(default="", description="Apify API key")

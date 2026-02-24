@@ -54,7 +54,7 @@ class LLMService:
         logger.info(
             "LLM Service initialized",
             default_provider=self._default_provider.value,
-            default_model=self._default_model
+            default_model=self._default_model,
         )
 
     def _determine_default_provider(self) -> ProviderType:
@@ -78,10 +78,7 @@ class LLMService:
         return LLMProvider.PROVIDER_CONFIGS[self._default_provider]["default_model"]
 
     def _get_provider(
-        self,
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        **config_kwargs
+        self, provider: Optional[str] = None, model: Optional[str] = None, **config_kwargs
     ) -> LLMProvider:
         """
         Get a configured LLM provider instance.
@@ -120,7 +117,7 @@ class LLMService:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
-        retry=retry_if_exception_type((LLMServiceException,))
+        retry=retry_if_exception_type((LLMServiceException,)),
     )
     async def generate_code(
         self,
@@ -134,7 +131,7 @@ class LLMService:
         include_memory: bool = True,
         include_analytics: bool = True,
         max_agents: int = 4,
-        few_shot_examples: List[Dict] = None
+        few_shot_examples: List[Dict] = None,
     ) -> Dict[str, Any]:
         """
         Generate agent code using LLM.
@@ -168,7 +165,7 @@ class LLMService:
             tools_requested=tools_requested,
             include_memory=include_memory,
             include_analytics=include_analytics,
-            max_agents=max_agents
+            max_agents=max_agents,
         )
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -176,14 +173,10 @@ class LLMService:
         # Add few-shot examples if provided
         if few_shot_examples:
             for example in few_shot_examples:
-                messages.append({
-                    "role": "user",
-                    "content": example.get("description", "")
-                })
-                messages.append({
-                    "role": "assistant",
-                    "content": json.dumps(example.get("output", {}))
-                })
+                messages.append({"role": "user", "content": example.get("description", "")})
+                messages.append(
+                    {"role": "assistant", "content": json.dumps(example.get("output", {}))}
+                )
 
         messages.append({"role": "user", "content": user_prompt})
 
@@ -197,7 +190,7 @@ class LLMService:
             model=model_name,
             complexity=complexity,
             task_type=task_type,
-            max_agents=max_agents
+            max_agents=max_agents,
         )
 
         try:
@@ -208,7 +201,7 @@ class LLMService:
                 "LLM response received",
                 provider=response.provider.value,
                 model=response.model,
-                tokens_used=response.tokens_used
+                tokens_used=response.tokens_used,
             )
 
             return self._parse_response(response.content)
@@ -218,15 +211,13 @@ class LLMService:
         except Exception as e:
             logger.error("LLM generation failed", provider=provider_name, error=str(e))
             raise LLMServiceException(
-                f"Failed to generate code: {str(e)}",
-                provider=provider_name,
-                original_error=e
+                f"Failed to generate code: {str(e)}", provider=provider_name, original_error=e
             )
 
     def _get_model_for_provider(self, provider: str) -> str:
         """Get default model for a provider."""
         provider_map = {
-            "zai": "glm-4-plus",  # 20 concurrent requests
+            "zai": "GLM-5",  # Reliable JSON output for code generation
             "portkey": "@zhipu/glm-4.7-flashx",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
@@ -239,6 +230,7 @@ class LLMService:
     def _get_system_prompt(self) -> str:
         """Get the system prompt for code generation."""
         from app.prompts.system_prompts import CODE_GENERATION_SYSTEM_PROMPT
+
         return CODE_GENERATION_SYSTEM_PROMPT
 
     def _build_user_prompt(
@@ -250,7 +242,7 @@ class LLMService:
         tools_requested: Optional[List[str]],
         include_memory: bool,
         include_analytics: bool,
-        max_agents: int
+        max_agents: int,
     ) -> str:
         """Build the user prompt for code generation."""
         tools_str = ", ".join(tools_requested) if tools_requested else "auto-select based on task"
@@ -280,19 +272,55 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
 """
 
     def _parse_response(self, content: str) -> Dict[str, Any]:
-        """Parse LLM response into structured data."""
+        """Parse LLM response into structured data.
+
+        Handles multiple response formats:
+        1. Direct JSON
+        2. JSON wrapped in markdown code blocks (```json ... ```)
+        3. JSON with broken escape sequences (common with some models)
+        """
+        # Attempt 1: Direct parse
         try:
             return json.loads(content)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse LLM response as JSON: {e}")
+        except json.JSONDecodeError:
+            pass
 
-            # Try to extract JSON from markdown code blocks
-            from app.utils.helpers import extract_code_from_markdown
-            extracted = extract_code_from_markdown(content)
-            try:
-                return json.loads(extracted)
-            except json.JSONDecodeError:
-                raise ValueError(f"Invalid JSON response from LLM")
+        # Attempt 2: Extract from markdown code blocks
+        from app.utils.helpers import extract_code_from_markdown
+
+        extracted = extract_code_from_markdown(content)
+        try:
+            return json.loads(extracted)
+        except json.JSONDecodeError:
+            pass
+
+        # Attempt 3: Fix common escape issues (models sometimes double-escape
+        # or produce invalid escape sequences inside JSON string values)
+        import re
+
+        try:
+            # Find the outermost JSON object
+            match = re.search(r"\{.*\}", extracted, re.DOTALL)
+            if match:
+                raw = match.group(0)
+                # Try parsing as-is first, then with repairs
+                try:
+                    return json.loads(raw)
+                except json.JSONDecodeError:
+                    pass
+                # Fix unescaped newlines inside JSON string values
+                fixed = re.sub(
+                    r'(?<=": ")(.*?)(?="[,\n\}])',
+                    lambda m: m.group(0).replace("\n", "\\n"),
+                    raw,
+                    flags=re.DOTALL,
+                )
+                return json.loads(fixed)
+        except (json.JSONDecodeError, Exception) as e:
+            logger.error(
+                "All JSON parse attempts failed", error=str(e), content_preview=content[:200]
+            )
+            raise ValueError(f"Invalid JSON response from LLM: {e}")
 
     async def check_health(self) -> Dict[str, str]:
         """
@@ -327,7 +355,7 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
         messages: List[Dict[str, str]],
         provider: str = None,
         model: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Stream a completion for the given messages.
@@ -350,7 +378,7 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
         messages: List[Dict[str, str]],
         provider: str = None,
         model: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> CompletionResponse:
         """
         Get a completion for the given messages.
