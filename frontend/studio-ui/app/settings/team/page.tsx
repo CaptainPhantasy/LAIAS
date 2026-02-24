@@ -52,7 +52,7 @@ export default function TeamSettingsPage() {
 
   const fetchTeams = async () => {
     try {
-      const res = await fetch('http://localhost:8001/api/teams', {
+      const res = await fetch('http://localhost:4521/api/teams', {
         headers: {
           'X-User-Id': '00000000-0000-0000-0000-000000000000',
           'X-User-Email': 'dev@laias.local',
@@ -76,7 +76,7 @@ export default function TeamSettingsPage() {
 
   const fetchTeamDetails = async (teamId: string) => {
     try {
-      const res = await fetch(`http://localhost:8001/api/teams/${teamId}`, {
+      const res = await fetch(`http://localhost:4521/api/teams/${teamId}`, {
         headers: {
           'X-User-Id': '00000000-0000-0000-0000-000000000000',
         },
@@ -96,7 +96,7 @@ export default function TeamSettingsPage() {
     if (!newTeamName.trim()) return;
 
     try {
-      const res = await fetch('http://localhost:8001/api/teams', {
+      const res = await fetch('http://localhost:4521/api/teams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ export default function TeamSettingsPage() {
     const mockUserId = `00000000-0000-4000-8000-${hex.padEnd(12, '0')}`;
 
     try {
-      const res = await fetch(`http://localhost:8001/api/teams/${selectedTeam.id}/members`, {
+      const res = await fetch(`http://localhost:4521/api/teams/${selectedTeam.id}/members`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +168,7 @@ export default function TeamSettingsPage() {
     if (!selectedTeam) return;
 
     try {
-      await fetch(`http://localhost:8001/api/teams/${selectedTeam.id}/members/${userId}`, {
+      await fetch(`http://localhost:4521/api/teams/${selectedTeam.id}/members/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +186,7 @@ export default function TeamSettingsPage() {
     if (!selectedTeam) return;
 
     try {
-      await fetch(`http://localhost:8001/api/teams/${selectedTeam.id}/members/${userId}`, {
+      await fetch(`http://localhost:4521/api/teams/${selectedTeam.id}/members/${userId}`, {
         method: 'DELETE',
         headers: {
           'X-User-Id': '00000000-0000-0000-0000-000000000000',

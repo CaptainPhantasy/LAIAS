@@ -6,7 +6,7 @@ import { KPIGrid, SystemStatus, RecentDeployments } from '@/components/dashboard
 import { useContainers } from '@/hooks';
 import { healthCheck } from '@/lib/api';
 import type { DashboardMetric, ContainerInfo } from '@/types';
-import type { HealthResponse } from '../../shared/types';
+import type { DockerHealthResponse } from '../../shared/types';
 
 // ============================================================================
 // Dashboard Page
@@ -14,7 +14,7 @@ import type { HealthResponse } from '../../shared/types';
 
 export default function DashboardPage() {
   const { containers, isLoading, refetch } = useContainers({ autoRefresh: true });
-  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [health, setHealth] = useState<DockerHealthResponse | null>(null);
   const [healthLoading, setHealthLoading] = useState(true);
 
   // Fetch health status
@@ -77,9 +77,9 @@ export default function DashboardPage() {
           latency: health.checks.redis?.latency_ms,
         },
         {
-          name: 'LLM Provider',
-          status: health.checks.llm_provider?.status || 'unhealthy',
-          latency: health.checks.llm_provider?.latency_ms,
+          name: 'Docker',
+          status: health.checks.docker?.status || 'unhealthy',
+          latency: health.checks.docker?.latency_ms,
         },
       ]
     : [];
@@ -113,21 +113,21 @@ export default function DashboardPage() {
           <div className="grid grid-cols-3 gap-6">
             <div className="text-center py-2">
               <p className="text-3xl font-bold text-text-primary tracking-tight">
-                {health.metrics.total_agents || 0}
+                {health.metrics.total_deployments || 0}
               </p>
-              <p className="text-sm font-medium text-text-muted mt-1">Total Agents</p>
+              <p className="text-sm font-medium text-text-muted mt-1">Total Deployments</p>
             </div>
             <div className="text-center py-2">
               <p className="text-3xl font-bold text-success tracking-tight">
-                {health.metrics.cache_hits || 0}
+                {health.metrics.running_containers || 0}
               </p>
-              <p className="text-sm font-medium text-text-muted mt-1">Cache Hits</p>
+              <p className="text-sm font-medium text-text-muted mt-1">Running Containers</p>
             </div>
             <div className="text-center py-2">
               <p className="text-3xl font-bold text-text-primary tracking-tight">
-                {health.metrics.cache_misses || 0}
+                {health.metrics.total_containers || 0}
               </p>
-              <p className="text-sm font-medium text-text-muted mt-1">Cache Misses</p>
+              <p className="text-sm font-medium text-text-muted mt-1">Total Containers</p>
             </div>
           </div>
         </div>

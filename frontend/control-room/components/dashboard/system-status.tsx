@@ -45,7 +45,7 @@ export function SystemStatus({ services, className }: SystemStatusProps) {
         <div className="flex items-center justify-center py-6 text-center">
           <div>
             <p className="text-sm text-text-muted">Unable to connect to backend</p>
-            <p className="text-xs text-text-3 mt-1">Check that Docker Orchestrator is running on port 8002</p>
+            <p className="text-xs text-text-3 mt-1">Check that Docker Orchestrator is running on port 4522</p>
           </div>
         </div>
       ) : (

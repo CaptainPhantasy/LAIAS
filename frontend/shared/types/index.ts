@@ -57,6 +57,21 @@ export type ExecResponse = import('./docker-orchestrator').components['schemas']
 export type LogsResponse = import('./docker-orchestrator').components['schemas']['LogsResponse'];
 export type MetricsResponse = import('./docker-orchestrator').components['schemas']['MetricsResponse'];
 
+// Error Response (generic, usable by both apps)
+export interface ErrorResponse {
+  detail?: string | { message: string } | Array<{ msg: string; loc: string[] }>;
+  message?: string;
+  error?: string;
+  error_code?: string;
+}
+
+// Regenerate Request (used by shared api-client)
+export interface RegenerateRequest {
+  agent_id: string;
+  feedback: string;
+  previous_code: string;
+}
+
 // Docker-specific Health Types (namespaced to avoid conflict)
 export type DockerHealthResponse = import('./docker-orchestrator').components['schemas']['HealthResponse'];
 export type DockerHealthCheck = import('./docker-orchestrator').components['schemas']['HealthCheck'];
@@ -91,11 +106,11 @@ export interface ApiClientConfig {
 
 export const API_CONFIG = {
   agentGenerator: {
-    baseUrl: process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:8001',
+    baseUrl: process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:4521',
     timeout: 30000, // 30s for generation
   },
   dockerOrchestrator: {
-    baseUrl: process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:8002',
+    baseUrl: process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:4522',
     timeout: 10000, // 10s for container ops
   },
 } as const;

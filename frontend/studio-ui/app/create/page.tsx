@@ -30,8 +30,8 @@ import { CodePanel } from '@/components/code-editor';
 import { cn, debounce } from '@/lib/utils';
 
 const API_BASE = typeof window !== 'undefined'
-  ? (window.location.hostname.includes('ngrok') ? 'https://laias-api.ngrok-free.app' : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'))
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001');
+  ? (window.location.hostname.includes('ngrok') ? 'https://laias-api.ngrok-free.app' : (process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:4521'))
+  : (process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:4521');
 const FETCH_TIMEOUT = 8000; // 8 second timeout for template loading
 
 // ============================================================================
@@ -99,7 +99,7 @@ function CreateAgentPageContent() {
       task_type: 'general',
       max_agents: 3,
       tools_requested: [],
-      provider: 'zai',
+      provider: 'openai',
       model: 'default',
     },
   });
@@ -373,7 +373,7 @@ function CreateAgentPageContent() {
       setGenerationState('complete');
 
       // Navigate to control room to see deployed agent
-      window.open(`http://localhost:3001?agent=${deployment.container_id}`, '_blank');
+      window.open(`http://localhost:4528?agent=${deployment.container_id}`, '_blank');
 
       // TODO: Add proper client-side logging
       console.info('Agent deployed successfully', {

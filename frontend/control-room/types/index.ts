@@ -15,8 +15,8 @@ import type {
   MetricsResponse,
   LogsResponse,
   DeploymentResponse,
-  HealthResponse,
-  ErrorResponse,
+  DockerHealthResponse,
+  DockerErrorResponse,
   ContainerStatus,
   DeploymentStatus,
   LogLevel,
@@ -28,6 +28,7 @@ import type {
 } from '../../shared/types'; // Re-export common shared types for convenience
 
 // Re-export shared types for use throughout the control-room
+// HealthResponse and ErrorResponse are the Docker Orchestrator variants
 export type {
   ContainerInfo,
   ContainerListResponse,
@@ -36,8 +37,6 @@ export type {
   MetricsResponse,
   LogsResponse,
   DeploymentResponse,
-  HealthResponse,
-  ErrorResponse,
   ContainerStatus,
   DeploymentStatus,
   LogLevel,
@@ -47,6 +46,8 @@ export type {
   AsyncState,
   LoadingState,
 };
+export type { DockerHealthResponse as HealthResponse };
+export type { DockerErrorResponse as ErrorResponse };
 
 // ============================================================================
 // Control Room Specific Types

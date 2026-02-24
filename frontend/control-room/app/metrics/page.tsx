@@ -107,7 +107,7 @@ export default function MetricsPage() {
       try {
         setAnalyticsLoading(true);
         const response = await fetch(
-          `http://localhost:8002/api/analytics?days=${timeRange}`
+          `${process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:4522'}/api/analytics?days=${timeRange}`
         );
         if (response.ok) {
           const data = await response.json();

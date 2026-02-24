@@ -37,12 +37,12 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <Input
               label="Agent Generator URL"
-              defaultValue="http://localhost:8001"
+              defaultValue="http://localhost:4521"
               helperText="URL for the agent generator service"
             />
             <Input
               label="Docker Orchestrator URL"
-              defaultValue="http://localhost:8002"
+              defaultValue="http://localhost:4522"
               helperText="URL for the docker orchestrator service"
             />
           </div>

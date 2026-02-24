@@ -7,7 +7,7 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
   env: {
-    NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL: process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:8002',
+    NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL: process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:4522',
   },
 };
 

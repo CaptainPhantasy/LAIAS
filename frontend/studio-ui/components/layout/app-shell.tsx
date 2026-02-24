@@ -100,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggle }) => {
       {/* Control Room Link */}
       <div className="p-3 border-t border-border">
         <a
-          href="http://localhost:3001"
+          href="http://localhost:4528"
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
