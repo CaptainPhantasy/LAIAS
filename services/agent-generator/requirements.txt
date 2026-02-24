@@ -116,7 +116,11 @@ apify-client>=1.6.0
 # =============================================================================
 # Integration Tools
 # =============================================================================
-# Communication
+# Composio - 850+ integrations via single API (Gmail, Slack, GitHub, Jira, etc.)
+composio-core>=0.6.11
+composio-crewai>=0.1.0
+
+# Communication (direct SDKs as fallback)
 slack-sdk>=3.26.0
 
 # Email

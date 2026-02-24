@@ -4,7 +4,7 @@ Log streaming endpoints.
 Provides REST and WebSocket access to container logs.
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException, status
 from typing import Optional, List
 from datetime import datetime
 import asyncio

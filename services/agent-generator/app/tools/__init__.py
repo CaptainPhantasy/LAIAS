@@ -24,6 +24,13 @@ from app.tools.cloud_tools import CloudToolsConfig
 from app.tools.automation_tools import AutomationToolsConfig
 from app.tools.integration_tools import IntegrationToolsConfig
 from app.tools.mcp_adapter import MCPToolsAdapter, MCPServerConfig, get_mcp_adapter, list_mcp_presets
+from app.tools.composio_tools import (
+    ComposioConfig,
+    ComposioToolsManager,
+    get_composio_manager,
+    get_composio_tools,
+    COMPOSIO_AVAILABLE,
+)
 
 __all__ = [
     # Registry
@@ -47,4 +54,10 @@ __all__ = [
     "MCPServerConfig",
     "get_mcp_adapter",
     "list_mcp_presets",
+    # Composio Integration (850+ tools)
+    "ComposioConfig",
+    "ComposioToolsManager",
+    "get_composio_manager",
+    "get_composio_tools",
+    "COMPOSIO_AVAILABLE",
 ]

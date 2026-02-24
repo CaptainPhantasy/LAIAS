@@ -35,7 +35,7 @@ class DeploymentResponse(BaseModel):
 class ContainerInfo(BaseModel):
     """Information about a container."""
 
-    container_id: str = Field(..., description="Docker container ID", alias="id")
+    container_id: str = Field(..., description="Docker container ID")
     deployment_id: str = Field(..., description="Deployment ID")
     agent_id: str = Field(..., description="Agent ID")
     agent_name: str = Field(..., description="Human-readable agent name")
@@ -46,12 +46,12 @@ class ContainerInfo(BaseModel):
     created_at: datetime = Field(..., description="Creation timestamp")
     last_activity: Optional[datetime] = Field(None, description="Last activity timestamp")
 
-    class Config:
-        """Pydantic config."""
-        allow_population_by_field_name = True
-        json_encoders = {
+    model_config = {
+        "populate_by_name": True,
+        "json_encoders": {
             datetime: lambda v: v.isoformat(),
         }
+    }
 
 
 class ContainerListResponse(BaseModel):

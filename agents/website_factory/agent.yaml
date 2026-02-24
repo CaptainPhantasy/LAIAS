@@ -1,0 +1,214 @@
+# Website Construction Factory v2.0
+# "Zero Defect Tolerance. Production-Grade Output."
+
+name: website_construction_factory
+version: "2.0.0"
+role: elite-website-factory-orchestrator
+goal: Orchestrate multi-agent website construction with zero tolerance for defects
+
+backstory: |
+  # Website Construction Factory - Master Orchestrator
+  
+  You are the ORCHESTRATOR. You do NOT build. You SPAWN workers.
+  
+  Your job is to:
+  1. Monitor context window (check every task)
+  2. Spawn fresh workers for each task
+  3. Retire workers after task completion
+  4. Coordinate between phases
+  5. Enforce quality gates
+  6. Check for drift every few minutes
+
+# LLM Configuration - Z.AI Models
+llm:
+  coding:
+    provider: zai
+    model: glm-4-plus  # GLM-4.7 equivalent for coding
+    base_url: https://open.bigmodel.cn/api/paas/v4
+  vision:
+    provider: zai
+    model: glm-4v-plus  # GLM-4.6v for visual analysis
+    base_url: https://open.bigmodel.cn/api/paas/v4
+
+# Quality Thresholds
+thresholds:
+  vision_confidence: 0.98  # 98% minimum
+  improvement_cycle: 3.0   # 3% improvement threshold
+  lighthouse_min: 95       # All categories >= 95
+  lighthouse_accessibility: 100  # Accessibility must be 100
+  wcag_level: AA
+  contrast_ratio_min: 4.5  # 4.5:1 for text
+  context_checkpoint: 0.70 # Checkpoint at 70% context usage
+  drift_check_interval: 180 # 3 minutes
+
+# Build Phases
+phases:
+  - id: planning
+    name: "Phase 0: Planning & Documentation"
+    steps:
+      - Read specification document
+      - Create Floyd.md
+      - Create document management system
+      - Define file tree structure
+
+  - id: scaffold
+    name: "Phase 1: Scaffold"
+    critical_rules:
+      - "NEVER use ^ or ~ in dependency versions"
+      - "ALL versions must be exact"
+      - "package-lock.json is MANDATORY"
+    steps:
+      - Create file tree structure
+      - Initialize package.json with exact versions
+      - Create lock file
+      - Verify structure is correct
+
+  - id: design_system
+    name: "Phase 2: Design System"
+    steps:
+      - Create color tokens (exact hex values)
+      - Create typography scale
+      - Create spacing system (8px base)
+      - Create base components
+
+  - id: layout
+    name: "Phase 3: Layout"
+    steps:
+      - Build header (desktop + mobile)
+      - Build footer
+      - Build navigation
+      - Verify responsive behavior
+
+  - id: pages
+    name: "Phase 4: Pages"
+    cycle:
+      - Build page structure
+      - Critic review
+      - Apply fixes
+      - Verify fixes
+      - Check improvement (>= 3% to continue)
+    stop_condition: "improvement < 3%"
+
+  - id: interactions
+    name: "Phase 5: Interactions"
+    verification:
+      - All links clicked and verified
+      - All buttons clicked and verified
+      - All forms submitted and verified
+      - All dropdowns tested
+      - All modals tested
+
+  - id: verification
+    name: "Phase 6: Verification"
+    checks:
+      - Vision analysis (GLM-4.6v, 98%+ confidence)
+      - Accessibility audit (WCAG 2.1 AA, 100% pass)
+      - Performance audit (Lighthouse >= 95)
+      - Interaction testing (100% working)
+
+  - id: sign_off
+    name: "Phase 7: Dual Critic Sign-Off"
+    requirements:
+      - Critic #1 independent review (>= 95%)
+      - Critic #2 independent review (>= 95%)
+      - Both must agree
+      - Any disagreement triggers another cycle
+
+# Worker Types
+workers:
+  - type: scaffold_builder
+    role: "Creates file structure and installs locked dependencies"
+    max_iter: 10
+    
+  - type: design_system_builder
+    role: "Creates pixel-perfect design tokens and base components"
+    max_iter: 15
+    
+  - type: layout_builder
+    role: "Builds responsive layouts at all breakpoints"
+    max_iter: 15
+    
+  - type: page_builder
+    role: "Builds pages matching specification exactly"
+    max_iter: 20
+    
+  - type: interaction_wirer
+    role: "Connects all interactive elements"
+    max_iter: 15
+    
+  - type: harsh_critic
+    role: "Finds EVERY defect, grades harshly"
+    max_iter: 25
+    
+  - type: fixer
+    role: "Addresses every issue from critic"
+    max_iter: 20
+    
+  - type: verifier
+    role: "Confirms all fixes are complete"
+    max_iter: 15
+    
+  - type: vision_analyzer
+    role: "Analyzes screenshots with 98%+ confidence"
+    llm: glm-4v-plus
+    max_iter: 10
+    
+  - type: accessibility_auditor
+    role: "Verifies WCAG 2.1 AA compliance"
+    max_iter: 15
+    
+  - type: performance_auditor
+    role: "Verifies Lighthouse >= 95 all categories"
+    max_iter: 10
+    
+  - type: final_signoff_critic
+    role: "Independent review for final sign-off"
+    max_iter: 20
+
+# MCP Tools Required
+tools:
+  - floyd-supercache  # State persistence
+  - floyd-runner      # Build/test/lint
+  - floyd-explorer    # File reading
+  - floyd-terminal    # Process management
+  - lab-lead          # Agent spawning
+
+# Sign-Off Requirements
+sign_off:
+  per_page:
+    - ui_critic_1_signed: true
+    - ui_critic_2_signed: true
+    - accessibility_passed: true
+    - vision_confidence: ">= 0.98"
+    - lighthouse_scores: "all >= 95"
+    - interactions_verified: true
+    
+  project_complete:
+    - all_pages_signed_off: true
+    - all_links_verified: true
+    - all_forms_working: true
+    - all_breakpoints_verified: true
+    - final_build_receipt: true
+
+# Drift Prevention
+drift_prevention:
+  check_interval_seconds: 180
+  checks:
+    - file_tree_matches_spec
+    - dependencies_locked
+    - design_system_complete
+    - layout_complete
+    - pages_signed_off
+  auto_correct: true
+
+# Context Management
+context:
+  checkpoint_threshold: 0.70
+  storage: floyd-supercache
+  keys:
+    - "website_factory:phase:{phase}:status"
+    - "website_factory:page:{name}:status"
+    - "website_factory:checkpoint:{timestamp}"
+
+allow_delegation: true
+verbose: true

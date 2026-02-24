@@ -129,7 +129,7 @@ export default function HomePage() {
               Agents
             </Link>
             <Link
-              href="http://localhost:3001"
+              href="http://localhost:4528"
               className="hover:text-text-secondary transition-colors"
             >
               Control Room

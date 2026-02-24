@@ -66,12 +66,12 @@ services:
     image: laias/agent-generator:latest
     container_name: laias-agent-generator
     ports:
-      - "8001:8001"
+      - "4521:8001"
     environment:
       - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
       - REDIS_URL=redis://redis:6379/0
       # CORS Configuration
-      - ALLOWED_ORIGINS=["http://localhost:3000", "http://localhost:5173", "https://laias-studio.ngrok-free.app", "https://laias-api.ngrok-free.app"]
+      - ALLOWED_ORIGINS=["http://localhost:4527", "http://localhost:4528", "https://laias-studio.ngrok-free.app", "https://laias-api.ngrok-free.app"]
       # LLM Provider API Keys
       - ZAI_API_KEY=${ZAI_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -84,7 +84,7 @@ services:
       # Service Configuration
       - LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-zai}
       - DEFAULT_MODEL=${DEFAULT_MODEL:-glm-5}
-      - SERVICE_PORT=8001
+      - SERVICE_PORT=4521
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TEMPLATES_DIR=/app/templates/presets
     volumes:
@@ -109,14 +109,14 @@ services:
     image: laias/docker-orchestrator:latest
     container_name: laias-docker-orchestrator
     ports:
-      - "8002:8002"
+      - "4522:8002"
     environment:
       - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
       - REDIS_URL=redis://redis:6379/1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AGENT_IMAGE_BASE=laias/agent-runner:latest
       - AGENT_CODE_PATH=/var/laias/agents
-      - SERVICE_PORT=8002
+      - SERVICE_PORT=4522
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     volumes:
       # CRITICAL: Access host Docker socket for sibling container spawning
@@ -145,17 +145,17 @@ services:
       context: ./frontend
       dockerfile: studio-ui/Dockerfile
       args:
-        - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
-        - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+        - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:4521
+        - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
     image: laias/studio-ui:latest
     container_name: laias-studio-ui
     ports:
-      - "3000:3000"
+      - "4527:3000"
     environment:
       # NOTE: NEXT_PUBLIC_ vars are baked into client-side JS at build time
       # Browser needs localhost URLs, not Docker internal network names
-      - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:8001
-      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+      - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:4521
+      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
     depends_on:
       agent-generator:
         condition: service_healthy
@@ -175,15 +175,15 @@ services:
       context: ./frontend
       dockerfile: control-room/Dockerfile
       args:
-        - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+        - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
     image: laias/control-room:latest
     container_name: laias-control-room
     ports:
-      - "3001:3001"
+      - "4528:3001"
     environment:
       # NOTE: NEXT_PUBLIC_ vars are baked into client-side JS at build time
       # Browser needs localhost URLs, not Docker internal network names
-      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:8002
+      - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
     depends_on:
       docker-orchestrator:
         condition: service_healthy

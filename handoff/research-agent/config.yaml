@@ -1,0 +1,59 @@
+# =============================================================================
+# Research Agent Configuration
+# =============================================================================
+# Copy this file and modify for your setup.
+# Environment variables take precedence over this file.
+
+# -----------------------------------------------------------------------------
+# LLM Configuration
+# -----------------------------------------------------------------------------
+llm:
+  # Provider: openai, anthropic, ollama, groq, or any OpenAI-compatible
+  provider: "openai"
+  
+  # Model name (provider-specific)
+  # OpenAI: gpt-4o, gpt-4o-mini, gpt-4-turbo
+  # Anthropic: claude-3-5-sonnet-20241022, claude-3-opus-20240229
+  # Ollama: llama3.2, mistral, codellama
+  # Groq: llama-3.3-70b-versatile, mixtral-8x7b-32768
+  model: "gpt-4o"
+  
+  # API key (or set via OPENAI_API_KEY env var)
+  # api_key: "sk-..."
+  
+  # Base URL (for OpenAI-compatible APIs, self-hosted, etc.)
+  # base_url: "http://localhost:11434/v1"
+
+# -----------------------------------------------------------------------------
+# Output Configuration
+# -----------------------------------------------------------------------------
+output_directory: "./research_output"
+
+# -----------------------------------------------------------------------------
+# Business Context
+# -----------------------------------------------------------------------------
+# Customize this for your business - this is used by the analyst agent
+# to provide relevant recommendations.
+business_context:
+  name: "Your Business Name"
+  description: "What your business does and its key focus areas"
+  focus_areas:
+    - "example area 1"
+    - "example area 2"
+    - "example area 3"
+
+# -----------------------------------------------------------------------------
+# Agent Configuration
+# -----------------------------------------------------------------------------
+agents:
+  researcher:
+    max_iter: 20  # Max reasoning iterations
+  
+  analyst:
+    max_iter: 15
+  
+  documenter:
+    max_iter: 10
+  
+  builder:
+    max_iter: 25

@@ -939,4 +939,57 @@ EXAMPLE 3: Customizing configuration
         verbose=False
     )
     flow = LegacyAIPrimeFlow(config=config)
+
+EXAMPLE 4: Using Composio for 850+ integrations
+
+    # Composio provides unified access to Gmail, Slack, GitHub, Jira, 
+    # Salesforce, HubSpot, Stripe, and 800+ more integrations
+    
+    from composio import Composio
+    from crewai import Agent, Task, Crew
+    
+    # Initialize with your Composio API key
+    composio = Composio(api_key=os.getenv("COMPOSIO_API_KEY"))
+    
+    # Get tools for specific integrations
+    tools = composio.tools.get(
+        user_id="default",
+        toolkits=["GITHUB", "SLACK", "GMAIL"]
+    )
+    
+    # Create agent with Composio tools
+    agent = Agent(
+        role="Integration Specialist",
+        goal="Manage tasks across multiple platforms",
+        tools=tools,
+        llm=LLM(model="gpt-4o")
+    )
+    
+    # Popular Composio toolkits:
+    # - Communication: GMAIL, SLACK, DISCORD, TELEGRAM, OUTLOOK
+    # - Project Management: GITHUB, JIRA, LINEAR, ASANA, NOTION
+    # - CRM: SALESFORCE, HUBSPOT, ZENDESK
+    # - Payments: STRIPE, SHOPIFY
+    # - Storage: GOOGLE_DRIVE, DROPBOX, GOOGLESHEETS
+
+EXAMPLE 5: Using MCP (Model Context Protocol) tools
+
+    from crewai_tools import MCPServerAdapter
+    from mcp import StdioServerParameters
+    
+    # Connect to MCP server (e.g., GitHub)
+    github_mcp = StdioServerParameters(
+        command="npx",
+        args=["-y", "@modelcontextprotocol/server-github"],
+        env={"GITHUB_TOKEN": os.getenv("GITHUB_TOKEN")}
+    )
+    
+    adapter = MCPServerAdapter(github_mcp)
+    mcp_tools = adapter.tools  # All GitHub MCP tools available
+    
+    agent = Agent(
+        role="GitHub Manager",
+        goal="Manage repositories and issues",
+        tools=mcp_tools
+    )
 """

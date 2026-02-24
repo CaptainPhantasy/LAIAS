@@ -44,6 +44,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir \
     # CrewAI framework
     "crewai[tools]>=0.80.0" \
+    # Composio - 850+ integrations
+    "composio-core>=0.6.11" \
+    "composio-crewai>=0.1.0" \
+    # MCP (Model Context Protocol)
+    "mcp>=1.6.0" \
+    "mcpadapt>=0.1.9" \
     # Data processing
     "pandas>=2.0.0" \
     "numpy>=1.24.0" \

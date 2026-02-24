@@ -11,7 +11,7 @@ import structlog
 
 from fastapi import APIRouter
 from redis.asyncio import Redis
-from sqlalchemy import text
+from sqlalchemy import text, select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
