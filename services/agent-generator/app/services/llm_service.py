@@ -226,7 +226,7 @@ class LLMService:
     def _get_model_for_provider(self, provider: str) -> str:
         """Get default model for a provider."""
         provider_map = {
-            "zai": "glm-5",
+            "zai": "glm-4-plus",  # 20 concurrent requests
             "portkey": "@zhipu/glm-4.7-flashx",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
@@ -234,7 +234,7 @@ class LLMService:
             "google": "gemini-2.0-flash-exp",
             "mistral": "mistral-large-latest",
         }
-        return provider_map.get(provider.lower(), "glm-5")
+        return provider_map.get(provider.lower(), "gpt-4o")
 
     def _get_system_prompt(self) -> str:
         """Get the system prompt for code generation."""

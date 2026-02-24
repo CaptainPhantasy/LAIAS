@@ -127,13 +127,13 @@ class LLMProvider:
     # Provider-specific configurations
     PROVIDER_CONFIGS: Dict[ProviderType, Dict[str, Any]] = {
         ProviderType.ZAI: {
-            "base_url": "https://api.z.ai/api/coding/paas/v4",
-            "default_model": "glm-5",
+            "base_url": "https://api.z.ai/api/paas/v4",  # Standard endpoint (not coding)
+            "default_model": "GLM-4-Plus",  # 20 concurrent requests, must be exact case
             "api_key_env": "ZAI_API_KEY",
             "header_prefix": "Bearer",
             "supports_streaming": True,
             "format": "openai",
-            "thinking_disabled": True,  # Disable reasoning mode for direct content
+            "thinking_disabled": True,  # Required: disables reasoning mode
         },
         ProviderType.PORTKEY: {
             "base_url": "https://api.portkey.ai/v1",
