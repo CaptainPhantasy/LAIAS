@@ -72,3 +72,8 @@ frontend/studio-ui/.next/
 frontend/control-room/.next/
 frontend/*/node_modules/
 frontend/*/.env.local
+
+# Agent output directories (generated at runtime)
+agents/*/research/
+agents/*/output/
+agents/*/results/
