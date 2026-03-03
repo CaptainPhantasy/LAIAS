@@ -57,7 +57,7 @@ class DocDriftSentinelState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class DocDriftSentinelFlow(Flow[DocDriftSentinelState]):
     """
     doc_drift_sentinel Agent - **Agent Type**: Documentation Guardian / Semantic Synchronizer
@@ -66,8 +66,8 @@ class DocDriftSentinelFlow(Flow[DocDriftSentinelState]):
     Tags: code, development, testing, documentation, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("doc_drift_sentinel Agent initialized")
 

@@ -57,7 +57,7 @@ class DiagnosticSurgeonState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class DiagnosticSurgeonFlow(Flow[DiagnosticSurgeonState]):
     """
     diagnostic_surgeon Agent - **Agent Type**: System Troubleshooter / Root Cause Analyst
@@ -66,8 +66,8 @@ class DiagnosticSurgeonFlow(Flow[DiagnosticSurgeonState]):
     Tags: analysis, code, documentation, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("diagnostic_surgeon Agent initialized")
 

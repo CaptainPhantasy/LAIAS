@@ -57,7 +57,7 @@ class ProcessTerminalState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ProcessTerminalFlow(Flow[ProcessTerminalState]):
     """
     process_terminal_agent Agent - **Agent Type**: Process Orchestrator / Session Manager
@@ -66,8 +66,8 @@ class ProcessTerminalFlow(Flow[ProcessTerminalState]):
     Tags: code, development, testing, automation, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("process_terminal_agent Agent initialized")
 

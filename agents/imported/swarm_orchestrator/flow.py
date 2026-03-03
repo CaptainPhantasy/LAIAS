@@ -57,7 +57,7 @@ class SwarmOrchestratorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class SwarmOrchestratorFlow(Flow[SwarmOrchestratorState]):
     """
     swarm_orchestrator Agent - **Agent Type**: Multi-Agent Coordinator / Task Distribution Manager
@@ -66,8 +66,8 @@ class SwarmOrchestratorFlow(Flow[SwarmOrchestratorState]):
     Tags: code, monitoring
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("swarm_orchestrator Agent initialized")
 

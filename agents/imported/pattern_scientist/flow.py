@@ -57,7 +57,7 @@ class PatternScientistState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class PatternScientistFlow(Flow[PatternScientistState]):
     """
     pattern_scientist Agent - **Agent Type**: Pattern Recognition Specialist / Abstraction Extractor
@@ -66,8 +66,8 @@ class PatternScientistFlow(Flow[PatternScientistState]):
     Tags: code, testing, api, refactoring
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("pattern_scientist Agent initialized")
 

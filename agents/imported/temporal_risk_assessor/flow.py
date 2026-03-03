@@ -57,7 +57,7 @@ class TemporalRiskAssessorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class TemporalRiskAssessorFlow(Flow[TemporalRiskAssessorState]):
     """
     temporal_risk_assessor Agent - **Agent Type**: Code Archaeologist / Risk Analyst
@@ -66,8 +66,8 @@ class TemporalRiskAssessorFlow(Flow[TemporalRiskAssessorState]):
     Tags: analysis, code, security, testing
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("temporal_risk_assessor Agent initialized")
 

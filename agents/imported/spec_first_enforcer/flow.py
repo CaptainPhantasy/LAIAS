@@ -57,7 +57,7 @@ class SpecFirstEnforcerState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class SpecFirstEnforcerFlow(Flow[SpecFirstEnforcerState]):
     """
     spec_first_enforcer Agent - **Agent Type**: Methodology Enforcer / Development Discipline Coach
@@ -66,8 +66,8 @@ class SpecFirstEnforcerFlow(Flow[SpecFirstEnforcerState]):
     Tags: code, development, security, testing, documentation
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("spec_first_enforcer Agent initialized")
 

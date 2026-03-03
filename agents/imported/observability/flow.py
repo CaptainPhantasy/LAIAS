@@ -57,7 +57,7 @@ class ObservabilityState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ObservabilityFlow(Flow[ObservabilityState]):
     """
     OBSERVABILITY REPORT - 
@@ -66,8 +66,8 @@ class ObservabilityFlow(Flow[ObservabilityState]):
     Tags: analysis
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("OBSERVABILITY REPORT initialized")
 

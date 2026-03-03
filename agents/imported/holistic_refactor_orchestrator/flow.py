@@ -57,7 +57,7 @@ class HolisticRefactorOrchestratorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class HolisticRefactorOrchestratorFlow(Flow[HolisticRefactorOrchestratorState]):
     """
     holistic_refactor_orchestrator Agent - **Agent Type**: Refactoring Consultant / Safe Transformation Expert
@@ -66,8 +66,8 @@ class HolisticRefactorOrchestratorFlow(Flow[HolisticRefactorOrchestratorState]):
     Tags: analysis, code, testing, refactoring, deployment
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("holistic_refactor_orchestrator Agent initialized")
 

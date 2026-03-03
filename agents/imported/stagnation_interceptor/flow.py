@@ -57,7 +57,7 @@ class StagnationInterceptorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class StagnationInterceptorFlow(Flow[StagnationInterceptorState]):
     """
     stagnation_interceptor Agent - **Agent Type**: Productivity Coach / Flow State Guardian
@@ -66,8 +66,8 @@ class StagnationInterceptorFlow(Flow[StagnationInterceptorState]):
     Tags: research, code, development, api, monitoring
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("stagnation_interceptor Agent initialized")
 

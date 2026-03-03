@@ -57,7 +57,7 @@ class DependencyTimeMachineState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class DependencyTimeMachineFlow(Flow[DependencyTimeMachineState]):
     """
     dependency_time_machine Agent - **Agent Type**: Dependency Futurist / Trend Analyst
@@ -66,8 +66,8 @@ class DependencyTimeMachineFlow(Flow[DependencyTimeMachineState]):
     Tags: analysis, development, security, web
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("dependency_time_machine Agent initialized")
 

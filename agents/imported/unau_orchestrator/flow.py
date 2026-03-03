@@ -57,7 +57,7 @@ class UnauOrchestratorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class UnauOrchestratorFlow(Flow[UnauOrchestratorState]):
     """
     UNAU SPAWN DECISION - 
@@ -66,8 +66,8 @@ class UnauOrchestratorFlow(Flow[UnauOrchestratorState]):
     Tags: code, security, testing, documentation, architecture
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("UNAU SPAWN DECISION initialized")
 

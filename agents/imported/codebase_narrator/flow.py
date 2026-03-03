@@ -57,7 +57,7 @@ class CodebaseNarratorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class CodebaseNarratorFlow(Flow[CodebaseNarratorState]):
     """
     codebase_narrator Agent - **Agent Type**: Project Diarist / Literary Technical Writer
@@ -66,8 +66,8 @@ class CodebaseNarratorFlow(Flow[CodebaseNarratorState]):
     Tags: code, development, documentation, deployment
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("codebase_narrator Agent initialized")
 
