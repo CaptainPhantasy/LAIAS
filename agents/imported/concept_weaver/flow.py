@@ -57,7 +57,7 @@ class ConceptWeaverState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ConceptWeaverFlow(Flow[ConceptWeaverState]):
     """
     concept_weaver Agent - **Agent Type**: Knowledge Synthesizer / Memory Architect
@@ -66,8 +66,8 @@ class ConceptWeaverFlow(Flow[ConceptWeaverState]):
     Tags: code, database, web, refactoring
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("concept_weaver Agent initialized")
 

@@ -57,7 +57,7 @@ class SecurityState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class SecurityFlow(Flow[SecurityState]):
     """
     SECURITY HARDENING REPORT - 
@@ -66,8 +66,8 @@ class SecurityFlow(Flow[SecurityState]):
     Tags: security
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("SECURITY HARDENING REPORT initialized")
 

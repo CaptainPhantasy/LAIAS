@@ -57,7 +57,7 @@ class ImplementerState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ImplementerFlow(Flow[ImplementerState]):
     """
     IMPLEMENTATION EVIDENCE PACKAGE - 
@@ -66,8 +66,8 @@ class ImplementerFlow(Flow[ImplementerState]):
     Tags: analysis, code, refactoring
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("IMPLEMENTATION EVIDENCE PACKAGE initialized")
 

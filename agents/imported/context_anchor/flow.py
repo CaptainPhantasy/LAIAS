@@ -57,7 +57,7 @@ class ContextAnchorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ContextAnchorFlow(Flow[ContextAnchorState]):
     """
     context_anchor Agent - **Agent Type**: Mental State Librarian / Context Manager
@@ -66,8 +66,8 @@ class ContextAnchorFlow(Flow[ContextAnchorState]):
     Tags: code, development, architecture
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("context_anchor Agent initialized")
 

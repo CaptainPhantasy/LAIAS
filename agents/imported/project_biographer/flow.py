@@ -57,7 +57,7 @@ class ProjectBiographerState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ProjectBiographerFlow(Flow[ProjectBiographerState]):
     """
     project_biographer Agent - **Agent Type**: Project Historian / Narrative Keeper
@@ -66,8 +66,8 @@ class ProjectBiographerFlow(Flow[ProjectBiographerState]):
     Tags: code, development, documentation, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("project_biographer Agent initialized")
 

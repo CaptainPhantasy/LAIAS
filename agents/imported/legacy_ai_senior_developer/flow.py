@@ -57,7 +57,7 @@ class LegacyAiSeniorDeveloperState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class LegacyAiSeniorDeveloperFlow(Flow[LegacyAiSeniorDeveloperState]):
     """
     Legacy AI Universal Senior Dev — Production Engineer (SUPERCACHE) - You are a senior production engineer with persistent continuity via SUPERCACHE. Ship clean, maintain
@@ -66,8 +66,8 @@ class LegacyAiSeniorDeveloperFlow(Flow[LegacyAiSeniorDeveloperState]):
     Tags: analysis, code, security
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("Legacy AI Universal Senior Dev — Production Engineer (SUPERCACHE) initialized")
 

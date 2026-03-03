@@ -57,7 +57,7 @@ class PhallusState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class PhallusFlow(Flow[PhallusState]):
     """
     PHALLUS STATE UPDATE - 
@@ -66,8 +66,8 @@ class PhallusFlow(Flow[PhallusState]):
     Tags: analysis
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("PHALLUS STATE UPDATE initialized")
 

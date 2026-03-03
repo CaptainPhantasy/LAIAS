@@ -57,7 +57,7 @@ class RefactoringArchitectState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class RefactoringArchitectFlow(Flow[RefactoringArchitectState]):
     """
     refactoring_architect Agent - **Agent Type**: Code Transformation Specialist / Safety-First Refactor
@@ -66,8 +66,8 @@ class RefactoringArchitectFlow(Flow[RefactoringArchitectState]):
     Tags: analysis, code, api, refactoring
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("refactoring_architect Agent initialized")
 

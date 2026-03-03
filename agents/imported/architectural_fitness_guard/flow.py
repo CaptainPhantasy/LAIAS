@@ -57,7 +57,7 @@ class ArchitecturalFitnessGuardState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ArchitecturalFitnessGuardFlow(Flow[ArchitecturalFitnessGuardState]):
     """
     architectural_fitness_guard Agent - **Agent Type**: Automated Architect / Governance Enforcer
@@ -66,8 +66,8 @@ class ArchitecturalFitnessGuardFlow(Flow[ArchitecturalFitnessGuardState]):
     Tags: analysis, code, testing, api, database
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("architectural_fitness_guard Agent initialized")
 

@@ -57,7 +57,7 @@ class UserPersonaSimulatorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class UserPersonaSimulatorFlow(Flow[UserPersonaSimulatorState]):
     """
     user_persona_simulator Agent - **Agent Type**: UX Research Lab Director / Empathic Tester
@@ -66,8 +66,8 @@ class UserPersonaSimulatorFlow(Flow[UserPersonaSimulatorState]):
     Tags: research, code, testing, automation, documentation
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("user_persona_simulator Agent initialized")
 

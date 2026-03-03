@@ -57,7 +57,7 @@ class ShadowBranchExplorerState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ShadowBranchExplorerFlow(Flow[ShadowBranchExplorerState]):
     """
     shadow_branch_explorer Agent - **Agent Type**: Research Scientist / Safe Experimentation Orchestrator
@@ -66,8 +66,8 @@ class ShadowBranchExplorerFlow(Flow[ShadowBranchExplorerState]):
     Tags: research, code, development, testing, documentation
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("shadow_branch_explorer Agent initialized")
 

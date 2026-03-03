@@ -57,7 +57,7 @@ class ArchitectureState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ArchitectureFlow(Flow[ArchitectureState]):
     """
     ARCHITECTURE REPAIR REPORT - 
@@ -66,8 +66,8 @@ class ArchitectureFlow(Flow[ArchitectureState]):
     Tags: architecture
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("ARCHITECTURE REPAIR REPORT initialized")
 

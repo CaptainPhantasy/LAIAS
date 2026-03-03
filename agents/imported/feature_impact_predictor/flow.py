@@ -57,7 +57,7 @@ class FeatureImpactPredictorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class FeatureImpactPredictorFlow(Flow[FeatureImpactPredictorState]):
     """
     feature_impact_predictor Agent - **Agent Type**: Senior Engineering Manager / Impact Analyst
@@ -66,8 +66,8 @@ class FeatureImpactPredictorFlow(Flow[FeatureImpactPredictorState]):
     Tags: research, analysis, code, development, security
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("feature_impact_predictor Agent initialized")
 

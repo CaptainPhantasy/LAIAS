@@ -57,7 +57,7 @@ class RotPredictorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class RotPredictorFlow(Flow[RotPredictorState]):
     """
     rot_predictor Agent - **Agent Type**: Supply Chain Analyst / Dependency Health Forecaster
@@ -66,8 +66,8 @@ class RotPredictorFlow(Flow[RotPredictorState]):
     Tags: analysis, code, security, database, web
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("rot_predictor Agent initialized")
 

@@ -57,7 +57,7 @@ class PerformanceState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class PerformanceFlow(Flow[PerformanceState]):
     """
     PERFORMANCE OPTIMIZATION REPORT - 
@@ -66,8 +66,8 @@ class PerformanceFlow(Flow[PerformanceState]):
     Tags: database
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("PERFORMANCE OPTIMIZATION REPORT initialized")
 

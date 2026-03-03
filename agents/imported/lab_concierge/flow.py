@@ -57,7 +57,7 @@ class LabConciergeState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class LabConciergeFlow(Flow[LabConciergeState]):
     """
     lab_concierge Agent - **Agent Type**: Resource Facilitator / Lab Manager
@@ -66,8 +66,8 @@ class LabConciergeFlow(Flow[LabConciergeState]):
     Tags: analysis, code, development, testing
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("lab_concierge Agent initialized")
 

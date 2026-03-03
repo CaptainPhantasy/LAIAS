@@ -57,7 +57,7 @@ class OverwatchState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class OverwatchFlow(Flow[OverwatchState]):
     """
     OVERWATCH VERIFICATION REPORT - 
@@ -66,8 +66,8 @@ class OverwatchFlow(Flow[OverwatchState]):
     Tags: analysis
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("OVERWATCH VERIFICATION REPORT initialized")
 

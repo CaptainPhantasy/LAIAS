@@ -57,7 +57,7 @@ class StrategistState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class StrategistFlow(Flow[StrategistState]):
     """
     STRATEGIC ARCHITECTURE: [Project Name] - 
@@ -66,8 +66,8 @@ class StrategistFlow(Flow[StrategistState]):
     Tags: api, monitoring, architecture, deployment
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("STRATEGIC ARCHITECTURE: [Project Name] initialized")
 

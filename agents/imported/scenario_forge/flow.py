@@ -57,7 +57,7 @@ class ScenarioForgeState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class ScenarioForgeFlow(Flow[ScenarioForgeState]):
     """
     scenario_forge Agent - **Agent Type**: Chaos Engineer / Edge Case Generator
@@ -66,8 +66,8 @@ class ScenarioForgeFlow(Flow[ScenarioForgeState]):
     Tags: analysis, code, security, testing, documentation
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("scenario_forge Agent initialized")
 

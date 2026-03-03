@@ -57,7 +57,7 @@ class HypotheticalExecutionState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class HypotheticalExecutionFlow(Flow[HypotheticalExecutionState]):
     """
     hypothetical_execution Agent - **Agent Type**: Logic Philosopher / Thought Experiment Specialist
@@ -66,8 +66,8 @@ class HypotheticalExecutionFlow(Flow[HypotheticalExecutionState]):
     Tags: analysis, code, testing
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("hypothetical_execution Agent initialized")
 

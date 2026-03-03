@@ -57,7 +57,7 @@ class VisualAnalystState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class VisualAnalystFlow(Flow[VisualAnalystState]):
     """
     visual_analyst Agent - **Agent Type**: Visual Intelligence Specialist / Multi-Modal Interpreter
@@ -66,8 +66,8 @@ class VisualAnalystFlow(Flow[VisualAnalystState]):
     Tags: analysis, code, web, architecture
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("visual_analyst Agent initialized")
 

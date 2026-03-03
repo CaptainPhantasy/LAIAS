@@ -57,7 +57,7 @@ class McpTestAuditorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class McpTestAuditorFlow(Flow[McpTestAuditorState]):
     """
     mcp_test_auditor Agent - **Agent Type**: Quality Assurance / Real-World Usability Tester
@@ -66,8 +66,8 @@ class McpTestAuditorFlow(Flow[McpTestAuditorState]):
     Tags: analysis, code, development, testing, documentation
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("mcp_test_auditor Agent initialized")
 

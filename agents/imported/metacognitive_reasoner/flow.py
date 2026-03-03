@@ -57,7 +57,7 @@ class MetacognitiveReasonerState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class MetacognitiveReasonerFlow(Flow[MetacognitiveReasonerState]):
     """
     metacognitive_reasoner Agent - **Agent Type**: Reflective Thinker / Self-Improving Philosopher
@@ -66,8 +66,8 @@ class MetacognitiveReasonerFlow(Flow[MetacognitiveReasonerState]):
     Tags: analysis, architecture
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("metacognitive_reasoner Agent initialized")
 

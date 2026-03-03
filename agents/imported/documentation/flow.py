@@ -57,7 +57,7 @@ class DocumentationState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class DocumentationFlow(Flow[DocumentationState]):
     """
     DOCUMENTATION REPORT - 
@@ -66,8 +66,8 @@ class DocumentationFlow(Flow[DocumentationState]):
     Tags: code, documentation, api, architecture
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("DOCUMENTATION REPORT initialized")
 

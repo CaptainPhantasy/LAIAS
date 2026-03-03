@@ -57,7 +57,7 @@ class CriticState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class CriticFlow(Flow[CriticState]):
     """
     CRITIC EVIDENCE REPORT — CYCLE <N> - 
@@ -66,8 +66,8 @@ class CriticFlow(Flow[CriticState]):
     Tags: analysis, code, security, documentation, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("CRITIC EVIDENCE REPORT — CYCLE <N> initialized")
 

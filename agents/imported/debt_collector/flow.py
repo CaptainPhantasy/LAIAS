@@ -57,7 +57,7 @@ class DebtCollectorState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class DebtCollectorFlow(Flow[DebtCollectorState]):
     """
     debt_collector Agent - **Agent Type**: Technical Debt Accountant / Portfolio Manager
@@ -66,8 +66,8 @@ class DebtCollectorFlow(Flow[DebtCollectorState]):
     Tags: analysis, code, development, documentation, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("debt_collector Agent initialized")
 

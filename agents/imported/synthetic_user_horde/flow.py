@@ -57,7 +57,7 @@ class SyntheticUserHordeState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class SyntheticUserHordeFlow(Flow[SyntheticUserHordeState]):
     """
     synthetic_user_horde Agent - **Agent Type**: QA Orchestrator / Multi-Agent Coordinator
@@ -66,8 +66,8 @@ class SyntheticUserHordeFlow(Flow[SyntheticUserHordeState]):
     Tags: analysis, code, security, testing, documentation
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("synthetic_user_horde Agent initialized")
 

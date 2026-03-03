@@ -57,7 +57,7 @@ class CodeArchaeologistState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class CodeArchaeologistFlow(Flow[CodeArchaeologistState]):
     """
     code_archaeologist Agent - **Agent Type**: Codebase Historian / Semantic Index Maintainer
@@ -66,8 +66,8 @@ class CodeArchaeologistFlow(Flow[CodeArchaeologistState]):
     Tags: analysis, code, api
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("code_archaeologist Agent initialized")
 

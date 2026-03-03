@@ -57,7 +57,7 @@ class PreCommitDevilsAdvocateState(BaseModel):
 # FLOW CLASS
 # =============================================================================
 
-@persist
+@persist()
 class PreCommitDevilsAdvocateFlow(Flow[PreCommitDevilsAdvocateState]):
     """
     pre_commit_devils_advocate Agent - **Agent Type**: Adversarial Reviewer / Critical Thinking Partner
@@ -66,8 +66,8 @@ class PreCommitDevilsAdvocateFlow(Flow[PreCommitDevilsAdvocateState]):
     Tags: analysis, code, security, testing, database
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         logger.info("pre_commit_devils_advocate Agent initialized")
 
