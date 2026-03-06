@@ -1,7 +1,8 @@
 import json
 import os
 from datetime import datetime
-from typing import Dict
+from pathlib import Path
+from typing import Any, Dict
 
 import aiofiles
 import structlog
@@ -218,6 +219,84 @@ class OutputPersistenceService:
                 error=str(exc),
             )
             return False
+
+    def list_runs(self, deployment_id: str) -> list[dict[str, object]]:
+        deployment_root = Path(settings.AGENT_OUTPUT_PATH) / deployment_id
+        if not deployment_root.exists() or not deployment_root.is_dir():
+            return []
+
+        runs: list[dict[str, object]] = []
+        for run_dir in sorted(deployment_root.iterdir(), key=lambda p: p.name, reverse=True):
+            if not run_dir.is_dir():
+                continue
+
+            events_path = run_dir / "events.jsonl"
+            summary_path = run_dir / "summary.md"
+            metrics_path = run_dir / "metrics.json"
+            event_count = 0
+            if events_path.exists():
+                with events_path.open("r", encoding="utf-8") as f:
+                    event_count = sum(1 for line in f if line.strip())
+
+            runs.append(
+                {
+                    "run_id": run_dir.name,
+                    "has_summary": summary_path.exists(),
+                    "has_metrics": metrics_path.exists(),
+                    "event_count": event_count,
+                }
+            )
+
+        return runs
+
+    def get_run_detail(
+        self,
+        deployment_id: str,
+        run_id: str,
+        max_events: int = 500,
+    ) -> dict[str, object]:
+        run_root = Path(settings.AGENT_OUTPUT_PATH) / deployment_id / run_id
+        summary_markdown = ""
+        metrics: dict[str, object] = {}
+        events: list[dict[str, object]] = []
+
+        summary_path = run_root / "summary.md"
+        if summary_path.exists():
+            summary_markdown = summary_path.read_text(encoding="utf-8")
+
+        metrics_path = run_root / "metrics.json"
+        if metrics_path.exists():
+            try:
+                parsed_metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+                if isinstance(parsed_metrics, dict):
+                    metrics = parsed_metrics
+            except json.JSONDecodeError:
+                metrics = {}
+
+        events_path = run_root / "events.jsonl"
+        if events_path.exists():
+            with events_path.open("r", encoding="utf-8") as f:
+                for line in f:
+                    payload = line.strip()
+                    if not payload:
+                        continue
+                    try:
+                        parsed = json.loads(payload)
+                        if isinstance(parsed, dict):
+                            events.append(parsed)
+                    except json.JSONDecodeError:
+                        continue
+
+        if len(events) > max_events:
+            events = events[-max_events:]
+
+        return {
+            "deployment_id": deployment_id,
+            "run_id": run_id,
+            "summary_markdown": summary_markdown,
+            "metrics": metrics,
+            "events": events,
+        }
 
 
 _output_persistence_service: OutputPersistenceService | None = None

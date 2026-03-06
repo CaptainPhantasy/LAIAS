@@ -155,6 +155,28 @@ class OutputEventIngestResponse(BaseModel):
     destinations: Dict[str, bool] = Field(..., description="Destination write status by backend")
 
 
+class OutputRunListItem(BaseModel):
+    run_id: str = Field(..., description="Run identifier")
+    has_summary: bool = Field(..., description="Whether summary markdown exists")
+    has_metrics: bool = Field(..., description="Whether metrics artifact exists")
+    event_count: int = Field(..., description="Number of captured events")
+
+
+class OutputRunListResponse(BaseModel):
+    deployment_id: str = Field(..., description="Deployment ID")
+    runs: List[OutputRunListItem] = Field(..., description="Available runs")
+
+
+class OutputRunDetailResponse(BaseModel):
+    deployment_id: str = Field(..., description="Deployment ID")
+    run_id: str = Field(..., description="Run identifier")
+    summary_markdown: str = Field(default="", description="Human-readable run summary")
+    metrics: Dict[str, object] = Field(default_factory=dict, description="Run metrics payload")
+    events: List[Dict[str, object]] = Field(
+        default_factory=list, description="Structured event stream"
+    )
+
+
 # ============================================================================
 # Analytics Response Models
 # ============================================================================
