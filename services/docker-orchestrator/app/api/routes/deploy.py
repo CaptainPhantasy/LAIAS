@@ -4,7 +4,7 @@ Agent deployment endpoints.
 Handles deployment of generated agents to Docker containers.
 """
 
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request
 from typing import Dict
 import uuid
 from datetime import datetime
@@ -18,10 +18,12 @@ from app.utils.exceptions import (
     ResourceLimitError,
     exception_to_http_response,
 )
+from app.middleware.rate_limit import limiter, RATE_LIMITS
 
 router = APIRouter(prefix="/api", tags=["deploy"])
 
 
+@limiter.limit(RATE_LIMITS["deployment"])
 @router.post(
     "/deploy",
     response_model=DeploymentResponse,
@@ -30,7 +32,8 @@ router = APIRouter(prefix="/api", tags=["deploy"])
     description="Deploy a generated agent to a new Docker container",
 )
 async def deploy_agent(
-    request: DeployAgentRequest,
+    http_request: Request,
+    body: DeployAgentRequest,
     background_tasks: BackgroundTasks,
 ) -> DeploymentResponse:
     """
@@ -44,7 +47,7 @@ async def deploy_agent(
     5. Return deployment info
 
     Args:
-        request: Deployment request with agent code and config
+        body: Deployment request with agent code and config
 
     Returns:
         DeploymentResponse: Deployment details including endpoints
@@ -75,20 +78,20 @@ async def deploy_agent(
         # Deploy the agent
         container = await get_docker_service().deploy_agent(
             deployment_id=deployment_id,
-            agent_id=request.agent_id,
-            agent_name=request.agent_name,
-            flow_code=request.flow_code,
-            agents_yaml=request.agents_yaml,
-            environment_vars=request.environment_vars,
-            cpu_limit=request.cpu_limit,
-            memory_limit=request.memory_limit,
+            agent_id=body.agent_id,
+            agent_name=body.agent_name,
+            flow_code=body.flow_code,
+            agents_yaml=body.agents_yaml,
+            environment_vars=body.environment_vars,
+            cpu_limit=body.cpu_limit,
+            memory_limit=body.memory_limit,
         )
 
         # Start container if requested
         started_at = None
         container_status = "created"
 
-        if request.auto_start:
+        if body.auto_start:
             await get_docker_service().start_container(container.id)
             started_at = datetime.utcnow()
             container_status = "running"
@@ -100,14 +103,14 @@ async def deploy_agent(
         from app.services.analytics_store import analytics_store
         await analytics_store.add_event("deployment", {
             "deployment_id": deployment_id,
-            "agent_id": request.agent_id,
-            "agent_name": request.agent_name,
+            "agent_id": body.agent_id,
+            "agent_name": body.agent_name,
             "status": container_status,
         })
 
         return DeploymentResponse(
             deployment_id=deployment_id,
-            agent_id=request.agent_id,
+            agent_id=body.agent_id,
             container_id=container.id,
             container_name=container.name,
             status=container_status,  # type: ignore
@@ -130,7 +133,7 @@ async def deploy_agent(
             logger.error(
                 "Unexpected deployment error",
                 deployment_id=deployment_id,
-                agent_id=request.agent_id,
+                agent_id=body.agent_id,
                 error=str(e),
             )
             raise HTTPException(
@@ -146,8 +149,8 @@ async def deploy_agent(
         from app.services.analytics_store import analytics_store
         await analytics_store.add_event("deployment", {
             "deployment_id": deployment_id,
-            "agent_id": request.agent_id,
-            "agent_name": request.agent_name,
+            "agent_id": body.agent_id,
+            "agent_name": body.agent_name,
             "status": "error",
         })
 

@@ -8,7 +8,7 @@ services:
     container_name: laias-postgres
     environment:
       POSTGRES_USER: laias
-      POSTGRES_PASSWORD: laias_secure_password
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-laias_dev_password}
       POSTGRES_DB: laias
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -68,7 +68,7 @@ services:
     ports:
       - "4521:8001"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
+      - DATABASE_URL=postgresql+asyncpg://laias:${POSTGRES_PASSWORD:-laias_dev_password}@postgres:5432/laias
       - REDIS_URL=redis://redis:6379/0
       # CORS Configuration
       - ALLOWED_ORIGINS=["http://localhost:4527", "http://localhost:4528", "https://laias-studio.ngrok-free.app", "https://laias-api.ngrok-free.app"]
@@ -87,6 +87,8 @@ services:
       - SERVICE_PORT=4521
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TEMPLATES_DIR=/app/templates/presets
+      # Internal service-to-service URL (Docker DNS, not localhost)
+      - DOCKER_ORCHESTRATOR_URL=http://docker-orchestrator:8002
     volumes:
       - ./templates/presets:/app/templates/presets:ro
     depends_on:
@@ -111,7 +113,7 @@ services:
     ports:
       - "4522:8002"
     environment:
-      - DATABASE_URL=postgresql+asyncpg://laias:laias_secure_password@postgres:5432/laias
+      - DATABASE_URL=postgresql+asyncpg://laias:${POSTGRES_PASSWORD:-laias_dev_password}@postgres:5432/laias
       - REDIS_URL=redis://redis:6379/1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AGENT_IMAGE_BASE=laias/agent-runner:latest

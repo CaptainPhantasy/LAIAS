@@ -8,7 +8,10 @@
     "start": "next start --port 3000",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "generate:types": "openapi-typescript ../shared/types/openapi.json -o ../shared/types/agent-generator.ts"
+    "generate:types": "openapi-typescript ../shared/types/openapi.json -o ../shared/types/agent-generator.ts",
+    "test": "vitest",
+    "test:watch": "vitest watch",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -19,20 +22,27 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.2",
+    "recharts": "^2.12.7",
     "tailwind-merge": "^2.5.4",
-    "zod": "^3.23.8",
-    "zustand": "^5.0.1"
+    "zustand": "^5.0.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.0",
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@vitest/ui": "^3.0.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.14.0",
     "eslint-config-next": "15.0.3",
+    "jsdom": "^25.0.1",
     "openapi-typescript": "^6.7.6",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^1.0.0"
   }
 }

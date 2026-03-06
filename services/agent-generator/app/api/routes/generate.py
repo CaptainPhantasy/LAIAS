@@ -5,8 +5,9 @@ POST /api/generate-agent
 Generates CrewAI agent code from natural language description.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from datetime import datetime
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
@@ -17,15 +18,18 @@ from app.database.session import get_db
 from app.api.auth import get_current_user, DevUser
 from app.services.code_generator import get_code_generator
 from app.config import settings
+from app.middleware.rate_limit import limiter, RATE_LIMITS
 
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/api", tags=["generation"])
 
 
+@limiter.limit(RATE_LIMITS["generation"])
 @router.post("/generate-agent", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK)
 async def generate_agent(
-    request: GenerateAgentRequest,
+    request: Request,
+    body: GenerateAgentRequest,
     db: AsyncSession = Depends(get_db),
     current_user: DevUser = Depends(get_current_user),
 ) -> GenerateAgentResponse:
@@ -106,8 +110,151 @@ async def generate_agent(
         )
 
 
+@limiter.limit(RATE_LIMITS["generation"])
+@router.post("/generate-and-deploy", status_code=status.HTTP_201_CREATED)
+async def generate_and_deploy(
+    http_request: Request,
+    body: GenerateAgentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: DevUser = Depends(get_current_user),
+):
+    """
+    Generate an agent and immediately deploy it to a Docker container.
+
+    Single-call server-side handoff: Generator → DB save → Orchestrator deploy.
+    Eliminates the need for the frontend to bridge two services.
+
+    Returns both the generated code and deployment details.
+    """
+    # Step 1: Generate using the code generator directly
+    generator = get_code_generator()
+    response = await generator.generate(
+        description=body.description,
+        agent_name=body.agent_name,
+        complexity=body.complexity,
+        task_type=body.task_type,
+        tools_requested=body.tools_requested,
+        llm_provider=body.llm_provider,
+        model=body.model,
+    )
+
+    # Persist to database
+    try:
+        from datetime import datetime as dt
+        agent_record = Agent(
+            id=response.agent_id,
+            name=response.agent_name,
+            description=body.description,
+            flow_code=response.flow_code,
+            agents_yaml=response.agents_yaml,
+            requirements=response.requirements,
+            owner_id=current_user.id,
+            created_at=dt.utcnow(),
+        )
+        db.add(agent_record)
+        await db.commit()
+        logger.info("Agent persisted to DB", agent_id=response.agent_id)
+    except Exception as db_err:
+        logger.warning("Failed to persist agent to database (generation still returned)", error=str(db_err))
+
+    # Step 2: Deploy via internal HTTP to Docker Orchestrator
+    from app.services.orchestrator_client import get_orchestrator_client, OrchestratorError
+    try:
+        deployment = await get_orchestrator_client().deploy_agent(
+            agent_id=response.agent_id,
+            agent_name=response.agent_name,
+            flow_code=response.flow_code,
+            agents_yaml=response.agents_yaml,
+            requirements=response.requirements,
+            auto_start=True,
+        )
+
+        # Update deployed_count in DB
+        try:
+            from sqlalchemy import select as sa_select
+            query = sa_select(Agent).where(Agent.id == response.agent_id)
+            result = await db.execute(query)
+            agent_record = result.scalar_one_or_none()
+            if agent_record:
+                agent_record.deployed_count = (agent_record.deployed_count or 0) + 1
+                from datetime import datetime as dt
+                agent_record.last_deployed = dt.utcnow()
+                await db.commit()
+        except Exception:
+            pass  # Non-fatal
+
+        logger.info(
+            "Generate-and-deploy complete",
+            agent_id=response.agent_id,
+            deployment_id=deployment.get("deployment_id"),
+        )
+
+        return {
+            "generation": response.model_dump(),
+            "deployment": deployment,
+        }
+
+    except OrchestratorError as e:
+        logger.error("Deploy handoff failed", agent_id=response.agent_id, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Agent generated successfully but deployment failed: {str(e)}"
+        )
+    except Exception as e:
+        logger.error("Deploy handoff failed (unexpected)", agent_id=response.agent_id, error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Agent generated but orchestrator unreachable: {str(e)}"
+        )
+
+
+class DeployProxyRequest(BaseModel):
+    agent_id: str
+    agent_name: str
+    flow_code: str
+    agents_yaml: str = ""
+    auto_start: bool = True
+    memory_limit: str = "512m"
+    cpu_limit: float = 1.0
+
+
+@limiter.limit(RATE_LIMITS["deployment"])
+@router.post("/deploy", status_code=status.HTTP_201_CREATED)
+async def deploy_agent_proxy(http_request: Request, body: DeployProxyRequest):
+    """
+    Proxy deploy endpoint — forwards to Docker Orchestrator.
+
+    Allows the frontend to deploy through a single service (agent-generator)
+    instead of needing direct access to the orchestrator.
+    """
+    from app.services.orchestrator_client import get_orchestrator_client, OrchestratorError
+    try:
+        deployment = await get_orchestrator_client().deploy_agent(
+            agent_id=body.agent_id,
+            agent_name=body.agent_name,
+            flow_code=body.flow_code,
+            agents_yaml=body.agents_yaml,
+            auto_start=body.auto_start,
+            memory_limit=body.memory_limit,
+            cpu_limit=body.cpu_limit,
+        )
+        return deployment
+    except OrchestratorError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Orchestrator unreachable: {str(e)}",
+        )
+
+
+@limiter.limit(RATE_LIMITS["generation"])
 @router.post("/regenerate", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK)
 async def regenerate_agent(
+    http_request: Request,
     agent_id: str,
     feedback: str,
     previous_code: str
