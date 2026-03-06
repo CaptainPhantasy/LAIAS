@@ -32,7 +32,7 @@ router = APIRouter(prefix="/api", tags=["deploy"])
     description="Deploy a generated agent to a new Docker container",
 )
 async def deploy_agent(
-    http_request: Request,
+    request: Request,
     body: DeployAgentRequest,
     background_tasks: BackgroundTasks,
 ) -> DeploymentResponse:

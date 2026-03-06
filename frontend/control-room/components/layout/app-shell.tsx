@@ -43,63 +43,56 @@ export function AppShell({ children, title }: AppShellProps) {
         isMobile && !isCollapsed && 'overflow-hidden'
       )}
     >
+      {/* Mobile overlay backdrop - must be before sidebar for z-index */}
+      {isMobile && !isCollapsed && (
+        <button
+          className="fixed inset-0 z-40 bg-bg-primary/50"
+          onClick={() => setIsCollapsed(true)}
+          aria-label="Close sidebar"
+        />
+      )}
+
+      {/* Sidebar - fixed position on desktop */}
       <div
         className={cn(
-          'transition-all duration-200 ease-in-out',
-          // Grid layout for desktop
-          'md:grid md:grid-cols-[auto_1fr]',
-          'md:grid-rows-[auto_1fr]',
-          'md:grid-areas-[\"header-header\"\"sidebar-main\"]'
+          // Desktop: fixed sidebar
+          'hidden md:block',
+          // Mobile: show when expanded
+          isMobile && !isCollapsed && 'block'
         )}
-        style={
-          isMobile
-            ? undefined
-            : {
-                gridTemplateColumns: `${sidebarWidth}px 1fr`,
-              }
-        }
       >
-        {/* Sidebar */}
         <div
           className={cn(
-            'md:area-sidebar',
-            // Mobile overlay behavior
-            isMobile &&
-              !isCollapsed &&
-              'fixed inset-0 z-50 bg-bg-primary/80 backdrop-blur-sm'
+            // Desktop: fixed positioning
+            'md:fixed md:top-0 md:left-0 md:h-screen',
+            // Mobile: overlay behavior
+            isMobile && !isCollapsed && 'fixed inset-0 z-50'
           )}
         >
-          <div
-            className={cn(
-              // Mobile: inset sidebar with transition
-              isMobile && 'h-full'
-            )}
-          >
-            <Sidebar
-              collapsed={isCollapsed}
-              onToggle={() => setIsCollapsed(!isCollapsed)}
-            />
-          </div>
-
-          {/* Mobile overlay backdrop */}
-          {isMobile && !isCollapsed && (
-            <button
-              className="fixed inset-0 z-40 bg-bg-primary/50"
-              onClick={() => setIsCollapsed(true)}
-              aria-label="Close sidebar"
-            />
-          )}
+          <Sidebar
+            collapsed={isCollapsed}
+            onToggle={() => setIsCollapsed(!isCollapsed)}
+          />
         </div>
+      </div>
 
+      {/* Main wrapper - flex column for header + content */}
+      <div
+        className="flex flex-col min-h-screen"
+        style={{
+          // Desktop: offset for fixed sidebar
+          marginLeft: isMobile ? 0 : sidebarWidth,
+        }}
+      >
         {/* Header (Top Bar) */}
-        <div className="md:area-header">
+        <header className="sticky top-0 z-30">
           <TopBar title={title} />
-        </div>
+        </header>
 
         {/* Main Content Area */}
         <main
           className={cn(
-            'md:area-main',
+            'flex-1',
             'min-h-[calc(100vh-56px)]',
             'p-4 md:p-6 lg:p-8',
             'overflow-y-auto'
