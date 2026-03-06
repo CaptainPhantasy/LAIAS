@@ -82,7 +82,7 @@ async def get_container_logs(
             if not line.strip():
                 continue
 
-            entry = get_log_streamer().parse_log_line(line)
+            entry = get_log_streamer()._parse_log_line(line)
             if entry:
                 # Apply level filter if provided
                 if level is None or entry["level"].upper() == level.upper():
@@ -204,7 +204,7 @@ async def _log_stream_handler(
             )
             for line in previous_logs:
                 if line.strip():
-                    entry = get_log_streamer().parse_log_line(line)
+                    entry = get_log_streamer()._parse_log_line(line)
                     if entry:
                         await websocket.send_json({
                             "type": "log",
