@@ -65,6 +65,17 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import structlog
 import os
+import json
+import asyncio
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+try:
+    import crewai.events  # noqa: F401
+
+    crewai_events_available = True
+except ImportError:
+    crewai_events_available = False
 
 # =============================================================================
 # LOGGING SETUP
@@ -81,9 +92,9 @@ logger = structlog.get_logger()
 try:
     from crewai_tools import SerperDevTool
 
-    CREWAI_TOOLS_AVAILABLE = True
+    crewai_tools_available = True
 except ImportError:
-    CREWAI_TOOLS_AVAILABLE = False
+    crewai_tools_available = False
     logger.warning("crewai_tools not available - using fallback tools")
 
 
@@ -236,6 +247,246 @@ class AnalyticsService:
         return self.metrics
 
 
+class OutputRouter:
+    def __init__(self, deployment_id: str, destinations: Dict[str, bool]):
+        self.deployment_id = deployment_id
+        self.destinations = destinations
+        self.output_root = Path(os.getenv("LAIAS_OUTPUT_ROOT", "/app/outputs"))
+        self.ingest_url = os.getenv("LAIAS_OUTPUT_INGEST_URL", "")
+        self.run_id = ""
+
+    def set_run_id(self, run_id: str) -> None:
+        self.run_id = run_id
+
+    async def emit(
+        self, event_type: str, level: str, message: str, payload: Dict[str, Any]
+    ) -> None:
+        record = {
+            "run_id": self.run_id,
+            "event_type": event_type,
+            "level": level,
+            "message": message,
+            "source": "agent",
+            "payload": payload,
+            "destinations": self.destinations,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+
+        if self.destinations.get("files", False):
+            await self._write_file_event(record)
+
+        if self.destinations.get("postgres", False) and self.ingest_url:
+            await self._post_event(record)
+
+    def emit_sync(
+        self, event_type: str, level: str, message: str, payload: Dict[str, Any]
+    ) -> None:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.emit(event_type, level, message, payload))
+        except RuntimeError:
+            asyncio.run(self.emit(event_type, level, message, payload))
+
+    async def _write_file_event(self, record: Dict[str, Any]) -> None:
+        if not self.run_id:
+            return
+
+        run_root = self.output_root / self.run_id
+        run_root.mkdir(parents=True, exist_ok=True)
+        event_line = json.dumps(record, default=str)
+
+        events_path = run_root / "events.jsonl"
+        with events_path.open("a", encoding="utf-8") as f:
+            f.write(event_line + "\n")
+
+        summary_path = run_root / "summary.md"
+        if not summary_path.exists():
+            summary_path.write_text(
+                f"# Run Summary\n\nrun_id: `{self.run_id}`\n\n", encoding="utf-8"
+            )
+        with summary_path.open("a", encoding="utf-8") as f:
+            f.write(
+                f"- {record['timestamp']} [{record['level']}] "
+                f"{record['event_type']}: {record['message']}\n"
+            )
+
+        if record["event_type"] == "run_completed":
+            metrics_path = run_root / "metrics.json"
+            metrics_path.write_text(
+                json.dumps(record["payload"], indent=2, default=str), encoding="utf-8"
+            )
+
+    async def _post_event(self, record: Dict[str, Any]) -> None:
+        payload_bytes = json.dumps(record, default=str).encode("utf-8")
+        request = Request(
+            self.ingest_url,
+            data=payload_bytes,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            await asyncio.to_thread(urlopen, request, timeout=5)
+        except Exception as exc:
+            logger.warning(
+                "Output ingest post failed", error=str(exc), ingest_url=self.ingest_url
+            )
+
+
+def register_structured_event_listener(output_router: OutputRouter) -> bool:
+    if not crewai_events_available:
+        return False
+
+    from crewai.events import crewai_event_bus
+    from crewai.events.types.crew_events import (
+        CrewKickoffStartedEvent,
+        CrewKickoffCompletedEvent,
+        CrewKickoffFailedEvent,
+    )
+    from crewai.events.types.llm_events import (
+        LLMCallStartedEvent,
+        LLMCallCompletedEvent,
+        LLMCallFailedEvent,
+    )
+    from crewai.events.types.task_events import (
+        TaskStartedEvent,
+        TaskCompletedEvent,
+        TaskFailedEvent,
+    )
+    from crewai.events.types.tool_usage_events import (
+        ToolUsageStartedEvent,
+        ToolUsageFinishedEvent,
+        ToolUsageErrorEvent,
+    )
+
+    @crewai_event_bus.on(CrewKickoffStartedEvent)
+    def on_crew_started(source, event) -> None:
+        output_router.emit_sync(
+            "crew_started",
+            "INFO",
+            "Crew kickoff started",
+            {"crew_name": getattr(event, "crew_name", None)},
+        )
+
+    @crewai_event_bus.on(CrewKickoffCompletedEvent)
+    def on_crew_completed(source, event) -> None:
+        output_router.emit_sync(
+            "crew_completed",
+            "INFO",
+            "Crew kickoff completed",
+            {"crew_name": getattr(event, "crew_name", None)},
+        )
+
+    @crewai_event_bus.on(CrewKickoffFailedEvent)
+    def on_crew_failed(source, event) -> None:
+        output_router.emit_sync(
+            "crew_failed",
+            "ERROR",
+            "Crew kickoff failed",
+            {
+                "crew_name": getattr(event, "crew_name", None),
+                "error": str(getattr(event, "error", "")),
+            },
+        )
+
+    @crewai_event_bus.on(TaskStartedEvent)
+    def on_task_started(source, event) -> None:
+        output_router.emit_sync(
+            "task_started",
+            "INFO",
+            "Task started",
+            {"task": str(getattr(event, "task", ""))},
+        )
+
+    @crewai_event_bus.on(TaskCompletedEvent)
+    def on_task_completed(source, event) -> None:
+        output_router.emit_sync(
+            "task_completed",
+            "INFO",
+            "Task completed",
+            {"output": str(getattr(event, "output", ""))[:1000]},
+        )
+
+    @crewai_event_bus.on(TaskFailedEvent)
+    def on_task_failed(source, event) -> None:
+        output_router.emit_sync(
+            "task_failed",
+            "ERROR",
+            "Task failed",
+            {"error": str(getattr(event, "error", ""))},
+        )
+
+    @crewai_event_bus.on(LLMCallStartedEvent)
+    def on_llm_started(source, event) -> None:
+        output_router.emit_sync(
+            "llm_started",
+            "DEBUG",
+            "LLM call started",
+            {
+                "call_id": str(getattr(event, "call_id", "")),
+                "message_count": len(getattr(event, "messages", []) or []),
+            },
+        )
+
+    @crewai_event_bus.on(LLMCallCompletedEvent)
+    def on_llm_completed(source, event) -> None:
+        output_router.emit_sync(
+            "llm_completed",
+            "DEBUG",
+            "LLM call completed",
+            {
+                "call_type": str(getattr(event, "call_type", "")),
+                "response": str(getattr(event, "response", ""))[:500],
+            },
+        )
+
+    @crewai_event_bus.on(LLMCallFailedEvent)
+    def on_llm_failed(source, event) -> None:
+        output_router.emit_sync(
+            "llm_failed",
+            "ERROR",
+            "LLM call failed",
+            {"error": str(getattr(event, "error", ""))},
+        )
+
+    @crewai_event_bus.on(ToolUsageStartedEvent)
+    def on_tool_started(source, event) -> None:
+        output_router.emit_sync(
+            "tool_started",
+            "INFO",
+            "Tool usage started",
+            {
+                "tool_name": str(getattr(event, "tool_name", "")),
+                "tool_args": getattr(event, "tool_args", {}),
+            },
+        )
+
+    @crewai_event_bus.on(ToolUsageFinishedEvent)
+    def on_tool_finished(source, event) -> None:
+        output_router.emit_sync(
+            "tool_finished",
+            "INFO",
+            "Tool usage finished",
+            {
+                "tool_name": str(getattr(event, "tool_name", "")),
+                "from_cache": bool(getattr(event, "from_cache", False)),
+            },
+        )
+
+    @crewai_event_bus.on(ToolUsageErrorEvent)
+    def on_tool_error(source, event) -> None:
+        output_router.emit_sync(
+            "tool_error",
+            "ERROR",
+            "Tool usage failed",
+            {
+                "tool_name": str(getattr(event, "tool_name", "")),
+                "error": str(getattr(event, "error", "")),
+            },
+        )
+
+    return True
+
+
 # =============================================================================
 # SECTION 4: CUSTOM TOOLS (Optional)
 # =============================================================================
@@ -314,11 +565,57 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
         self.config = config or AgentConfig()
         self.analytics = AnalyticsService()
         self.tools = self._initialize_tools()
+        self.output_config = self._load_output_config()
+        self.output_router = OutputRouter(
+            deployment_id=os.getenv("LAIAS_DEPLOYMENT_ID", ""),
+            destinations=self.output_config,
+        )
+        self.event_listener_registered = register_structured_event_listener(
+            self.output_router
+        )
 
         logger.info(
             "LegacyAI Prime Flow initialized",
             model=self.config.default_model,
             memory_enabled=self.config.memory_enabled,
+            output_config=self.output_config,
+            event_listener_registered=self.event_listener_registered,
+        )
+
+    def _load_output_config(self) -> Dict[str, bool]:
+        raw = os.getenv("LAIAS_OUTPUT_CONFIG", "")
+        default_config = {"postgres": True, "files": True}
+        if not raw:
+            return default_config
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, dict):
+                config = default_config.copy()
+                for key in ("postgres", "files"):
+                    if key in parsed:
+                        config[key] = bool(parsed[key])
+                return config
+        except Exception:
+            logger.warning("Invalid LAIAS_OUTPUT_CONFIG, using defaults")
+        return default_config
+
+    async def _task_callback(self, task_output) -> None:
+        await self.output_router.emit(
+            event_type="task_callback",
+            level="INFO",
+            message="Task callback received",
+            payload={
+                "output": str(getattr(task_output, "raw", task_output))[:1200],
+                "agent": str(getattr(task_output, "agent", "")),
+            },
+        )
+
+    async def _step_callback(self, step_output) -> None:
+        await self.output_router.emit(
+            event_type="step_callback",
+            level="DEBUG",
+            message="Step callback received",
+            payload={"step": str(step_output)[:1200]},
         )
 
     # =========================================================================
@@ -338,7 +635,7 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
         tools.append(EnterpriseSearchTool())
 
         # Add crewai_tools if available
-        if CREWAI_TOOLS_AVAILABLE:
+        if crewai_tools_available:
             try:
                 tools.extend(
                     [
@@ -383,6 +680,7 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             # Generate task ID if not provided (inputs pre-populated into self.state)
             if not self.state.task_id:
                 self.state.task_id = f"task_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.output_router.set_run_id(self.state.task_id)
             self.state.status = "initializing"
             self.state.created_at = datetime.utcnow().isoformat()
 
@@ -394,6 +692,16 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
 
             # Start analytics tracking
             self.analytics.start_session(self.state.task_id)
+            await self.output_router.emit(
+                event_type="run_started",
+                level="INFO",
+                message="Run started",
+                payload={
+                    "task_id": self.state.task_id,
+                    "inputs": self.state.inputs,
+                    "event_listener_registered": self.event_listener_registered,
+                },
+            )
 
             self.state.status = "initialized"
             self.state.progress = 5.0
@@ -404,13 +712,12 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             self.state.status = "error"
             self.state.error_count += 1
             self.state.last_error = str(e)
-            return self.state
-
-        except Exception as e:
-            logger.error(f"Initialization failed: {str(e)}")
-            self.state.status = "error"
-            self.state.error_count += 1
-            self.state.last_error = str(e)
+            await self.output_router.emit(
+                event_type="run_failed",
+                level="ERROR",
+                message="Initialization failed",
+                payload={"error": str(e), "task_id": self.state.task_id},
+            )
             return self.state
 
     @listen("initialize_execution")
@@ -461,6 +768,8 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
                 tasks=[analysis_task],
                 process=Process.sequential,
                 verbose=self.config.verbose,
+                task_callback=self._task_callback,
+                step_callback=self._step_callback,
             )
 
             result = await crew.kickoff_async()
@@ -539,6 +848,8 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
                 process=Process.sequential,
                 verbose=self.config.verbose,
                 memory=self.config.memory_enabled,
+                task_callback=self._task_callback,
+                step_callback=self._step_callback,
             )
 
             result = await crew.kickoff_async()
@@ -648,7 +959,11 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             )
 
             crew = Crew(
-                agents=[reporter], tasks=[report_task], verbose=self.config.verbose
+                agents=[reporter],
+                tasks=[report_task],
+                verbose=self.config.verbose,
+                task_callback=self._task_callback,
+                step_callback=self._step_callback,
             )
 
             result = await crew.kickoff_async()
@@ -666,6 +981,19 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             # End analytics session
             self.analytics.end_session()
 
+            await self.output_router.emit(
+                event_type="run_completed",
+                level="INFO",
+                message="Run completed",
+                payload={
+                    "task_id": self.state.task_id,
+                    "status": self.state.status,
+                    "tokens_used": self.analytics.metrics.get("tokens_used", 0),
+                    "api_calls": self.analytics.metrics.get("api_calls", 0),
+                    "estimated_cost": self.analytics.metrics.get("total_cost", 0.0),
+                },
+            )
+
             logger.info(
                 "Flow completed successfully",
                 task_id=self.state.task_id,
@@ -679,6 +1007,12 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             self.state.error_count += 1
             self.state.last_error = str(e)
             self.state.status = "error"
+            await self.output_router.emit(
+                event_type="run_failed",
+                level="ERROR",
+                message="Finalization failed",
+                payload={"task_id": self.state.task_id, "error": str(e)},
+            )
             return self.state
 
     # =========================================================================
@@ -751,10 +1085,6 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
         """
         logger.info("Continuing execution", progress=self.state.progress)
         self.state.progress += 10.0
-
-        # Route back to main execution
-        if self.state.progress < 75.0:
-            return await self.execute_main_task(state)
 
         return self.state
 
@@ -908,6 +1238,7 @@ async def main():
     inputs = {
         "task_description": os.getenv("TASK_DESCRIPTION", "Default task"),
         "task_id": os.getenv("TASK_ID", None),
+        "deployment_id": os.getenv("LAIAS_DEPLOYMENT_ID", ""),
     }
 
     # Parse additional inputs from TASK_INPUTS env var if present
