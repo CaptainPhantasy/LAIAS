@@ -8,12 +8,60 @@ import { Input, Select } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 
+const STORAGE_KEY = 'laias-settings';
+
+interface Settings {
+  agentGeneratorUrl: string;
+  dockerOrchestratorUrl: string;
+  defaultLlmProvider: string;
+  defaultComplexity: string;
+  autoValidate: boolean;
+  showLineNumbers: boolean;
+  wordWrap: boolean;
+}
+
+const DEFAULTS: Settings = {
+  agentGeneratorUrl: 'http://localhost:4521',
+  dockerOrchestratorUrl: 'http://localhost:4522',
+  defaultLlmProvider: 'zai',
+  defaultComplexity: 'moderate',
+  autoValidate: true,
+  showLineNumbers: true,
+  wordWrap: true,
+};
+
+function loadSettings(): Settings {
+  if (typeof window === 'undefined') return DEFAULTS;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return DEFAULTS;
+    return { ...DEFAULTS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULTS;
+  }
+}
+
 export default function SettingsPage() {
+  const [settings, setSettings] = React.useState<Settings>(DEFAULTS);
   const [saved, setSaved] = React.useState(false);
 
+  React.useEffect(() => {
+    setSettings(loadSettings());
+  }, []);
+
+  const update = <K extends keyof Settings>(key: K, value: Settings[K]) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleSave = () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleReset = () => {
+    setSettings(DEFAULTS);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   return (
@@ -37,12 +85,14 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <Input
               label="Agent Generator URL"
-              defaultValue="http://localhost:4521"
+              value={settings.agentGeneratorUrl}
+              onChange={(e) => update('agentGeneratorUrl', e.target.value)}
               helperText="URL for the agent generator service"
             />
             <Input
               label="Docker Orchestrator URL"
-              defaultValue="http://localhost:4522"
+              value={settings.dockerOrchestratorUrl}
+              onChange={(e) => update('dockerOrchestratorUrl', e.target.value)}
               helperText="URL for the docker orchestrator service"
             />
           </div>
@@ -53,7 +103,8 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <Select
               label="Default LLM Provider"
-              defaultValue="zai"
+              value={settings.defaultLlmProvider}
+              onChange={(e) => update('defaultLlmProvider', e.target.value)}
               options={[
                 { value: 'zai', label: 'ZAI (Default)' },
                 { value: 'openai', label: 'OpenAI' },
@@ -63,7 +114,8 @@ export default function SettingsPage() {
             />
             <Select
               label="Default Complexity"
-              defaultValue="moderate"
+              value={settings.defaultComplexity}
+              onChange={(e) => update('defaultComplexity', e.target.value)}
               options={[
                 { value: 'simple', label: 'Simple' },
                 { value: 'moderate', label: 'Moderate' },
@@ -79,17 +131,20 @@ export default function SettingsPage() {
             <Checkbox
               label="Auto-validate on generation"
               description="Automatically validate code after generation"
-              defaultChecked
+              checked={settings.autoValidate}
+              onChange={(e) => update('autoValidate', e.target.checked)}
             />
             <Checkbox
               label="Show line numbers"
               description="Display line numbers in code editor"
-              defaultChecked
+              checked={settings.showLineNumbers}
+              onChange={(e) => update('showLineNumbers', e.target.checked)}
             />
             <Checkbox
               label="Word wrap"
               description="Enable word wrap in code editor"
-              defaultChecked
+              checked={settings.wordWrap}
+              onChange={(e) => update('wordWrap', e.target.checked)}
             />
           </div>
         </SectionPanel>
@@ -99,7 +154,7 @@ export default function SettingsPage() {
           <Button variant="primary" onClick={handleSave}>
             {saved ? 'Saved!' : 'Save Settings'}
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={handleReset}>
             Reset to Defaults
           </Button>
         </div>

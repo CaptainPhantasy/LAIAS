@@ -209,6 +209,7 @@ interface AgentCardProps {
 
 function AgentCard({ agent }: AgentCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const getComplexityBadge = (complexity: string) => {
     switch (complexity) {
@@ -255,9 +256,25 @@ function AgentCard({ agent }: AgentCardProps) {
                   <Copy className="w-4 h-4" />
                   Duplicate
                 </button>
-                <button className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 w-full text-error">
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Delete agent "${agent.description || agent.agent_id}"?`)) return;
+                    setIsDeleting(true);
+                    setShowMenu(false);
+                    try {
+                      await studioApi.deleteAgent(agent.agent_id);
+                      window.location.reload();
+                    } catch (err) {
+                      alert(err instanceof Error ? err.message : 'Failed to delete agent');
+                      setIsDeleting(false);
+                    }
+                  }}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 w-full text-error"
+                >
                   <Trash2 className="w-4 h-4" />
-                  Delete
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             )}
