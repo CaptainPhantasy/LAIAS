@@ -7,8 +7,11 @@ Tools for reading, writing, and searching various file formats.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import os
+import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
+
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -141,8 +144,8 @@ class FileToolsConfig:
                     tool = registry.instantiate_tool(config.name)
                     tools.append(tool)
                 except Exception as e:
+                    logger.warning("Failed to instantiate tool", tool=config.name, error=str(e))
                     # Log but continue with other tools
-                    pass
 
         return tools
 

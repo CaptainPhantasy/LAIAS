@@ -7,8 +7,11 @@ Tools for extracting data from websites and browser automation.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import os
+import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
+
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -135,8 +138,8 @@ class WebToolsConfig:
                 try:
                     tool = registry.instantiate_tool(config.name)
                     tools.append(tool)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("Failed to instantiate tool", tool=config.name, error=str(e))
 
         return tools
 
