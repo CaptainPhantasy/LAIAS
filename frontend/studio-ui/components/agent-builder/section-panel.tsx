@@ -17,6 +17,7 @@ interface SectionPanelProps {
   accentColor?: 'cyan' | 'purple' | 'pink';
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }
 
 // ============================================================================
@@ -32,6 +33,7 @@ export const SectionPanel: React.FC<SectionPanelProps> = ({
   accentColor = 'cyan',
   children,
   className,
+  id,
 }) => {
   const [isCollapsed, setIsCollapsed] = React.useState(defaultCollapsed);
 
@@ -43,6 +45,7 @@ export const SectionPanel: React.FC<SectionPanelProps> = ({
 
   return (
     <section
+      id={id}
       className={cn(
         'relative bg-surface border border-border rounded-lg overflow-hidden',
         className

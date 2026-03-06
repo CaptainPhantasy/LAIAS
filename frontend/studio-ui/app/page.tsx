@@ -120,7 +120,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="py-6 px-6 border-t border-border">
         <div className="max-w-7xl mx-auto flex justify-between items-center text-sm text-text-muted">
-          <span>LAIAS Studio</span>
+          <span>v1.0.0-beta - © 2026 Legacy AI</span>
           <div className="flex gap-6">
             <Link href="/templates" className="hover:text-text-secondary transition-colors">
               Templates

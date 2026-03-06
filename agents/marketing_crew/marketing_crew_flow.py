@@ -39,6 +39,7 @@ from pathlib import Path
 import structlog
 import yaml
 import os
+import json
 
 # =============================================================================
 # LOGGING
@@ -188,7 +189,7 @@ class MarketingAnalytics:
 # =============================================================================
 
 
-@persist
+@persist()
 class LegacyMarketingFlow(Flow[MarketingState]):
     """
     Legacy AI Marketing Team — Godzilla pattern.
@@ -229,8 +230,8 @@ class LegacyMarketingFlow(Flow[MarketingState]):
         finalize  write_content (loop back)
     """
 
-    def __init__(self, config: Optional[MarketingConfig] = None):
-        super().__init__()
+    def __init__(self, config: Optional[MarketingConfig] = None, **kwargs):
+        super().__init__(**kwargs)
         self.config = config or MarketingConfig()
         self.analytics = MarketingAnalytics()
         self.style_guide = STYLE_GUIDE
@@ -357,20 +358,16 @@ class LegacyMarketingFlow(Flow[MarketingState]):
     # =========================================================================
 
     @start()
-    async def initialize(self, inputs: Dict[str, Any]) -> MarketingState:
+    async def initialize(self) -> MarketingState:
         """ENTRY POINT — validate inputs and set up state."""
         try:
-            self.state.task_id = inputs.get(
-                "task_id",
-                f"mkt_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-            )
-            self.state.topic = inputs.get("topic", "")
-            self.state.content_type = inputs.get("content_type", "blog")
-            self.state.target_platforms = inputs.get(
-                "target_platforms", ["linkedin", "twitter"]
-            )
-            self.state.raw_notes = inputs.get("raw_notes", "")
-            self.state.reference_docs = inputs.get("reference_docs", "")
+            # inputs are pre-populated into self.state by kickoff_async(inputs=...)
+            if not self.state.task_id:
+                self.state.task_id = f"mkt_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            if not self.state.content_type:
+                self.state.content_type = "blog"
+            if not self.state.target_platforms:
+                self.state.target_platforms = ["linkedin", "twitter"]
             self.state.created_at = datetime.utcnow().isoformat()
             self.state.status = "initialized"
             self.state.progress = 5.0
@@ -514,7 +511,21 @@ LONG-FORM CONTENT:
 
 TARGET PLATFORMS: {", ".join(self.state.target_platforms)}
 
-For each platform, create a post that:
+CRITICAL FORMATTING RULE: You MUST separate each platform's post using this
+exact delimiter format so they can be parsed programmatically:
+
+===PLATFORM: linkedin===
+[linkedin post here]
+
+===PLATFORM: twitter===
+[twitter post here]
+
+===PLATFORM: github===
+[github post here]
+
+Only include sections for the TARGET PLATFORMS listed above.
+
+For each platform:
 
 LINKEDIN:
 - Professional but human. Same ideas, slightly less profanity.
@@ -534,7 +545,7 @@ ALL PLATFORMS:
 - Replace with: "Look, here's the thing." or just start talking.
 - Sound like a real person, not a social media intern.
 """,
-                expected_output="Social media posts for each target platform, clearly labeled",
+                expected_output="Social media posts separated by ===PLATFORM: name=== delimiters, one section per platform",
                 agent=social_mgr,
             )
 
@@ -546,10 +557,27 @@ ALL PLATFORMS:
             )
             result = await crew.kickoff_async()
 
-            # Parse into platform dict
+            # Parse into platform dict using delimiters
             result_text = str(result)
-            for platform in self.state.target_platforms:
-                self.state.social_posts[platform] = result_text
+            import re
+
+            sections = re.split(r"===PLATFORM:\s*(\w+)===", result_text)
+            # sections will be: [pre_text, platform1, content1, platform2, content2, ...]
+            parsed = {}
+            for i in range(1, len(sections) - 1, 2):
+                platform_key = sections[i].strip().lower()
+                platform_content = sections[i + 1].strip()
+                parsed[platform_key] = platform_content
+
+            # Fall back: if parsing failed, split evenly across platforms
+            if not parsed:
+                logger.warning(
+                    "Social post delimiter parsing failed, using full text per platform"
+                )
+                for platform in self.state.target_platforms:
+                    parsed[platform] = result_text
+
+            self.state.social_posts = parsed
 
             self.state.progress = 55.0
             self.analytics.record(cost=0.03)
@@ -718,7 +746,7 @@ NOTES: [specific feedback]
 
     @listen("approve")
     async def finalize(self, state: MarketingState) -> MarketingState:
-        """SUCCESS — Package all approved content."""
+        """SUCCESS — Package all approved content and save to files."""
         try:
             self.state.status = "finalizing"
 
@@ -733,10 +761,40 @@ NOTES: [specific feedback]
             self.state.progress = 100.0
             self.state.updated_at = datetime.utcnow().isoformat()
 
+            # Save outputs to files — relative to this file's location
+            output_dir = _HERE / "research" / self.state.task_id
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save all outputs as markdown
+            (output_dir / "long_form.md").write_text(self.state.long_form_draft)
+            (output_dir / "content_strategy.md").write_text(self.state.content_strategy)
+            (output_dir / "brand_review.md").write_text(self.state.brand_review_notes)
+            (output_dir / "seo_suggestions.md").write_text(self.state.seo_suggestions)
+            (output_dir / "social_posts.md").write_text(
+                "\n\n".join(
+                    f"## {platform.upper()}\n\n{post}"
+                    for platform, post in self.state.social_posts.items()
+                )
+            )
+
+            # Save complete summary as markdown too
+            (output_dir / "marketing_output.md").write_text(
+                f"# Marketing Output — {self.state.task_id}\n\n"
+                f"**Topic:** {self.state.topic}\n"
+                f"**Content Type:** {self.state.content_type}\n"
+                f"**Status:** {self.state.status}\n"
+                f"**Created:** {self.state.created_at}\n"
+                f"**Completed:** {self.state.updated_at}\n"
+                f"**Revisions:** {self.state.revision_count}\n"
+                f"**API Calls:** {self.analytics.metrics.get('api_calls', 0)}\n"
+                f"**Total Cost:** ${self.analytics.metrics.get('total_cost', 0):.4f}\n"
+            )
+
             self.analytics.end()
             logger.info(
-                "Marketing flow completed",
+                "Marketing flow completed and saved to files",
                 task_id=self.state.task_id,
+                output_dir=str(output_dir),
                 revision_count=self.state.revision_count,
             )
             return self.state
@@ -816,7 +874,7 @@ async def main():
 
     except Exception as e:
         logger.error(f"Marketing flow failed: {e}")
-        raise
+        raise e
 
 
 if __name__ == "__main__":

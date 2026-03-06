@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, MoreVertical, Trash2, Copy, ExternalLink } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Trash2, Copy, ExternalLink, Target } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
@@ -137,6 +137,55 @@ export default function AgentsPage() {
           )}
         </div>
       )}
+
+      {/* Business Development Agent Card - Featured */}
+      <div className="mb-6">
+        <Card variant="elevated" className="border-l-4 border-l-primary">
+          <CardHeader
+            title="Indiana SMB Business Development Agent"
+            description="AI-powered agent for finding and acquiring clients in the Indiana SMB market"
+            action={
+              <Badge variant="cyan" size="sm">Featured</Badge>
+            }
+          />
+          <CardContent>
+            <div className="flex items-center gap-2 text-sm text-text-secondary mb-3">
+              <Target className="w-4 h-4" />
+              <span>Specialized for custom software, website design, and AI integration services</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-text-secondary">Industries:</span>
+                <p>Healthcare, Manufacturing, Legal</p>
+              </div>
+              <div>
+                <span className="text-text-secondary">Geography:</span>
+                <p>Indiana (Regional)</p>
+              </div>
+              <div>
+                <span className="text-text-secondary">Focus:</span>
+                <p>Lead Generation</p>
+              </div>
+              <div>
+                <span className="text-text-secondary">Type:</span>
+                <p>Business Development</p>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Link href="/agents/business-development-indiana-smb" className="flex-1">
+              <Button variant="primary" size="sm" fullWidth>
+                Launch Business Dev Agent
+              </Button>
+            </Link>
+            <Link href="/create?template=indiana-smb-business-dev">
+              <Button variant="outline" size="sm">
+                Customize
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+      </div>
 
       {/* Agent Grid */}
       {!isLoading && filteredAgents.length > 0 && (

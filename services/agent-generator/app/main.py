@@ -131,6 +131,7 @@ def create_app() -> FastAPI:
     from app.api.routes.users import router as users_router
     from app.api.routes.teams import router as teams_router
     from app.api.routes.templates import router as templates_router
+    from app.api.routes.business_dev import router as business_dev_router
 
     app.include_router(generate_router)
     app.include_router(validate_router)
@@ -140,6 +141,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(templates_router)
+    app.include_router(business_dev_router)
 
     # =============================================================================
     # Root Endpoint
