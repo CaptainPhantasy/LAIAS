@@ -73,6 +73,11 @@ frontend/control-room/.next/
 frontend/*/node_modules/
 frontend/*/.env.local
 
+# Un-ignore frontend lib/ directories (overrides Python lib/ rule above)
+!frontend/studio-ui/lib/
+!frontend/control-room/lib/
+!frontend/shared/lib/
+
 # Agent output directories (generated at runtime)
 agents/*/research/
 agents/*/output/
