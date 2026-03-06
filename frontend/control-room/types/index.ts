@@ -269,6 +269,26 @@ export interface ControlRoomSettings {
   compactMode: boolean;
 }
 
+export interface OutputRunListItem {
+  run_id: string;
+  has_summary: boolean;
+  has_metrics: boolean;
+  event_count: number;
+}
+
+export interface OutputRunListResponse {
+  deployment_id: string;
+  runs: OutputRunListItem[];
+}
+
+export interface OutputRunDetailResponse {
+  deployment_id: string;
+  run_id: string;
+  summary_markdown: string;
+  metrics: Record<string, unknown>;
+  events: Record<string, unknown>[];
+}
+
 /**
  * Default settings
  */

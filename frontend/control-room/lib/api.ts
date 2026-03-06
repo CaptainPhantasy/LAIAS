@@ -19,7 +19,12 @@ import type {
   ContainerStatus,
 } from '../../shared/types';
 
-import type { LogFilters, TimeRange } from '../types';
+import type {
+  LogFilters,
+  TimeRange,
+  OutputRunListResponse,
+  OutputRunDetailResponse,
+} from '../types';
 
 // ============================================================================
 // Re-export for convenience
@@ -173,6 +178,35 @@ export async function healthCheck() {
   return dockerOrchestratorApi.healthCheck();
 }
 
+export async function getDeploymentOutputRuns(
+  deploymentId: string
+): Promise<OutputRunListResponse> {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:4522';
+  const response = await fetch(
+    `${baseUrl}/api/deployments/${deploymentId}/outputs/runs`
+  );
+  if (!response.ok) {
+    throw new ApiError(response.status, null, 'Failed to fetch deployment runs');
+  }
+  return response.json();
+}
+
+export async function getDeploymentOutputRunDetail(
+  deploymentId: string,
+  runId: string
+): Promise<OutputRunDetailResponse> {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:4522';
+  const response = await fetch(
+    `${baseUrl}/api/deployments/${deploymentId}/outputs/runs/${runId}`
+  );
+  if (!response.ok) {
+    throw new ApiError(response.status, null, 'Failed to fetch run artifacts');
+  }
+  return response.json();
+}
+
 // ============================================================================
 // Polling Utilities
 // ============================================================================
@@ -279,6 +313,8 @@ export const controlRoomApi = {
   execInContainer,
   removeDeployment,
   healthCheck,
+  getDeploymentOutputRuns,
+  getDeploymentOutputRunDetail,
   createContainerPoller,
   createMetricsPoller,
 } as const;
