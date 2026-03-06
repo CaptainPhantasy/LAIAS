@@ -68,7 +68,12 @@ async def init_db() -> None:
     Initialize database tables.
 
     Creates all tables if they don't exist.
-    Use Alembic for production migrations instead.
+    
+    NOTE: For production, use Alembic migrations instead:
+        cd services/agent-generator
+        alembic upgrade head
+    
+    This init_db() is kept for development/testing convenience.
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

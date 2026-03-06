@@ -282,8 +282,8 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
         # Attempt 1: Direct parse
         try:
             return json.loads(content)
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            logger.debug("Direct JSON parse failed, trying markdown extraction", error=str(e))
 
         # Attempt 2: Extract from markdown code blocks
         from app.utils.helpers import extract_code_from_markdown
@@ -291,8 +291,8 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
         extracted = extract_code_from_markdown(content)
         try:
             return json.loads(extracted)
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            logger.debug("Markdown extraction JSON parse failed, trying escape fix", error=str(e))
 
         # Attempt 3: Fix common escape issues (models sometimes double-escape
         # or produce invalid escape sequences inside JSON string values)
@@ -306,8 +306,8 @@ IMPORTANT: The flow_code must be complete, runnable Python code with NO placehol
                 # Try parsing as-is first, then with repairs
                 try:
                     return json.loads(raw)
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.debug("Raw JSON parse failed, attempting escape fix", error=str(e))
                 # Fix unescaped newlines inside JSON string values
                 fixed = re.sub(
                     r'(?<=": ")(.*?)(?="[,\n\}])',

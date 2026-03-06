@@ -7,8 +7,11 @@ Tools for AI-powered operations, code interpretation, and RAG.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import os
+import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
+
+logger = structlog.get_logger()
 
 
 @dataclass
@@ -205,8 +208,8 @@ class AIToolsConfig:
                 try:
                     tool = registry.instantiate_tool(config.name)
                     tools.append(tool)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning("Failed to instantiate tool", tool=config.name, error=str(e))
 
         return tools
 
