@@ -46,21 +46,28 @@ class AgentState(BaseModel):
 from crewai.flow.flow import Flow, listen, start, router, or_
 from crewai.flow.persistence import persist
 
-@persist
+@persist()  # NOTE: Must be @persist() with parentheses, NOT @persist
 class GeneratedFlow(Flow[AgentState]):
     \"\"\"Flow following Godzilla pattern.\"\"\"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        # **kwargs is REQUIRED — @persist() injects a 'persistence' kwarg
+        super().__init__(**kwargs)
         self.tools = self._initialize_tools()
         self.config = self._get_config()
 
     @start()
-    async def initialize(self, inputs: Dict[str, Any]) -> AgentState:
-        \"\"\"Entry point - setup and validation.\"\"\"
+    async def initialize(self) -> AgentState:
+        \"\"\"Entry point - setup and validation.
+
+        IMPORTANT: Do NOT add 'inputs: Dict[str, Any]' as a positional arg.
+        @persist() wraps this method and will break if it receives unexpected args.
+        Instead call kickoff_async(inputs={...}) and access data via self.state,
+        which CrewAI pre-populates from the inputs dict before calling this.
+        \"\"\"
         try:
-            self.state.task_id = inputs.get("task_id", "auto_" + str(uuid.uuid4())[:8])
-            self.state.inputs = inputs
+            if not self.state.task_id:
+                self.state.task_id = "auto_" + str(uuid.uuid4())[:8]
             self.state.status = "initializing"
 
             logger.info("Flow initialized", task_id=self.state.task_id)
@@ -132,7 +139,7 @@ def _create_specialist_agent(self) -> Agent:
 | @start() | Yes | Entry point decorator |
 | @listen() | Yes | Event listener decorator |
 | @router() | Yes | Conditional routing |
-| @persist | Yes | State persistence |
+| @persist() | Yes | State persistence (must include parentheses) |
 | try/except | Yes | Error handling |
 | logger.info() | Yes | Structured logging |
 | Typed State | Yes | Pydantic BaseModel |
@@ -206,5 +213,5 @@ GODZILLA_VALIDATION_RULES = {
         (r"@router\\(", "Consider adding @router() for conditional branching"),
         (r"AnalyticsService", "Consider adding analytics for monitoring"),
         (r"async def", "Consider using async methods for better performance"),
-    ]
+    ],
 }

@@ -77,3 +77,10 @@ frontend/*/.env.local
 agents/*/research/
 agents/*/output/
 agents/*/results/
+
+# Investigation/debug artifacts
+analyze_tom_api.py
+investigate_tom_interface.py
+test_vision_agent_connection.py
+main-PbXg9eXZ_analyzed.txt
+visionEngine-Bx1oUYIr_analyzed.txt

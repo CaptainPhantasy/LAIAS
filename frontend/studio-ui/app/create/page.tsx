@@ -509,6 +509,7 @@ function CreateAgentPageContent() {
         <form onSubmit={handleSubmit(handleGenerate)} className="space-y-6 overflow-auto">
           {/* Description */}
           <SectionPanel
+            id="description"
             title="Description"
             required
             accentColor="cyan"
@@ -541,7 +542,7 @@ function CreateAgentPageContent() {
           </SectionPanel>
 
           {/* Type Configuration */}
-          <SectionPanel title="Agent Configuration" accentColor="purple">
+          <SectionPanel id="type" title="Agent Configuration" accentColor="purple">
             <div className="grid grid-cols-3 gap-4">
               <Controller
                 name="complexity"
@@ -596,7 +597,7 @@ function CreateAgentPageContent() {
           </SectionPanel>
 
           {/* Tools */}
-          <SectionPanel title="Tools" accentColor="pink">
+          <SectionPanel id="tools" title="Tools" accentColor="pink">
             {/* Tool category tabs */}
             <div className="flex flex-wrap gap-2 mb-4">
               {['all', 'web', 'files', 'code', 'database', 'communication', 'cloud', 'ai', 'data', 'browser', 'media', 'utility'].map((cat) => (
@@ -663,6 +664,7 @@ function CreateAgentPageContent() {
 
           {/* Advanced Options */}
           <SectionPanel
+            id="advanced"
             title="Advanced Options"
             collapsible
             defaultCollapsed

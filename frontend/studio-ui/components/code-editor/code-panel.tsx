@@ -299,11 +299,11 @@ export const CodePanel: React.FC<CodePanelProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
         <Tabs value={activeTab} onValueChange={(v) => onTabChange(v as CodeTab)}>
-          <TabsList className="bg-bg-tertiary">
+          <TabsList className="bg-bg-tertiary overflow-x-auto">
             <TabsTrigger value="flow.py">flow.py</TabsTrigger>
-            <TabsTrigger value="agents.yaml">agents.yaml</TabsTrigger>
-            <TabsTrigger value="state.py">state.py</TabsTrigger>
-            <TabsTrigger value="requirements.txt">requirements.txt</TabsTrigger>
+            <TabsTrigger value="agents.yaml">agents</TabsTrigger>
+            <TabsTrigger value="state.py">state</TabsTrigger>
+            <TabsTrigger value="requirements.txt">requirements</TabsTrigger>
           </TabsList>
         </Tabs>
 

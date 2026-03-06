@@ -18,10 +18,10 @@ class MarketingState(BaseModel):
     research_trends: str = Field(default="")
     post_engagement: str = Field(default="")
 
-@persist
+@persist()
 class LegacyAIMarketingFlow(Flow[MarketingState]):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.tools = self.auto_select_tools()
 
     def _create_content_creator(self) -> Agent:

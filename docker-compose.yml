@@ -118,6 +118,8 @@ services:
       - AGENT_CODE_PATH=/var/laias/agents
       - SERVICE_PORT=4522
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # CORS Configuration
+      - CORS_ORIGINS=["http://localhost:4527", "http://localhost:4528", "https://laias-studio.ngrok-free.app", "https://laias-api.ngrok-free.app"]
     volumes:
       # CRITICAL: Access host Docker socket for sibling container spawning
       - /var/run/docker.sock:/var/run/docker.sock
