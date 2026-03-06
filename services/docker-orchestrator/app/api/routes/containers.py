@@ -27,7 +27,8 @@ router = APIRouter(prefix="/api", tags=["containers"])
     description="List all LAIAS agent containers",
 )
 async def list_containers(
-    status_filter: Optional[str] = None,
+    status: Optional[str] = None,
+    all_containers: bool = True,
     limit: int = 100,
     offset: int = 0,
 ) -> ContainerListResponse:
@@ -35,7 +36,8 @@ async def list_containers(
     List all agent containers.
 
     Args:
-        status_filter: Optional status filter (running, stopped, etc.)
+        status: Optional status filter (running, stopped, paused, exited, all)
+        all_containers: Whether to include stopped containers (default: True)
         limit: Maximum number of containers to return
         offset: Number of containers to skip
 
@@ -43,11 +45,12 @@ async def list_containers(
         ContainerListResponse: List of containers with summary
     """
     try:
-        containers = await get_docker_service().list_containers(all=True)
+        containers = await get_docker_service().list_containers(all=all_containers)
 
-        # Apply status filter if provided
-        if status_filter:
-            containers = [c for c in containers if c.get("status") == status_filter]
+        # Apply status filter if provided (and not 'all')
+        if status and status.lower() != 'all':
+            # Handle both exact match and partial match (e.g., "running" matches "running")
+            containers = [c for c in containers if status.lower() in c.get("status", "").lower()]
 
         # Apply pagination
         total = len(containers)

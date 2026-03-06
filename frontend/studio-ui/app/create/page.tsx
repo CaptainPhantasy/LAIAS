@@ -64,8 +64,9 @@ function CreateAgentPageContent() {
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [templateName, setTemplateName] = useState<string | null>(null);
-  const [templateLoaded, setTemplateLoaded] = useState(false);
+  const [loadedTemplateId, setLoadedTemplateId] = useState<string | null>(null);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [templateApplied, setTemplateApplied] = useState(false); // For visual feedback
 
   const {
     generationState,
@@ -133,8 +134,8 @@ function CreateAgentPageContent() {
       // Set active template ID for UI display
       setActiveTemplateId(activeTemplateId);
 
-      // Prevent double-loading
-      if (templateLoaded) {
+      // Prevent double-loading of the SAME template
+      if (loadedTemplateId === activeTemplateId) {
         console.log('[CreatePage] Template already loaded, skipping');
         return;
       }
@@ -165,7 +166,7 @@ function CreateAgentPageContent() {
         const template = await response.json();
         console.log('[CreatePage] Template loaded:', template);
         setTemplateName(template.name || activeTemplateId);
-        setTemplateLoaded(true);
+        setLoadedTemplateId(activeTemplateId);
 
         // Pre-fill form with template data
         if (template.sample_prompts?.[0]) {
@@ -201,6 +202,22 @@ function CreateAgentPageContent() {
         }
 
         console.log('[CreatePage] Template applied successfully');
+        
+        // Trigger visual feedback
+        setTemplateApplied(true);
+        
+        // Scroll to description field
+        setTimeout(() => {
+          const descSection = document.getElementById('description-section');
+          if (descSection) {
+            descSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+        
+        // Clear highlight after 3 seconds
+        setTimeout(() => {
+          setTemplateApplied(false);
+        }, 3000);
       } catch (err) {
         console.error('[CreatePage] Template load error:', err);
         if (err instanceof Error && err.name === 'AbortError') {
@@ -214,7 +231,7 @@ function CreateAgentPageContent() {
     };
 
     loadTemplate();
-  }, [searchParams, setValue, templateLoaded]);
+  }, [searchParams, setValue, loadedTemplateId]);
 
   // Debounced validation for description field (500ms per blueprint E.3)
   const debouncedValidate = useRef(
@@ -450,6 +467,11 @@ function CreateAgentPageContent() {
                 <div>
                   <span className="text-accent-cyan">Using template:</span>
                   <span className="text-text-primary font-medium ml-2">{templateName || activeTemplateId}</span>
+                  {templateApplied && (
+                    <span className="ml-2 text-success text-sm animate-pulse">
+                      ✓ Configuration applied
+                    </span>
+                  )}
                 </div>
               </>
             )}
@@ -508,12 +530,16 @@ function CreateAgentPageContent() {
         {/* Center: Form */}
         <form onSubmit={handleSubmit(handleGenerate)} className="space-y-6 overflow-auto">
           {/* Description */}
-          <SectionPanel
-            id="description"
-            title="Description"
-            required
-            accentColor="cyan"
-          >
+          <div id="description-section">
+            <SectionPanel
+              id="description"
+              title="Description"
+              required
+              accentColor="cyan"
+              className={cn(
+                templateApplied && 'ring-2 ring-success ring-offset-2 ring-offset-bg transition-all duration-500'
+              )}
+            >
             <Controller
               name="description"
               control={control}
@@ -540,6 +566,7 @@ function CreateAgentPageContent() {
               />
             </div>
           </SectionPanel>
+          </div>
 
           {/* Type Configuration */}
           <SectionPanel id="type" title="Agent Configuration" accentColor="purple">
@@ -597,7 +624,15 @@ function CreateAgentPageContent() {
           </SectionPanel>
 
           {/* Tools */}
-          <SectionPanel id="tools" title="Tools" accentColor="pink">
+          <div id="tools-section">
+            <SectionPanel 
+              id="tools" 
+              title="Tools" 
+              accentColor="pink"
+              className={cn(
+                templateApplied && watchedTools && watchedTools.length > 0 && 'ring-2 ring-success ring-offset-2 ring-offset-bg transition-all duration-500'
+              )}
+            >
             {/* Tool category tabs */}
             <div className="flex flex-wrap gap-2 mb-4">
               {['all', 'web', 'files', 'code', 'database', 'communication', 'cloud', 'ai', 'data', 'browser', 'media', 'utility'].map((cat) => (
@@ -661,6 +696,7 @@ function CreateAgentPageContent() {
               </div>
             )}
           </SectionPanel>
+          </div>
 
           {/* Advanced Options */}
           <SectionPanel

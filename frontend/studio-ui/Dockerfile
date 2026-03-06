@@ -11,7 +11,7 @@ WORKDIR /app
 
 # Install dependencies (including devDependencies needed for build)
 COPY studio-ui/package.json studio-ui/package-lock.json* ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps || npm install --legacy-peer-deps
 
 # ============================================================================
 # Stage 2: Builder

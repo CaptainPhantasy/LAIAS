@@ -366,7 +366,7 @@ export default function IndianaSMBBusinessDevAgent() {
                       <p className="text-sm text-text-secondary">{phase.description}</p>
                     </div>
                     {currentPhase === phase.name && (
-                      <Badge variant="primary" size="sm">In Progress</Badge>
+                      <Badge variant="cyan" size="sm">In Progress</Badge>
                     )}
                     {progress >= ((index + 1) / 6) * 100 && (
                       <Badge variant="success" size="sm">Completed</Badge>
@@ -541,7 +541,7 @@ export default function IndianaSMBBusinessDevAgent() {
                   
                   <h3 className="text-lg font-semibold mb-2 mt-4">Recommendations</h3>
                   <ul className="list-disc pl-5 space-y-1 text-text-secondary">
-                    <li>Follow up with the {metrics.qualifiedLeads - metrics.meetingsScheduled} qualified leads who didn't schedule meetings</li>
+                    <li>Follow up with the {metrics.qualifiedLeads - metrics.meetingsScheduled} qualified leads who didn&apos;t schedule meetings</li>
                     <li>Develop case studies from the {metrics.dealsClosed} closed deals to strengthen future proposals</li>
                     <li>Refine targeting based on which industries showed the highest conversion rates</li>
                     <li>Scale successful outreach strategies to increase lead generation</li>
