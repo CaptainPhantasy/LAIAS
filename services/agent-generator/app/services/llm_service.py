@@ -269,6 +269,13 @@ Return a JSON object with these keys:
 - agents_info: List of objects with role, goal, tools, llm_config for each agent
 
 IMPORTANT: The flow_code must be complete, runnable Python code with NO placeholders or TODOs.
+
+OUTPUT INSTRUMENTATION REQUIREMENTS:
+- Include an output router that reads LAIAS_OUTPUT_CONFIG and LAIAS_OUTPUT_ROOT.
+- Register CrewAI event bus listeners when available and emit structured events.
+- Provide task_callback and step_callback for Crew executions.
+- Write per-run artifacts: summary.md, events.jsonl, metrics.json.
+- Post structured events to LAIAS_OUTPUT_INGEST_URL when postgres output is enabled.
 """
 
     def _parse_response(self, content: str) -> Dict[str, Any]:

@@ -142,6 +142,7 @@ def _create_specialist_agent(self) -> Agent:
 | @persist() | Yes | State persistence (must include parentheses) |
 | try/except | Yes | Error handling |
 | logger.info() | Yes | Structured logging |
+| OutputRouter | Yes | Structured output routing for files and database ingest |
 | Typed State | Yes | Pydantic BaseModel |
 
 ## Flow State Transitions

@@ -37,6 +37,7 @@ class OrchestratorClient:
         agents_yaml: str,
         requirements: Optional[list[str]] = None,
         environment_vars: Optional[Dict[str, str]] = None,
+        output_config: Optional[Dict[str, bool]] = None,
         auto_start: bool = True,
         memory_limit: str = "512m",
         cpu_limit: float = 1.0,
@@ -54,6 +55,7 @@ class OrchestratorClient:
             "agents_yaml": agents_yaml,
             "requirements": requirements or [],
             "environment_vars": environment_vars or {},
+            "output_config": output_config or {"postgres": True, "files": True},
             "auto_start": auto_start,
             "memory_limit": memory_limit,
             "cpu_limit": cpu_limit,
@@ -95,9 +97,7 @@ class OrchestratorClient:
             status_code=response.status_code,
             error=error_detail,
         )
-        raise OrchestratorError(
-            f"Deployment failed (HTTP {response.status_code}): {error_detail}"
-        )
+        raise OrchestratorError(f"Deployment failed (HTTP {response.status_code}): {error_detail}")
 
     async def health_check(self) -> Dict[str, Any]:
         """Check orchestrator health."""
@@ -108,6 +108,7 @@ class OrchestratorClient:
 
 class OrchestratorError(Exception):
     """Raised when the Docker Orchestrator returns an error."""
+
     pass
 
 

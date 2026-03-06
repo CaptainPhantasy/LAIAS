@@ -26,7 +26,9 @@ router = APIRouter(prefix="/api", tags=["generation"])
 
 
 @limiter.limit(RATE_LIMITS["generation"])
-@router.post("/generate-agent", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/generate-agent", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK
+)
 async def generate_agent(
     request: Request,
     body: GenerateAgentRequest,
@@ -54,7 +56,7 @@ async def generate_agent(
             "Agent generation request received",
             agent_name=request.agent_name,
             complexity=request.complexity,
-            task_type=request.task_type
+            task_type=request.task_type,
         )
 
         generator = get_code_generator()
@@ -68,12 +70,13 @@ async def generate_agent(
             model=request.model,
             include_memory=request.include_memory,
             include_analytics=request.include_analytics,
-            max_agents=request.max_agents
+            max_agents=request.max_agents,
         )
 
         # Persist generated agent to database
         try:
             import uuid as uuid_lib
+
             agent_record = Agent(
                 id=response.agent_id,
                 name=response.agent_name,
@@ -83,22 +86,30 @@ async def generate_agent(
                 state_class=response.state_class,
                 complexity=request.complexity,
                 task_type=request.task_type,
-                tools=[t.model_dump() for t in response.agents_created] if response.agents_created else [],
+                tools=[t.model_dump() for t in response.agents_created]
+                if response.agents_created
+                else [],
                 requirements=response.requirements,
                 llm_provider=request.llm_provider,
                 model=request.model or "gpt-4o",
                 estimated_cost_per_run=response.estimated_cost_per_run,
                 complexity_score=response.complexity_score,
-                validation_status=response.validation_status.model_dump() if response.validation_status else {},
+                validation_status=response.validation_status.model_dump()
+                if response.validation_status
+                else {},
                 flow_diagram=response.flow_diagram,
-                owner_id=uuid_lib.UUID(current_user.id) if current_user.id != "00000000-0000-0000-0000-000000000000" else None,
+                owner_id=uuid_lib.UUID(current_user.id)
+                if current_user.id != "00000000-0000-0000-0000-000000000000"
+                else None,
             )
             db.add(agent_record)
             await db.commit()
             logger.info("Agent persisted to database", agent_id=response.agent_id)
         except Exception as db_err:
             await db.rollback()
-            logger.warning("Failed to persist agent to database (generation still returned)", error=str(db_err))
+            logger.warning(
+                "Failed to persist agent to database (generation still returned)", error=str(db_err)
+            )
 
         return response
 
@@ -106,7 +117,7 @@ async def generate_agent(
         logger.error("Agent generation failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate agent: {str(e)}"
+            detail=f"Failed to generate agent: {str(e)}",
         )
 
 
@@ -141,6 +152,7 @@ async def generate_and_deploy(
     # Persist to database
     try:
         from datetime import datetime as dt
+
         agent_record = Agent(
             id=response.agent_id,
             name=response.agent_name,
@@ -155,10 +167,13 @@ async def generate_and_deploy(
         await db.commit()
         logger.info("Agent persisted to DB", agent_id=response.agent_id)
     except Exception as db_err:
-        logger.warning("Failed to persist agent to database (generation still returned)", error=str(db_err))
+        logger.warning(
+            "Failed to persist agent to database (generation still returned)", error=str(db_err)
+        )
 
     # Step 2: Deploy via internal HTTP to Docker Orchestrator
     from app.services.orchestrator_client import get_orchestrator_client, OrchestratorError
+
     try:
         deployment = await get_orchestrator_client().deploy_agent(
             agent_id=response.agent_id,
@@ -172,12 +187,14 @@ async def generate_and_deploy(
         # Update deployed_count in DB
         try:
             from sqlalchemy import select as sa_select
+
             query = sa_select(Agent).where(Agent.id == response.agent_id)
             result = await db.execute(query)
             agent_record = result.scalar_one_or_none()
             if agent_record:
                 agent_record.deployed_count = (agent_record.deployed_count or 0) + 1
                 from datetime import datetime as dt
+
                 agent_record.last_deployed = dt.utcnow()
                 await db.commit()
         except Exception:
@@ -198,13 +215,13 @@ async def generate_and_deploy(
         logger.error("Deploy handoff failed", agent_id=response.agent_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Agent generated successfully but deployment failed: {str(e)}"
+            detail=f"Agent generated successfully but deployment failed: {str(e)}",
         )
     except Exception as e:
         logger.error("Deploy handoff failed (unexpected)", agent_id=response.agent_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Agent generated but orchestrator unreachable: {str(e)}"
+            detail=f"Agent generated but orchestrator unreachable: {str(e)}",
         )
 
 
@@ -216,6 +233,7 @@ class DeployProxyRequest(BaseModel):
     auto_start: bool = True
     memory_limit: str = "512m"
     cpu_limit: float = 1.0
+    output_config: dict[str, bool] = {"postgres": True, "files": True}
 
 
 @limiter.limit(RATE_LIMITS["deployment"])
@@ -228,12 +246,14 @@ async def deploy_agent_proxy(http_request: Request, body: DeployProxyRequest):
     instead of needing direct access to the orchestrator.
     """
     from app.services.orchestrator_client import get_orchestrator_client, OrchestratorError
+
     try:
         deployment = await get_orchestrator_client().deploy_agent(
             agent_id=body.agent_id,
             agent_name=body.agent_name,
             flow_code=body.flow_code,
             agents_yaml=body.agents_yaml,
+            output_config=body.output_config,
             auto_start=body.auto_start,
             memory_limit=body.memory_limit,
             cpu_limit=body.cpu_limit,
@@ -254,10 +274,7 @@ async def deploy_agent_proxy(http_request: Request, body: DeployProxyRequest):
 @limiter.limit(RATE_LIMITS["generation"])
 @router.post("/regenerate", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK)
 async def regenerate_agent(
-    http_request: Request,
-    agent_id: str,
-    feedback: str,
-    previous_code: str
+    http_request: Request, agent_id: str, feedback: str, previous_code: str
 ) -> GenerateAgentResponse:
     """
     Regenerate an agent based on feedback.
@@ -271,9 +288,7 @@ async def regenerate_agent(
 
         generator = get_code_generator()
         response = await generator.regenerate_with_feedback(
-            agent_id=agent_id,
-            feedback=feedback,
-            previous_code=previous_code
+            agent_id=agent_id, feedback=feedback, previous_code=previous_code
         )
 
         return response
@@ -282,5 +297,5 @@ async def regenerate_agent(
         logger.error("Agent regeneration failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to regenerate agent: {str(e)}"
+            detail=f"Failed to regenerate agent: {str(e)}",
         )

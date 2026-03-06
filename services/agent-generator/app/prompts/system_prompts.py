@@ -303,6 +303,9 @@ llm = LLM(model="openai/gpt-4o-mini")  # Cost efficient default
 7. Use `@start()` with empty parentheses
 8. Use `@listen(method_name)` - pass the method object, not a string
 9. Access state via `self.state["key"]` or `self.state.key` for Pydantic
+10. Include structured output routing using `LAIAS_OUTPUT_CONFIG`, `LAIAS_OUTPUT_ROOT`, and `LAIAS_OUTPUT_INGEST_URL`
+11. Register CrewAI event bus listeners when available and fallback to `task_callback` + `step_callback`
+12. Persist per-run artifacts: `summary.md`, `events.jsonl`, `metrics.json`
 
 ## RESPONSE FORMAT
 
