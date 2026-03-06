@@ -163,9 +163,9 @@ async def liveness() -> dict:
 )
 async def readiness() -> dict:
     """Readiness probe for Kubernetes."""
-    from app.services.docker_service import docker_service
+    from app.services.docker_service import get_docker_service
 
-    docker_ready = await docker_service.check_connection()
+    docker_ready = await get_docker_service().ping()
 
     if docker_ready:
         return {"status": "ready"}

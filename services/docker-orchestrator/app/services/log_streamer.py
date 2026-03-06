@@ -276,6 +276,5 @@ def get_log_streamer() -> "LogStreamer":
     """Get the log streamer singleton."""
     global _log_streamer
     if _log_streamer is None:
-        from app.services.docker_service import get_docker_service
-        _log_streamer = LogStreamer(get_docker_service())
+        _log_streamer = LogStreamer()
     return _log_streamer
