@@ -13,10 +13,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # -----------------------------------------------------------------------------
@@ -38,57 +35,47 @@ class Settings(BaseSettings):
     API_PREFIX: str = Field(default="/api", description="API route prefix")
     CORS_ORIGINS: List[str] = Field(
         default=["http://localhost:3000", "http://localhost:8000"],
-        description="CORS allowed origins"
+        description="CORS allowed origins",
     )
 
     # -----------------------------------------------------------------------------
     # Docker Configuration
     # -----------------------------------------------------------------------------
     DOCKER_HOST: Optional[str] = Field(
-        default=None,
-        description="Docker daemon socket URL (None for default)"
+        default=None, description="Docker daemon socket URL (None for default)"
     )
     DOCKER_NETWORK: str = Field(
-        default="laias-network",
-        description="Docker network for agent containers"
+        default="laias-network", description="Docker network for agent containers"
     )
     AGENT_IMAGE_BASE: str = Field(
-        default="laias/agent-runner:latest",
-        description="Base image for agent containers"
+        default="laias/agent-runner:latest", description="Base image for agent containers"
     )
     AGENT_CODE_PATH: str = Field(
-        default="/var/laias/agents",
-        description="Path to store generated agent code"
+        default="/var/laias/agents", description="Path to store generated agent code"
     )
-    CONTAINER_PREFIX: str = Field(
-        default="laias-agent-",
-        description="Prefix for container names"
+    AGENT_OUTPUT_PATH: str = Field(
+        default="/var/laias/outputs", description="Path to persist agent run outputs"
+    )
+    CONTAINER_PREFIX: str = Field(default="laias-agent-", description="Prefix for container names")
+    INTERNAL_ORCHESTRATOR_URL: str = Field(
+        default="http://docker-orchestrator:8002",
+        description="Internal URL reachable from agent containers",
     )
 
     # -----------------------------------------------------------------------------
     # Container Configuration
     # -----------------------------------------------------------------------------
     DEFAULT_CPU_LIMIT: float = Field(
-        default=1.0,
-        ge=0.1,
-        le=4.0,
-        description="Default CPU limit per container"
+        default=1.0, ge=0.1, le=4.0, description="Default CPU limit per container"
     )
     DEFAULT_MEMORY_LIMIT: str = Field(
-        default="512m",
-        description="Default memory limit per container"
+        default="512m", description="Default memory limit per container"
     )
     CONTAINER_STOP_TIMEOUT: int = Field(
-        default=10,
-        ge=1,
-        le=60,
-        description="Seconds to wait before force stopping container"
+        default=10, ge=1, le=60, description="Seconds to wait before force stopping container"
     )
     MAX_CONTAINERS: int = Field(
-        default=50,
-        ge=1,
-        le=200,
-        description="Maximum number of concurrent agent containers"
+        default=50, ge=1, le=200, description="Maximum number of concurrent agent containers"
     )
 
     # -----------------------------------------------------------------------------
@@ -96,7 +83,7 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------------
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://laias:laias_secure_password@localhost:5432/laias",
-        description="Database connection URL"
+        description="Database connection URL",
     )
     DATABASE_POOL_SIZE: int = Field(default=10, ge=1, description="Database pool size")
     DATABASE_MAX_OVERFLOW: int = Field(default=20, ge=0, description="Database max overflow")
@@ -104,60 +91,53 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------------
     # Redis Configuration
     # -----------------------------------------------------------------------------
-    REDIS_URL: str = Field(
-        default="redis://localhost:6379/0",
-        description="Redis connection URL"
-    )
+    REDIS_URL: str = Field(default="redis://localhost:6379/0", description="Redis connection URL")
     REDIS_STREAM_CHANNEL: str = Field(
-        default="laias:logs",
-        description="Redis pub/sub channel for log streaming"
+        default="laias:logs", description="Redis pub/sub channel for log streaming"
     )
 
     # -----------------------------------------------------------------------------
     # Monitoring Configuration
     # -----------------------------------------------------------------------------
-    METRICS_ENABLED: bool = Field(
-        default=True,
-        description="Enable Prometheus metrics endpoint"
-    )
-    METRICS_PATH: str = Field(
-        default="/metrics",
-        description="Prometheus metrics endpoint path"
-    )
+    METRICS_ENABLED: bool = Field(default=True, description="Enable Prometheus metrics endpoint")
+    METRICS_PATH: str = Field(default="/metrics", description="Prometheus metrics endpoint path")
     HEALTH_CHECK_INTERVAL: int = Field(
-        default=30,
-        ge=5,
-        description="Health check interval in seconds"
+        default=30, ge=5, description="Health check interval in seconds"
     )
 
     # -----------------------------------------------------------------------------
     # Security Configuration
     # -----------------------------------------------------------------------------
     SECRET_KEY: str = Field(
-        default="change-this-in-production",
-        description="Secret key for signing tokens"
+        default="change-this-in-production", description="Secret key for signing tokens"
     )
     API_KEY_HEADER: str = Field(
-        default="X-API-Key",
-        description="Header name for API key authentication"
+        default="X-API-Key", description="Header name for API key authentication"
     )
-    API_KEYS: List[str] = Field(
-        default=[],
-        description="Valid API keys (empty = disabled)"
-    )
+    API_KEYS: List[str] = Field(default=[], description="Valid API keys (empty = disabled)")
 
     @validator("AGENT_CODE_PATH")
     def validate_agent_code_path(cls, v: str) -> str:
         """Ensure agent code path is absolute."""
         import os
+
         if not os.path.isabs(v):
             raise ValueError(f"AGENT_CODE_PATH must be absolute: {v}")
+        return v
+
+    @validator("AGENT_OUTPUT_PATH")
+    def validate_agent_output_path(cls, v: str) -> str:
+        import os
+
+        if not os.path.isabs(v):
+            raise ValueError(f"AGENT_OUTPUT_PATH must be absolute: {v}")
         return v
 
     @validator("DEFAULT_MEMORY_LIMIT")
     def validate_memory_limit(cls, v: str) -> str:
         """Validate memory limit format."""
         import re
+
         if not re.match(r"^\d+[mg]$", v.lower()):
             raise ValueError(f"Invalid memory limit format: {v}")
         return v.lower()

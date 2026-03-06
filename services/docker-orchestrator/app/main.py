@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 import structlog
 
 from app.config import settings
-from app.api.routes import deploy, containers, logs, health, analytics
+from app.api.routes import deploy, containers, logs, health, analytics, outputs
 from app.services.docker_service import get_docker_service
 from app.services.resource_monitor import get_resource_monitor
 from app.utils.exceptions import (
@@ -62,8 +62,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Ensure agent code directory exists
     import os
+
     os.makedirs(settings.AGENT_CODE_PATH, exist_ok=True)
     logger.info("Agent code directory ready", path=settings.AGENT_CODE_PATH)
+    os.makedirs(settings.AGENT_OUTPUT_PATH, exist_ok=True)
+    logger.info("Agent output directory ready", path=settings.AGENT_OUTPUT_PATH)
 
     # Metrics monitoring available on-demand (no background task needed)
     if settings.METRICS_ENABLED:
@@ -77,6 +80,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Stop all active log streams
     try:
         from app.services.log_streamer import get_log_streamer
+
         streamer = get_log_streamer()
         active_count = len(streamer._active_streams)
         if active_count > 0:
@@ -88,7 +92,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     # Close Docker service connections
     try:
         docker_service = get_docker_service()
-        if hasattr(docker_service, 'close'):
+        if hasattr(docker_service, "close"):
             await docker_service.close()
         logger.info("Docker service connections closed")
     except Exception as e:
@@ -110,6 +114,7 @@ app = FastAPI(
 
 # Rate limiting
 from app.middleware.rate_limit import limiter, rate_limit_exceeded_handler
+
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
@@ -163,6 +168,10 @@ app.include_router(
 
 app.include_router(
     analytics.router,
+)
+
+app.include_router(
+    outputs.router,
 )
 
 

@@ -4,15 +4,19 @@ Agent deployment endpoints.
 Handles deployment of generated agents to Docker containers.
 """
 
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request, Depends
 from typing import Dict
 import uuid
+import json
 from datetime import datetime
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.requests import DeployAgentRequest
 from app.models.responses import DeploymentResponse
 from app.services.docker_service import get_docker_service
 from app.services.container_manager import get_container_manager
+from app.database.session import get_db
 from app.utils.exceptions import (
     DeploymentError,
     ResourceLimitError,
@@ -35,6 +39,7 @@ async def deploy_agent(
     request: Request,
     body: DeployAgentRequest,
     background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
 ) -> DeploymentResponse:
     """
     Deploy an agent to a container.
@@ -83,6 +88,7 @@ async def deploy_agent(
             flow_code=body.flow_code,
             agents_yaml=body.agents_yaml,
             environment_vars=body.environment_vars,
+            output_config=body.output_config,
             cpu_limit=body.cpu_limit,
             memory_limit=body.memory_limit,
         )
@@ -96,17 +102,84 @@ async def deploy_agent(
             started_at = datetime.utcnow()
             container_status = "running"
 
+        try:
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO deployments (
+                        id,
+                        agent_id,
+                        container_id,
+                        container_name,
+                        status,
+                        cpu_limit,
+                        memory_limit,
+                        environment_vars,
+                        created_at,
+                        started_at
+                    ) VALUES (
+                        :id,
+                        :agent_id,
+                        :container_id,
+                        :container_name,
+                        :status,
+                        :cpu_limit,
+                        :memory_limit,
+                        CAST(:environment_vars AS jsonb),
+                        :created_at,
+                        :started_at
+                    )
+                    ON CONFLICT (id)
+                    DO UPDATE SET
+                        container_id = EXCLUDED.container_id,
+                        container_name = EXCLUDED.container_name,
+                        status = EXCLUDED.status,
+                        cpu_limit = EXCLUDED.cpu_limit,
+                        memory_limit = EXCLUDED.memory_limit,
+                        environment_vars = EXCLUDED.environment_vars,
+                        started_at = EXCLUDED.started_at
+                    """
+                ),
+                {
+                    "id": deployment_id,
+                    "agent_id": body.agent_id,
+                    "container_id": container.id,
+                    "container_name": container.name,
+                    "status": container_status,
+                    "cpu_limit": body.cpu_limit,
+                    "memory_limit": body.memory_limit,
+                    "environment_vars": json.dumps(body.environment_vars),
+                    "created_at": datetime.utcnow(),
+                    "started_at": started_at,
+                },
+            )
+            await db.commit()
+        except Exception as db_error:
+            await db.rollback()
+            import structlog
+
+            structlog.get_logger().warning(
+                "Failed to persist deployment row",
+                deployment_id=deployment_id,
+                agent_id=body.agent_id,
+                error=str(db_error),
+            )
+
         # Build response
         base_url = "ws://localhost:8002" if settings.DEBUG else "wss://api.laias.platform"
 
         # Record analytics event
         from app.services.analytics_store import analytics_store
-        await analytics_store.add_event("deployment", {
-            "deployment_id": deployment_id,
-            "agent_id": body.agent_id,
-            "agent_name": body.agent_name,
-            "status": container_status,
-        })
+
+        await analytics_store.add_event(
+            "deployment",
+            {
+                "deployment_id": deployment_id,
+                "agent_id": body.agent_id,
+                "agent_name": body.agent_name,
+                "status": container_status,
+            },
+        )
 
         return DeploymentResponse(
             deployment_id=deployment_id,
@@ -118,6 +191,7 @@ async def deploy_agent(
             started_at=started_at,
             logs_endpoint=f"{base_url}/api/containers/{container.id}/logs/stream",
             metrics_endpoint=f"/api/containers/{container.id}/metrics",
+            output_config=body.output_config,
         )
 
     except Exception as e:
@@ -129,6 +203,7 @@ async def deploy_agent(
         else:
             # Log unexpected errors
             import structlog
+
             logger = structlog.get_logger()
             logger.error(
                 "Unexpected deployment error",
@@ -147,12 +222,16 @@ async def deploy_agent(
 
         # Record failed deployment analytics
         from app.services.analytics_store import analytics_store
-        await analytics_store.add_event("deployment", {
-            "deployment_id": deployment_id,
-            "agent_id": body.agent_id,
-            "agent_name": body.agent_name,
-            "status": "error",
-        })
+
+        await analytics_store.add_event(
+            "deployment",
+            {
+                "deployment_id": deployment_id,
+                "agent_id": body.agent_id,
+                "agent_name": body.agent_name,
+                "status": "error",
+            },
+        )
 
 
 @router.delete(
@@ -175,6 +254,7 @@ async def remove_deployment(deployment_id: str) -> None:
         await get_container_manager().remove_deployment(deployment_id)
     except Exception as e:
         from app.utils.exceptions import ContainerNotFoundError
+
         if isinstance(e, ContainerNotFoundError):
             raise exception_to_http_response(e)
         raise HTTPException(

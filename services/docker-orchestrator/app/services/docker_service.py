@@ -8,6 +8,7 @@ Implements the No-Build deployment strategy:
 """
 
 import os
+import json
 import shutil
 import aiofiles
 from typing import Dict, Any, Optional, List
@@ -64,11 +65,7 @@ class DockerService:
             self.client.networks.get(network_name)
         except NotFound:
             logger.info("Creating Docker network", network=network_name)
-            self.client.networks.create(
-                network_name,
-                driver="bridge",
-                labels={"laias": "true"}
-            )
+            self.client.networks.create(network_name, driver="bridge", labels={"laias": "true"})
 
     async def deploy_agent(
         self,
@@ -77,8 +74,9 @@ class DockerService:
         agent_name: str,
         flow_code: str,
         agents_yaml: str,
-        requirements: List[str] = None,
-        environment_vars: Dict[str, str] = None,
+        requirements: Optional[List[str]] = None,
+        environment_vars: Optional[Dict[str, str]] = None,
+        output_config: Optional[Dict[str, bool]] = None,
         cpu_limit: float = 1.0,
         memory_limit: str = "512m",
     ) -> Any:
@@ -106,12 +104,13 @@ class DockerService:
         """
         requirements = requirements or []
         environment_vars = environment_vars or {}
+        output_config = output_config or {"postgres": True, "files": True}
 
         # Step 1: Write code to deployment directory
         deploy_dir = os.path.join(self.code_path, deployment_id)
-        await self._write_agent_code(
-            deploy_dir, flow_code, agents_yaml, requirements
-        )
+        output_dir = os.path.join(settings.AGENT_OUTPUT_PATH, deployment_id)
+        await self._write_agent_code(deploy_dir, flow_code, agents_yaml, requirements)
+        os.makedirs(output_dir, exist_ok=True)
 
         # Step 2: Create container with volume mount
         container_name = f"{settings.CONTAINER_PREFIX}{deployment_id[:12]}"
@@ -121,7 +120,11 @@ class DockerService:
             "DEPLOYMENT_ID": deployment_id,
             "AGENT_ID": agent_id,
             "AGENT_NAME": agent_name,
-            **environment_vars
+            "LAIAS_DEPLOYMENT_ID": deployment_id,
+            "LAIAS_OUTPUT_CONFIG": json.dumps(output_config),
+            "LAIAS_OUTPUT_ROOT": "/app/outputs",
+            "LAIAS_OUTPUT_INGEST_URL": f"{settings.INTERNAL_ORCHESTRATOR_URL}/api/deployments/{deployment_id}/outputs/events",
+            **environment_vars,
         }
 
         # Create container
@@ -132,8 +135,9 @@ class DockerService:
                 volumes={
                     deploy_dir: {
                         "bind": "/app/agent",
-                        "mode": "ro"  # Read-only mount
-                    }
+                        "mode": "ro",  # Read-only mount
+                    },
+                    output_dir: {"bind": "/app/outputs", "mode": "rw"},
                 },
                 environment=env_vars,
                 cpu_period=100000,
@@ -146,8 +150,10 @@ class DockerService:
                     "deployment_id": deployment_id,
                     "agent_id": agent_id,
                     "agent_name": agent_name,
+                    "output_postgres": str(output_config.get("postgres", False)).lower(),
+                    "output_files": str(output_config.get("files", False)).lower(),
                     "laias": "agent",
-                }
+                },
             )
 
             logger.info(
@@ -229,9 +235,7 @@ class DockerService:
             logger.error("Failed to stop container", container_id=container_id, error=str(e))
             raise
 
-    async def remove_container(
-        self, container_id: str, force: bool = False
-    ) -> None:
+    async def remove_container(self, container_id: str, force: bool = False) -> None:
         """Remove a container and its code directory."""
         try:
             container = self.client.containers.get(container_id)
@@ -245,7 +249,9 @@ class DockerService:
             # Clean up code directory
             if deployment_id:
                 deploy_dir = os.path.join(self.code_path, deployment_id)
+                output_dir = os.path.join(settings.AGENT_OUTPUT_PATH, deployment_id)
                 await self._cleanup_deployment_dir(deploy_dir)
+                await self._cleanup_deployment_dir(output_dir)
 
             logger.info("Container removed", container_id=container_id)
 
@@ -292,8 +298,7 @@ class DockerService:
                 - stats["precpu_stats"]["cpu_usage"]["total_usage"]
             )
             system_delta = (
-                stats["cpu_stats"]["system_cpu_usage"]
-                - stats["precpu_stats"]["system_cpu_usage"]
+                stats["cpu_stats"]["system_cpu_usage"] - stats["precpu_stats"]["system_cpu_usage"]
             )
             cpu_percent = (cpu_delta / system_delta * 100.0) if system_delta > 0 else 0.0
 
@@ -327,10 +332,7 @@ class DockerService:
     async def list_containers(self, all: bool = True) -> List[Dict[str, Any]]:
         """List all LAIAS agent containers."""
         try:
-            containers = self.client.containers.list(
-                all=all,
-                filters={"label": "laias=agent"}
-            )
+            containers = self.client.containers.list(all=all, filters={"label": "laias=agent"})
 
             return [
                 {
@@ -362,7 +364,9 @@ class DockerService:
     async def cleanup_deployment(self, deployment_id: str) -> None:
         """Clean up a failed deployment."""
         deploy_dir = os.path.join(self.code_path, deployment_id)
+        output_dir = os.path.join(settings.AGENT_OUTPUT_PATH, deployment_id)
         await self._cleanup_deployment_dir(deploy_dir)
+        await self._cleanup_deployment_dir(output_dir)
 
     async def close(self) -> None:
         """Close Docker client connection."""

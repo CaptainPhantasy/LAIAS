@@ -56,26 +56,44 @@ class DeployAgentRequest(BaseModel):
         default=True,
         description="Automatically start container after creation",
     )
+    output_config: Dict[str, bool] = Field(
+        default_factory=lambda: {"postgres": True, "files": True},
+        description="Per-deployment output routing destinations",
+    )
 
     @validator("memory_limit")
     def validate_memory_limit(cls, v: str) -> str:
         """Validate memory limit format."""
         import re
+
         if not re.match(r"^\d+[mgMG]$", v):
-            raise ValueError(
-                "Memory limit must be in format: <number><unit> where unit is m or g"
-            )
+            raise ValueError("Memory limit must be in format: <number><unit> where unit is m or g")
         return v.lower()
 
     @validator("environment_vars")
     def validate_environment_vars(cls, v: Dict[str, str]) -> Dict[str, str]:
         """Validate environment variable names."""
         import re
+
         valid_key = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
         for key in v.keys():
             if not valid_key.match(key):
                 raise ValueError(f"Invalid environment variable name: {key}")
         return v
+
+    @validator("output_config")
+    def validate_output_config(cls, v: Dict[str, bool]) -> Dict[str, bool]:
+        allowed_destinations = {"postgres", "files"}
+        unknown_destinations = set(v.keys()) - allowed_destinations
+        if unknown_destinations:
+            unknown_list = ", ".join(sorted(unknown_destinations))
+            raise ValueError(f"Unknown output destinations: {unknown_list}")
+
+        normalized = {"postgres": False, "files": False}
+        normalized.update(v)
+        if not any(normalized.values()):
+            raise ValueError("At least one output destination must be enabled")
+        return normalized
 
 
 class ContainerActionRequest(BaseModel):
@@ -118,3 +136,14 @@ class LogsRequest(BaseModel):
         default=False,
         description="Follow log output (for streaming)",
     )
+
+
+class OutputEventIngestRequest(BaseModel):
+    run_id: str = Field(..., min_length=1, max_length=120)
+    event_type: str = Field(..., min_length=1, max_length=120)
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
+    message: str = Field(..., min_length=1)
+    source: str = Field(default="agent", min_length=1, max_length=120)
+    payload: Dict[str, object] = Field(default_factory=dict)
+    destinations: Optional[Dict[str, bool]] = Field(default=None)
+    timestamp: Optional[datetime] = Field(default=None)
