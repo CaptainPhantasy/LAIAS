@@ -27,9 +27,12 @@ from app.config import settings
 # Remaining imports
 # =============================================================================
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import structlog
 from time import time
 from app import __version__
@@ -63,7 +66,7 @@ logger = structlog.get_logger()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Manage application lifespan."""
+    """Manage application lifespan with graceful shutdown."""
     logger.info(
         "Starting Agent Generator Service",
         version=__version__,
@@ -76,11 +79,21 @@ async def lifespan(app: FastAPI):
         logger.info("Database initialized")
     except Exception as e:
         logger.error("Failed to initialize database", error=str(e))
+
     yield
+
+    # Shutdown - Graceful cleanup
+    logger.info("Shutting down Agent Generator Service")
+
     # Close database connections
     from app.database import close_db
-    await close_db()
-    logger.info("Shutting down Agent Generator Service")
+    try:
+        await close_db()
+        logger.info("Database connections closed")
+    except Exception as e:
+        logger.warning("Error closing database", error=str(e))
+
+    logger.info("Shutdown complete")
 
 
 # =============================================================================
@@ -89,6 +102,9 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
+    # Initialize rate limiter
+    from app.middleware.rate_limit import limiter, rate_limit_exceeded_handler
+
     app = FastAPI(
         title=settings.app_name,
         version=__version__,
@@ -97,6 +113,12 @@ def create_app() -> FastAPI:
         docs_url="/docs" if settings.debug else None,
         redoc_url="/redoc" if settings.debug else None
     )
+
+    # =============================================================================
+    # Rate Limiting
+    # =============================================================================
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
     # =============================================================================
     # CORS Middleware
@@ -131,8 +153,11 @@ def create_app() -> FastAPI:
     from app.api.routes.users import router as users_router
     from app.api.routes.teams import router as teams_router
     from app.api.routes.templates import router as templates_router
-    from app.api.routes.business_dev import router as business_dev_router
+    # business_dev routes disabled - functionality moved to Docker Orchestrator
+    # from app.api.routes.business_dev import router as business_dev_router
+    from app.api.routes.auth import router as auth_router
 
+    app.include_router(auth_router)
     app.include_router(generate_router)
     app.include_router(validate_router)
     app.include_router(health_router)
@@ -141,7 +166,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(templates_router)
-    app.include_router(business_dev_router)
+    # app.include_router(business_dev_router)  # Disabled - see GAP-ANALYSIS P0-4
 
     # =============================================================================
     # Root Endpoint

@@ -66,18 +66,31 @@ cp .env.example .env
 # - COMPOSIO_API_KEY (for MCP tools)
 ```
 
-### 2. Start Services
+### 2. Build Agent Runner Image
+
+Before deploying agents, you must build the base agent runner image. This image contains
+all CrewAI dependencies and is reused for all agent deployments:
+
+```bash
+docker-compose build agent-runner
+```
+
+> **Why is this required?** The agent-runner is defined with `profiles: [build-only]` 
+> because it's a base image, not a running service. It's used as the template for 
+> spawning agent containers on demand.
+
+### 3. Start Services
 ```bash
 docker-compose up -d
 ```
 
-### 3. Verify Health
+### 4. Verify Health
 ```bash
 curl http://localhost:8001/health  # Agent Generator
 curl http://localhost:8002/health  # Docker Orchestrator
 ```
 
-### 4. Access API Documentation
+### 5. Access API Documentation
 - Agent Generator: http://localhost:8001/api/docs
 - Docker Orchestrator: http://localhost:8002/api/docs
 

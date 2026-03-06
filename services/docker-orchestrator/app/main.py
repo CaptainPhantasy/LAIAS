@@ -6,9 +6,12 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import structlog
 
 from app.config import settings
@@ -68,8 +71,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     yield
 
-    # Shutdown
+    # Shutdown - Graceful cleanup
     logger.info("Shutting down Docker Orchestrator")
+
+    # Stop all active log streams
+    try:
+        from app.services.log_streamer import get_log_streamer
+        streamer = get_log_streamer()
+        active_count = len(streamer._active_streams)
+        if active_count > 0:
+            logger.info("Stopping active log streams", count=active_count)
+            streamer._active_streams.clear()
+    except Exception as e:
+        logger.warning("Failed to stop log streams", error=str(e))
+
+    # Close Docker service connections
+    try:
+        docker_service = get_docker_service()
+        if hasattr(docker_service, 'close'):
+            await docker_service.close()
+        logger.info("Docker service connections closed")
+    except Exception as e:
+        logger.warning("Failed to close Docker service", error=str(e))
+
     logger.info("Shutdown complete")
 
 
@@ -83,6 +107,11 @@ app = FastAPI(
     redoc_url=f"{settings.API_PREFIX}/redoc",
     openapi_url=f"{settings.API_PREFIX}/openapi.json",
 )
+
+# Rate limiting
+from app.middleware.rate_limit import limiter, rate_limit_exceeded_handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 
 # CORS middleware
 app.add_middleware(

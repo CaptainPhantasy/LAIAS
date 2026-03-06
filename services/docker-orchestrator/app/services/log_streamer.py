@@ -161,8 +161,8 @@ class LogStreamer:
                     "message": parsed.get("message", parsed.get("msg", line)),
                     "source": parsed.get("source", parsed.get("logger", "container")),
                 }
-        except (json.JSONDecodeError, TypeError):
-            pass
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.debug("Log line is not JSON, using raw format", error=str(e))
 
         # Standard Docker log format: timestamp message
         parts = line.split(" ", 1)
