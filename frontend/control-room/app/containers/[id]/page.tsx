@@ -2,7 +2,7 @@
 
 import { use, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ContainerDetail } from '@/components/containers';
+import { ContainerDetail, OutputArtifactsPanel } from '@/components/containers';
 import { MetricsPanel } from '@/components/metrics';
 import { useContainers, useContainerActions, useMetrics } from '@/hooks';
 import { getContainer } from '@/lib/api';
@@ -99,6 +99,10 @@ export default function ContainerDetailPage({
           />
         </div>
       )}
+
+      <OutputArtifactsPanel
+        deploymentId={container.labels?.deployment_id || ''}
+      />
     </div>
   );
 }
