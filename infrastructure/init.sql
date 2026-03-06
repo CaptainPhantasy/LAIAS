@@ -119,6 +119,80 @@ CREATE TABLE execution_metrics (
 );
 
 -- =============================================================================
+-- CREW RUNS TABLE
+-- Top-level run records for structured execution tracking
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS crew_runs (
+    id VARCHAR(120) PRIMARY KEY,
+    deployment_id VARCHAR(50) NOT NULL REFERENCES deployments(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'running'
+        CHECK (status IN ('running', 'completed', 'failed')),
+    started_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    completed_at TIMESTAMP WITH TIME ZONE,
+    metadata JSONB DEFAULT '{}'::jsonb
+);
+
+-- =============================================================================
+-- TASK RESULTS TABLE
+-- Per-task structured results from CrewAI events/callbacks
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS task_results (
+    id BIGSERIAL PRIMARY KEY,
+    run_id VARCHAR(120) NOT NULL REFERENCES crew_runs(id) ON DELETE CASCADE,
+    deployment_id VARCHAR(50) NOT NULL REFERENCES deployments(id) ON DELETE CASCADE,
+    task_name VARCHAR(255),
+    agent_role VARCHAR(255),
+    status VARCHAR(20) NOT NULL DEFAULT 'completed'
+        CHECK (status IN ('started', 'completed', 'failed')),
+    output_raw TEXT,
+    output_json JSONB,
+    error TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================================================
+-- LLM CALLS TABLE
+-- LLM-level observability and cost accounting
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS llm_calls (
+    id BIGSERIAL PRIMARY KEY,
+    run_id VARCHAR(120) NOT NULL REFERENCES crew_runs(id) ON DELETE CASCADE,
+    deployment_id VARCHAR(50) NOT NULL REFERENCES deployments(id) ON DELETE CASCADE,
+    call_id VARCHAR(255),
+    model VARCHAR(255),
+    call_type VARCHAR(100),
+    prompt_tokens INTEGER,
+    completion_tokens INTEGER,
+    total_tokens INTEGER,
+    latency_ms INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'completed'
+        CHECK (status IN ('started', 'completed', 'failed')),
+    error TEXT,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================================================
+-- TOOL USAGE TABLE
+-- Tool invocation observability
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS tool_usage (
+    id BIGSERIAL PRIMARY KEY,
+    run_id VARCHAR(120) NOT NULL REFERENCES crew_runs(id) ON DELETE CASCADE,
+    deployment_id VARCHAR(50) NOT NULL REFERENCES deployments(id) ON DELETE CASCADE,
+    tool_name VARCHAR(255) NOT NULL,
+    tool_args JSONB DEFAULT '{}'::jsonb,
+    output TEXT,
+    from_cache BOOLEAN DEFAULT FALSE,
+    status VARCHAR(20) NOT NULL DEFAULT 'completed'
+        CHECK (status IN ('started', 'completed', 'failed')),
+    error TEXT,
+    started_at TIMESTAMP WITH TIME ZONE,
+    finished_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- =============================================================================
 -- INDEXES
 -- =============================================================================
 CREATE INDEX idx_agents_created_at ON agents(created_at DESC);
@@ -130,6 +204,13 @@ CREATE INDEX idx_execution_logs_deployment_id ON execution_logs(deployment_id);
 CREATE INDEX idx_execution_logs_timestamp ON execution_logs(timestamp DESC);
 CREATE INDEX idx_execution_logs_level ON execution_logs(level);
 CREATE INDEX idx_execution_metrics_deployment_id ON execution_metrics(deployment_id);
+CREATE INDEX IF NOT EXISTS idx_crew_runs_deployment_id ON crew_runs(deployment_id);
+CREATE INDEX IF NOT EXISTS idx_task_results_run_id ON task_results(run_id);
+CREATE INDEX IF NOT EXISTS idx_task_results_deployment_id ON task_results(deployment_id);
+CREATE INDEX IF NOT EXISTS idx_llm_calls_run_id ON llm_calls(run_id);
+CREATE INDEX IF NOT EXISTS idx_llm_calls_deployment_id ON llm_calls(deployment_id);
+CREATE INDEX IF NOT EXISTS idx_tool_usage_run_id ON tool_usage(run_id);
+CREATE INDEX IF NOT EXISTS idx_tool_usage_deployment_id ON tool_usage(deployment_id);
 
 -- =============================================================================
 -- TRIGGERS
