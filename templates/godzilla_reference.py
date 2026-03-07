@@ -68,7 +68,7 @@ import os
 import json
 import asyncio
 from pathlib import Path
-from urllib.request import Request, urlopen
+import httpx
 
 try:
     import crewai.events  # noqa: F401
@@ -85,17 +85,11 @@ except ImportError:
 logger = structlog.get_logger()
 
 # =============================================================================
-# FEATURE FLAGS - Check tool availability
+# FEATURE FLAGS
 # =============================================================================
-# Some tools may not be available in all environments
 
-try:
-    from crewai_tools import SerperDevTool
-
-    crewai_tools_available = True
-except ImportError:
-    crewai_tools_available = False
-    logger.warning("crewai_tools not available - using fallback tools")
+# crewai.events is optional — graceful fallback if unavailable.
+# crewai_tools is required — fail fast on import (line 56) if missing.
 
 
 # =============================================================================
@@ -317,15 +311,9 @@ class OutputRouter:
             )
 
     async def _post_event(self, record: Dict[str, Any]) -> None:
-        payload_bytes = json.dumps(record, default=str).encode("utf-8")
-        request = Request(
-            self.ingest_url,
-            data=payload_bytes,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
         try:
-            await asyncio.to_thread(urlopen, request, timeout=5)
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                await client.post(self.ingest_url, json=record)
         except Exception as exc:
             logger.warning(
                 "Output ingest post failed", error=str(exc), ingest_url=self.ingest_url
@@ -634,24 +622,21 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
         # Add custom tools (always available)
         tools.append(EnterpriseSearchTool())
 
-        # Add crewai_tools if available
-        if crewai_tools_available:
-            try:
-                tools.extend(
-                    [
-                        SerperDevTool(),
-                        ScrapeWebsiteTool(),
-                        DirectoryReadTool(),
-                        FileReadTool(),
-                    ]
-                )
-                # Only add CodeInterpreter if explicitly enabled
-                if os.getenv("ENABLE_CODE_INTERPRETER", "false").lower() == "true":
-                    tools.append(CodeInterpreterTool())
-            except Exception as e:
-                logger.warning(f"Failed to initialize some tools: {e}")
+        try:
+            tools.extend(
+                [
+                    SerperDevTool(),
+                    ScrapeWebsiteTool(),
+                    DirectoryReadTool(),
+                    FileReadTool(),
+                ]
+            )
+            if os.getenv("ENABLE_CODE_INTERPRETER", "false").lower() == "true":
+                tools.append(CodeInterpreterTool())
+        except Exception as e:
+            logger.warning("Failed to initialize some tools", error=str(e))
 
-        logger.info(f"Initialized {len(tools)} tools")
+        logger.info("Tools initialized", tool_count=len(tools))
         return tools
 
     # =========================================================================
@@ -708,7 +693,9 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             return self.state
 
         except Exception as e:
-            logger.error(f"Initialization failed: {str(e)}")
+            logger.error(
+                "Initialization failed", error=str(e), task_id=self.state.task_id
+            )
             self.state.status = "error"
             self.state.error_count += 1
             self.state.last_error = str(e)
@@ -783,7 +770,7 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             return self.state
 
         except Exception as e:
-            logger.error(f"Analysis failed: {e}")
+            logger.error("Analysis failed", error=str(e), task_id=self.state.task_id)
             self.state.error_count += 1
             self.state.last_error = str(e)
             return self.state
@@ -870,7 +857,7 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             return self.state
 
         except Exception as e:
-            logger.error(f"Execution failed: {e}")
+            logger.error("Execution failed", error=str(e), task_id=self.state.task_id)
             self.state.error_count += 1
             self.state.last_error = str(e)
             return self.state
@@ -1003,7 +990,9 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             return self.state
 
         except Exception as e:
-            logger.error(f"Finalization failed: {e}")
+            logger.error(
+                "Finalization failed", error=str(e), task_id=self.state.task_id
+            )
             self.state.error_count += 1
             self.state.last_error = str(e)
             self.state.status = "error"
@@ -1281,7 +1270,7 @@ async def main():
         )
 
     except Exception as e:
-        logger.error(f"Flow execution failed: {e}")
+        logger.error("Flow execution failed", error=str(e))
         raise
 
 
