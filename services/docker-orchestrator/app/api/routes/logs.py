@@ -7,8 +7,9 @@ Provides REST and WebSocket access to container logs.
 import asyncio
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 
+from app.api.auth import is_api_key_valid, verify_api_key
 from app.models.responses import LogEntry, LogsResponse
 from app.services.docker_service import get_docker_service
 from app.services.log_streamer import get_log_streamer
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/api", tags=["logs"])
     response_model=LogsResponse,
     summary="Get container logs",
     description="Retrieve logs from a container",
+    dependencies=[Depends(verify_api_key)],
 )
 async def get_container_logs(
     container_id: str,
@@ -139,6 +141,11 @@ async def stream_container_logs(
     - WebSocket disconnects
     - Error occurs
     """
+    token = websocket.query_params.get("token")
+    if not is_api_key_valid(token):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     await websocket.accept()
 
     try:

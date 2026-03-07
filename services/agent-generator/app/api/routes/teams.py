@@ -5,6 +5,7 @@ Team management with RBAC - create, list, update, delete teams and members.
 """
 
 import uuid
+from typing import TypedDict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
@@ -83,6 +84,14 @@ class UpdateMemberRoleRequest(BaseModel):
     role: str = Field(..., pattern="^(owner|admin|member|viewer)$")
 
 
+class TeamMemberWithUser(TypedDict):
+    user_id: str
+    email: str
+    name: str | None
+    role: str
+    joined_at: str
+
+
 # =============================================================================
 # Helpers
 # =============================================================================
@@ -97,7 +106,7 @@ def _slugify(name: str) -> str:
 async def _get_members_with_users(
     team_id: uuid.UUID,
     db: AsyncSession,
-) -> list[dict[str, str | None]]:
+) -> list[TeamMemberWithUser]:
     """
     Get team members with actual user data from users table.
 
@@ -239,7 +248,16 @@ async def get_team(
     # Get members with user data
     members_data = await _get_members_with_users(team.id, db)
 
-    member_responses = [TeamMemberResponse(**m) for m in members_data]
+    member_responses = [
+        TeamMemberResponse(
+            user_id=m["user_id"],
+            email=m["email"],
+            name=m["name"],
+            role=m["role"],
+            joined_at=m["joined_at"],
+        )
+        for m in members_data
+    ]
 
     return TeamDetailResponse(
         id=str(team.id),

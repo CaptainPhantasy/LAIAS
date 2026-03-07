@@ -49,7 +49,7 @@ class Agent(Base):
     complexity: Mapped[str] = mapped_column(String(20), nullable=False)
     task_type: Mapped[str] = mapped_column(String(50), nullable=False)
     tools: Mapped[list[Any]] = mapped_column(JSONB, default=list)
-    requirements: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+    requirements: Mapped[list[Any] | dict[str, Any]] = mapped_column(JSONB, default=list)
 
     # === Metadata ===
     llm_provider: Mapped[str] = mapped_column(String(20), default="openai")
@@ -60,6 +60,9 @@ class Agent(Base):
     # === Validation ===
     validation_status: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     flow_diagram: Mapped[str | None] = mapped_column(Text)
+
+    version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    latest_version: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     # === Status ===
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -90,14 +93,18 @@ class Agent(Base):
             "description": self.description,
             "flow_code": self.flow_code,
             "agents_yaml": self.agents_yaml,
+            "state_class": self.state_class,
             "complexity": self.complexity,
             "task_type": self.task_type,
+            "requirements": self.requirements,
             "llm_provider": self.llm_provider,
             "model": self.model,
             "estimated_cost_per_run": self.estimated_cost_per_run,
             "complexity_score": self.complexity_score,
             "validation_status": self.validation_status,
             "flow_diagram": self.flow_diagram,
+            "version": self.version,
+            "latest_version": self.latest_version,
             "is_active": self.is_active,
             "deployed_count": self.deployed_count,
             "last_deployed": self.last_deployed.isoformat() if self.last_deployed else None,
@@ -105,6 +112,41 @@ class Agent(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "owner_id": str(self.owner_id) if self.owner_id else None,
             "team_id": str(self.team_id) if self.team_id else None,
+        }
+
+
+class AgentVersion(Base):
+    __tablename__ = "agent_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    agent_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    flow_code: Mapped[str | None] = mapped_column(Text)
+    agents_yaml: Mapped[str | None] = mapped_column(Text)
+    state_class: Mapped[str | None] = mapped_column(Text)
+    requirements: Mapped[list[Any] | dict[str, Any]] = mapped_column(JSONB, default=list)
+    validation_status: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    flow_diagram: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    change_summary: Mapped[str | None] = mapped_column(Text)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert model to dictionary."""
+        return {
+            "id": self.id,
+            "agent_id": self.agent_id,
+            "version": self.version,
+            "flow_code": self.flow_code,
+            "agents_yaml": self.agents_yaml,
+            "state_class": self.state_class,
+            "requirements": self.requirements,
+            "validation_status": self.validation_status,
+            "flow_diagram": self.flow_diagram,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "change_summary": self.change_summary,
         }
 
 

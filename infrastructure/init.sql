@@ -35,10 +35,28 @@ CREATE TABLE agents (
     -- Validation
     validation_status JSONB DEFAULT '{}'::jsonb,
     flow_diagram TEXT,
+
+    version INTEGER NOT NULL DEFAULT 1,
+    latest_version INTEGER NOT NULL DEFAULT 1,
     
     -- Timestamps
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS agent_versions (
+    id BIGSERIAL PRIMARY KEY,
+    agent_id VARCHAR(50) NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+    version INTEGER NOT NULL,
+    flow_code TEXT,
+    agents_yaml TEXT,
+    state_class TEXT,
+    requirements JSONB DEFAULT '[]'::jsonb,
+    validation_status JSONB DEFAULT '{}'::jsonb,
+    flow_diagram TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    change_summary TEXT,
+    CONSTRAINT uq_agent_versions_agent_version UNIQUE (agent_id, version)
 );
 
 -- =============================================================================
@@ -192,6 +210,13 @@ CREATE TABLE IF NOT EXISTS tool_usage (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_type VARCHAR(100) NOT NULL,
+    event_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- =============================================================================
 -- INDEXES
 -- =============================================================================
@@ -204,6 +229,9 @@ CREATE INDEX idx_execution_logs_deployment_id ON execution_logs(deployment_id);
 CREATE INDEX idx_execution_logs_timestamp ON execution_logs(timestamp DESC);
 CREATE INDEX idx_execution_logs_level ON execution_logs(level);
 CREATE INDEX idx_execution_metrics_deployment_id ON execution_metrics(deployment_id);
+CREATE INDEX IF NOT EXISTS idx_agent_versions_agent_id ON agent_versions(agent_id);
+CREATE INDEX IF NOT EXISTS idx_agent_versions_version ON agent_versions(version);
+CREATE INDEX IF NOT EXISTS idx_agent_versions_agent_id_version ON agent_versions(agent_id, version);
 CREATE INDEX IF NOT EXISTS idx_crew_runs_deployment_id ON crew_runs(deployment_id);
 CREATE INDEX IF NOT EXISTS idx_task_results_run_id ON task_results(run_id);
 CREATE INDEX IF NOT EXISTS idx_task_results_deployment_id ON task_results(deployment_id);
@@ -211,6 +239,8 @@ CREATE INDEX IF NOT EXISTS idx_llm_calls_run_id ON llm_calls(run_id);
 CREATE INDEX IF NOT EXISTS idx_llm_calls_deployment_id ON llm_calls(deployment_id);
 CREATE INDEX IF NOT EXISTS idx_tool_usage_run_id ON tool_usage(run_id);
 CREATE INDEX IF NOT EXISTS idx_tool_usage_deployment_id ON tool_usage(deployment_id);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_event_type ON analytics_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at DESC);
 
 -- =============================================================================
 -- TRIGGERS
@@ -281,6 +311,23 @@ BEGIN
     END IF;
 END $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'agents' AND column_name = 'version'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'agents' AND column_name = 'latest_version'
+    ) THEN
+        ALTER TABLE agents ADD COLUMN latest_version INTEGER NOT NULL DEFAULT 1;
+    END IF;
+END $$;
+
 -- Update deployments table with team association
 DO $$
 BEGIN
@@ -307,5 +354,16 @@ CREATE INDEX IF NOT EXISTS idx_deployments_team ON deployments(team_id);
 -- =============================================================================
 -- SEED DATA FOR DEVELOPMENT
 -- =============================================================================
--- Seed dev user for development (required for teams FK constraint)
-INSERT INTO users (id, email, name) VALUES ('00000000-0000-0000-0000-000000000000', 'dev@laias.local', 'Dev User') ON CONFLICT (id) DO NOTHING;
+-- Dev user is only seeded when LAIAS_SEED_DEV_DATA is set.
+-- In production, real users are created via the /auth/register endpoint.
+-- The DO block checks the environment variable via current_setting() with a
+-- fallback so it never errors on a clean Postgres instance.
+DO $$
+BEGIN
+    IF current_setting('app.seed_dev_data', true) = 'true' THEN
+        INSERT INTO users (id, email, name)
+        VALUES ('00000000-0000-0000-0000-000000000000', 'dev@laias.local', 'Dev User')
+        ON CONFLICT (id) DO NOTHING;
+        RAISE NOTICE 'Dev user seeded (app.seed_dev_data=true)';
+    END IF;
+END $$;

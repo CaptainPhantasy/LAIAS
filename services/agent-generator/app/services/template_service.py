@@ -20,7 +20,15 @@ logger = structlog.get_logger()
 # Templates Directory
 # =============================================================================
 
-TEMPLATES_DIR = Path(os.environ.get("TEMPLATES_DIR", "/app/templates/presets"))
+# Resolve templates directory: honour TEMPLATES_DIR env var, otherwise fall back
+# to the repo-relative path (works both locally and inside Docker where the
+# working directory is /app).
+_DEFAULT_TEMPLATES_DIR = str(
+    Path(__file__).resolve().parents[3] / "templates" / "presets"
+    if not Path("/app/templates/presets").exists()
+    else Path("/app/templates/presets")
+)
+TEMPLATES_DIR = Path(os.environ.get("TEMPLATES_DIR", _DEFAULT_TEMPLATES_DIR))
 
 
 # =============================================================================

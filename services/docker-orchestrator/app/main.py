@@ -2,6 +2,7 @@
 FastAPI application for Docker Orchestrator Service.
 """
 
+import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -31,7 +32,7 @@ logger = structlog.get_logger()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator:
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan manager.
 
@@ -46,12 +47,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     )
 
     # Initialize Docker service
+    docker_service = get_docker_service()
     try:
-        await get_docker_service().ping()
+        await docker_service.ping()
         logger.info("Docker connection verified")
     except Exception as e:
         logger.error("Docker connection failed", error=str(e))
         raise
+
+    gc_task: asyncio.Task[None] | None = None
+
+    async def container_gc_worker() -> None:
+        while True:
+            try:
+                await docker_service.garbage_collect_containers()
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.warning("Container GC run failed", error=str(e))
+
+            await asyncio.sleep(settings.GC_INTERVAL_SECONDS)
 
     # Ensure agent code directory exists
     import os
@@ -65,10 +80,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     if settings.METRICS_ENABLED:
         logger.info("Metrics monitoring available")
 
+    gc_task = asyncio.create_task(container_gc_worker(), name="container-gc-worker")
+    logger.info(
+        "Container GC background task started",
+        interval_seconds=settings.GC_INTERVAL_SECONDS,
+        max_age_hours=settings.GC_MAX_AGE_HOURS,
+    )
+
     yield
 
     # Shutdown - Graceful cleanup
     logger.info("Shutting down Docker Orchestrator")
+
+    if gc_task is not None:
+        gc_task.cancel()
+        try:
+            await gc_task
+        except asyncio.CancelledError:
+            logger.info("Container GC background task stopped")
 
     # Stop all active log streams
     try:
@@ -84,7 +113,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     # Close Docker service connections
     try:
-        docker_service = get_docker_service()
         if hasattr(docker_service, "close"):
             await docker_service.close()
         logger.info("Docker service connections closed")

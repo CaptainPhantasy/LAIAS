@@ -5,10 +5,13 @@ Provides usage statistics, deployment metrics, and performance data.
 """
 
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from pathlib import Path
 
-from fastapi import APIRouter, status
+import yaml
+from fastapi import APIRouter, Depends, status
 
+from app.api.auth import verify_api_key
 from app.models.responses import (
     AnalyticsResponse,
     DeploymentStatsResponse,
@@ -17,30 +20,31 @@ from app.models.responses import (
 )
 from app.services.analytics_store import analytics_store
 
-router = APIRouter(prefix="/api/analytics", tags=["analytics"])
+router = APIRouter(
+    prefix="/api/analytics",
+    tags=["analytics"],
+    dependencies=[Depends(verify_api_key)],
+)
 
-# LLM pricing per 1K tokens (USD)
-LLM_PRICING = {
-    "anthropic": {
-        "claude-3-5-sonnet": {"input": 0.003, "output": 0.015},
-        "claude-3-5-haiku": {"input": 0.0008, "output": 0.004},
-        "claude-3-opus": {"input": 0.015, "output": 0.075},
-    },
-    "openai": {
-        "gpt-4": {"input": 0.03, "output": 0.06},
-        "gpt-4-turbo": {"input": 0.01, "output": 0.03},
-        "gpt-3.5-turbo": {"input": 0.0005, "output": 0.0015},
-    },
-    "openrouter": {
-        "default": {"input": 0.001, "output": 0.002},
-    },
-}
+_PRICING_FILE = Path(__file__).resolve().parents[2] / "llm_pricing.yaml"
+_DEFAULT_PRICING = {"input": 0.001, "output": 0.002}
+
+
+def _load_llm_pricing() -> dict:
+    try:
+        with open(_PRICING_FILE) as f:
+            return yaml.safe_load(f) or {}
+    except FileNotFoundError:
+        return {}
+
+
+LLM_PRICING: dict = _load_llm_pricing()
 
 
 def calculate_cost(provider: str, model: str, input_tokens: int, output_tokens: int) -> float:
-    """Calculate cost based on token usage."""
+    """Calculate cost based on token usage and YAML-configured pricing."""
     provider_pricing = LLM_PRICING.get(provider.lower(), {})
-    model_pricing = provider_pricing.get(model, provider_pricing.get("default", {"input": 0.001, "output": 0.002}))
+    model_pricing = provider_pricing.get(model, provider_pricing.get("default", _DEFAULT_PRICING))
 
     input_cost = (input_tokens / 1000) * model_pricing["input"]
     output_cost = (output_tokens / 1000) * model_pricing["output"]
@@ -67,7 +71,7 @@ async def get_usage_stats(
     Returns:
         UsageStatsResponse with aggregated usage data
     """
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(UTC) - timedelta(days=days)
 
     # Get events from storage
     events = await analytics_store.get_events_since(since)
@@ -99,7 +103,7 @@ async def get_usage_stats(
                 cost = calculate_cost(prov, model, input_tokens, output_tokens)
 
                 # Daily aggregation
-                event_date = event.get("created_at", datetime.utcnow()).date()
+                event_date = event.get("created_at", datetime.now(UTC)).date()
                 daily_usage[event_date]["tokens"] += input_tokens + output_tokens
                 daily_usage[event_date]["calls"] += 1
                 daily_usage[event_date]["cost"] += cost
@@ -115,21 +119,25 @@ async def get_usage_stats(
     # Build daily timeseries
     timeseries = []
     for i in range(days):
-        d = (date.today() - timedelta(days=days - i - 1))
+        d = date.today() - timedelta(days=days - i - 1)
         if d in daily_usage:
-            timeseries.append({
-                "date": d.isoformat(),
-                "api_calls": daily_usage[d]["calls"],
-                "tokens_used": daily_usage[d]["tokens"],
-                "cost_usd": round(daily_usage[d]["cost"], 4),
-            })
+            timeseries.append(
+                {
+                    "date": d.isoformat(),
+                    "api_calls": daily_usage[d]["calls"],
+                    "tokens_used": daily_usage[d]["tokens"],
+                    "cost_usd": round(daily_usage[d]["cost"], 4),
+                }
+            )
         else:
-            timeseries.append({
-                "date": d.isoformat(),
-                "api_calls": 0,
-                "tokens_used": 0,
-                "cost_usd": 0.0,
-            })
+            timeseries.append(
+                {
+                    "date": d.isoformat(),
+                    "api_calls": 0,
+                    "tokens_used": 0,
+                    "cost_usd": 0.0,
+                }
+            )
 
     total_tokens = sum(t["input"] + t["output"] for t in tokens_by_provider.values())
 
@@ -166,7 +174,7 @@ async def get_deployment_stats(
     Returns:
         DeploymentStatsResponse with deployment metrics
     """
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(UTC) - timedelta(days=days)
     events = await analytics_store.get_events_since(since)
 
     # Aggregate deployment events
@@ -182,16 +190,18 @@ async def get_deployment_stats(
             status = data.get("status", "unknown")
             deployments_by_status[status] += 1
 
-            deployment_events.append({
-                "deployment_id": data.get("deployment_id"),
-                "agent_id": data.get("agent_id"),
-                "agent_name": data.get("agent_name"),
-                "status": status,
-                "created_at": event.get("created_at"),
-            })
+            deployment_events.append(
+                {
+                    "deployment_id": data.get("deployment_id"),
+                    "agent_id": data.get("agent_id"),
+                    "agent_name": data.get("agent_name"),
+                    "status": status,
+                    "created_at": event.get("created_at"),
+                }
+            )
 
             # Daily aggregation
-            event_date = event.get("created_at", datetime.utcnow()).date()
+            event_date = event.get("created_at", datetime.now(UTC)).date()
             daily_deployments[event_date]["total"] += 1
             if status == "running":
                 daily_deployments[event_date]["success"] += 1
@@ -200,32 +210,39 @@ async def get_deployment_stats(
 
     total_deployments = sum(deployments_by_status.values())
     successful_deployments = deployments_by_status.get("running", 0)
-    success_rate = (successful_deployments / total_deployments * 100) if total_deployments > 0 else 0
+    success_rate = (
+        (successful_deployments / total_deployments * 100) if total_deployments > 0 else 0
+    )
 
     # Build daily timeseries
     timeseries = []
     for i in range(days):
-        d = (date.today() - timedelta(days=days - i - 1))
+        d = date.today() - timedelta(days=days - i - 1)
         if d in daily_deployments:
-            timeseries.append({
-                "date": d.isoformat(),
-                "total": daily_deployments[d]["total"],
-                "successful": daily_deployments[d]["success"],
-                "failed": daily_deployments[d]["failed"],
-                "success_rate": round(
-                    (daily_deployments[d]["success"] / daily_deployments[d]["total"] * 100)
-                    if daily_deployments[d]["total"] > 0 else 0,
-                    2
-                ),
-            })
+            timeseries.append(
+                {
+                    "date": d.isoformat(),
+                    "total": daily_deployments[d]["total"],
+                    "successful": daily_deployments[d]["success"],
+                    "failed": daily_deployments[d]["failed"],
+                    "success_rate": round(
+                        (daily_deployments[d]["success"] / daily_deployments[d]["total"] * 100)
+                        if daily_deployments[d]["total"] > 0
+                        else 0,
+                        2,
+                    ),
+                }
+            )
         else:
-            timeseries.append({
-                "date": d.isoformat(),
-                "total": 0,
-                "successful": 0,
-                "failed": 0,
-                "success_rate": 0.0,
-            })
+            timeseries.append(
+                {
+                    "date": d.isoformat(),
+                    "total": 0,
+                    "successful": 0,
+                    "failed": 0,
+                    "success_rate": 0.0,
+                }
+            )
 
     return DeploymentStatsResponse(
         period_days=days,
@@ -257,7 +274,7 @@ async def get_performance_metrics(
     Returns:
         PerformanceMetricsResponse with performance data
     """
-    since = datetime.utcnow() - timedelta(days=days)
+    since = datetime.now(UTC) - timedelta(days=days)
     events = await analytics_store.get_events_since(since)
 
     # Aggregate performance metrics
@@ -276,7 +293,7 @@ async def get_performance_metrics(
         if event_type == "api_call":
             rt = data.get("response_time_ms")
             if rt is not None:
-                event_date = event.get("created_at", datetime.utcnow()).date()
+                event_date = event.get("created_at", datetime.now(UTC)).date()
                 if event_date not in daily_avg_response:
                     daily_avg_response[event_date] = []
                 daily_avg_response[event_date].append(rt)
@@ -287,28 +304,38 @@ async def get_performance_metrics(
     # Calculate daily averages
     daily_timeseries = []
     for i in range(days):
-        d = (date.today() - timedelta(days=days - i - 1))
+        d = date.today() - timedelta(days=days - i - 1)
         if d in daily_avg_response:
-            daily_timeseries.append({
-                "date": d.isoformat(),
-                "avg_response_time_ms": round(
-                    sum(daily_avg_response[d]) / len(daily_avg_response[d]), 2
-                ),
-                "request_count": len(daily_avg_response[d]),
-            })
+            daily_timeseries.append(
+                {
+                    "date": d.isoformat(),
+                    "avg_response_time_ms": round(
+                        sum(daily_avg_response[d]) / len(daily_avg_response[d]), 2
+                    ),
+                    "request_count": len(daily_avg_response[d]),
+                }
+            )
         else:
-            daily_timeseries.append({
-                "date": d.isoformat(),
-                "avg_response_time_ms": 0.0,
-                "request_count": 0,
-            })
+            daily_timeseries.append(
+                {
+                    "date": d.isoformat(),
+                    "avg_response_time_ms": 0.0,
+                    "request_count": 0,
+                }
+            )
 
     return PerformanceMetricsResponse(
         period_days=days,
         avg_response_time_ms=round(avg_response_time, 2),
-        p50_response_time_ms=round(sorted(response_times)[len(response_times) // 2], 2) if response_times else 0,
-        p95_response_time_ms=round(sorted(response_times)[int(len(response_times) * 0.95)], 2) if len(response_times) > 1 else 0,
-        p99_response_time_ms=round(sorted(response_times)[int(len(response_times) * 0.99)], 2) if len(response_times) > 1 else 0,
+        p50_response_time_ms=round(sorted(response_times)[len(response_times) // 2], 2)
+        if response_times
+        else 0,
+        p95_response_time_ms=round(sorted(response_times)[int(len(response_times) * 0.95)], 2)
+        if len(response_times) > 1
+        else 0,
+        p99_response_time_ms=round(sorted(response_times)[int(len(response_times) * 0.99)], 2)
+        if len(response_times) > 1
+        else 0,
         total_requests=len(response_times),
         daily_timeseries=daily_timeseries,
     )
@@ -373,7 +400,7 @@ async def seed_sample_data(days: int = 30) -> dict[str, str]:
         "/api/health",
     ]
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     events_created = 0
 
     # Generate data for each day
@@ -386,10 +413,13 @@ async def seed_sample_data(days: int = 30) -> dict[str, str]:
                 hours=randint(0, 23),
                 minutes=randint(0, 59),
             )
-            await analytics_store.add_event("api_call", {
-                "endpoint": choices(API_ENDPOINTS, weights=[40, 20, 20, 20])[0],
-                "response_time_ms": randint(50, 500),
-            })
+            await analytics_store.add_event(
+                "api_call",
+                {
+                    "endpoint": choices(API_ENDPOINTS, weights=[40, 20, 20, 20])[0],
+                    "response_time_ms": randint(50, 500),
+                },
+            )
             events_created += 1
 
         # LLM calls
@@ -400,12 +430,15 @@ async def seed_sample_data(days: int = 30) -> dict[str, str]:
             )
             provider = choices(LLM_PROVIDERS, weights=[50, 35, 15])[0]
 
-            await analytics_store.add_event("llm_call", {
-                "provider": provider,
-                "model": f"{provider}-model",
-                "input_tokens": randint(100, 5000),
-                "output_tokens": randint(50, 2000),
-            })
+            await analytics_store.add_event(
+                "llm_call",
+                {
+                    "provider": provider,
+                    "model": f"{provider}-model",
+                    "input_tokens": randint(100, 5000),
+                    "output_tokens": randint(50, 2000),
+                },
+            )
             events_created += 1
 
         # Deployments
@@ -416,12 +449,15 @@ async def seed_sample_data(days: int = 30) -> dict[str, str]:
             )
             status = "running" if randint(1, 100) <= 85 else "error"
 
-            await analytics_store.add_event("deployment", {
-                "deployment_id": f"seed-{deploy_time.strftime('%Y%m%d-%H%M%S')}",
-                "agent_id": f"agent-{randint(1000, 9999)}",
-                "agent_name": f"Seed Agent {randint(1, 100)}",
-                "status": status,
-            })
+            await analytics_store.add_event(
+                "deployment",
+                {
+                    "deployment_id": f"seed-{deploy_time.strftime('%Y%m%d-%H%M%S')}",
+                    "agent_id": f"agent-{randint(1000, 9999)}",
+                    "agent_name": f"Seed Agent {randint(1, 100)}",
+                    "status": status,
+                },
+            )
             events_created += 1
 
     return {

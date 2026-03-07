@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import verify_api_key
 from app.database.session import get_db
 from app.models.requests import OutputEventIngestRequest
 from app.models.responses import (
@@ -10,7 +11,7 @@ from app.models.responses import (
 )
 from app.services.output_persistence import get_output_persistence_service
 
-router = APIRouter(prefix="/api", tags=["outputs"])
+router = APIRouter(prefix="/api", tags=["outputs"], dependencies=[Depends(verify_api_key)])
 
 
 @router.post(

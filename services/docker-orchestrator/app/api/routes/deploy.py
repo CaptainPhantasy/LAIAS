@@ -6,12 +6,13 @@ Handles deployment of generated agents to Docker containers.
 
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import verify_api_key
 from app.database.session import get_db
 from app.middleware.rate_limit import RATE_LIMITS, limiter
 from app.models.requests import DeployAgentRequest
@@ -24,7 +25,7 @@ from app.utils.exceptions import (
     exception_to_http_response,
 )
 
-router = APIRouter(prefix="/api", tags=["deploy"])
+router = APIRouter(prefix="/api", tags=["deploy"], dependencies=[Depends(verify_api_key)])
 
 
 @limiter.limit(RATE_LIMITS["deployment"])
@@ -101,7 +102,7 @@ async def deploy_agent(
 
         if body.auto_start:
             await get_docker_service().start_container(container.id)
-            started_at = datetime.utcnow()
+            started_at = datetime.now(UTC)
             container_status = "running"
 
         try:
@@ -151,7 +152,7 @@ async def deploy_agent(
                     "cpu_limit": body.cpu_limit,
                     "memory_limit": body.memory_limit,
                     "environment_vars": json.dumps(body.environment_vars),
-                    "created_at": datetime.utcnow(),
+                    "created_at": datetime.now(UTC),
                     "started_at": started_at,
                 },
             )
@@ -189,7 +190,7 @@ async def deploy_agent(
             container_id=container.id,
             container_name=container.name,
             status=container_status,  # type: ignore
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
             started_at=started_at,
             logs_endpoint=f"{base_url}/api/containers/{container.id}/logs/stream",
             metrics_endpoint=f"/api/containers/{container.id}/metrics",

@@ -5,7 +5,7 @@ This creates realistic sample analytics data for testing the dashboard.
 Run this to populate analytics with demo data.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from random import choices, randint, uniform
 
 from app.services.analytics_store import analytics_store
@@ -35,7 +35,7 @@ async def seed_analytics(days: int = 30):
     """
     print(f"Seeding analytics with {days} days of sample data...")
 
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # Generate data for each day
     for day_offset in range(days, 0, -1):
@@ -49,10 +49,14 @@ async def seed_analytics(days: int = 30):
                 minutes=randint(0, 59),
             )
 
-            await analytics_store.add_event("api_call", {
-                "endpoint": choices(API_ENDPOINTS, weights=[40, 20, 20, 10, 10])[0],
-                "response_time_ms": randint(50, 500),
-            }, call_time)
+            await analytics_store.add_event(
+                "api_call",
+                {
+                    "endpoint": choices(API_ENDPOINTS, weights=[40, 20, 20, 10, 10])[0],
+                    "response_time_ms": randint(50, 500),
+                },
+                call_time,
+            )
 
         # Generate 5-20 LLM calls per day
         num_llm = randint(5, 20)
@@ -64,12 +68,16 @@ async def seed_analytics(days: int = 30):
             provider = choices(LLM_PROVIDERS, weights=[50, 35, 15])[0]
             model = MODELS[provider][0]
 
-            await analytics_store.add_event("llm_call", {
-                "provider": provider,
-                "model": model,
-                "input_tokens": randint(100, 5000),
-                "output_tokens": randint(50, 2000),
-            }, llm_time)
+            await analytics_store.add_event(
+                "llm_call",
+                {
+                    "provider": provider,
+                    "model": model,
+                    "input_tokens": randint(100, 5000),
+                    "output_tokens": randint(50, 2000),
+                },
+                llm_time,
+            )
 
         # Generate 1-5 deployments per day
         num_deployments = randint(1, 5)
@@ -81,12 +89,16 @@ async def seed_analytics(days: int = 30):
             # 85% success rate
             status = "running" if uniform(0, 1) < 0.85 else "error"
 
-            await analytics_store.add_event("deployment", {
-                "deployment_id": f"demo-{deploy_time.strftime('%Y%m%d-%H%M%S')}",
-                "agent_id": f"agent-{randint(1000, 9999)}",
-                "agent_name": f"Demo Agent {randint(1, 100)}",
-                "status": status,
-            }, deploy_time)
+            await analytics_store.add_event(
+                "deployment",
+                {
+                    "deployment_id": f"demo-{deploy_time.strftime('%Y%m%d-%H%M%S')}",
+                    "agent_id": f"agent-{randint(1000, 9999)}",
+                    "agent_name": f"Demo Agent {randint(1, 100)}",
+                    "status": status,
+                },
+                deploy_time,
+            )
 
     store_stats = analytics_store.get_stats()
     print("Seeding complete!")
@@ -102,7 +114,7 @@ async def add_event_with_time(self, event_type: str, event_data: dict, timestamp
         event = {
             "event_type": event_type,
             "event_data": event_data,
-            "created_at": timestamp or datetime.utcnow(),
+            "created_at": timestamp or datetime.now(UTC),
         }
         self._events.append(event)
         return event
@@ -125,4 +137,5 @@ async def run_seeder():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(run_seeder())

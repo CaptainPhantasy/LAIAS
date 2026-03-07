@@ -5,6 +5,7 @@ CRUD operations for saved agents.
 """
 
 from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -13,9 +14,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import DevUser, get_current_user
 from app.database.session import get_db
-from app.models.database import Agent
+from app.models.database import Agent, AgentVersion
 from app.models.requests import AgentUpdateRequest
-from app.models.responses import AgentDetailResponse, AgentListResponse
+from app.models.responses import (
+    AgentDetailResponse,
+    AgentListResponse,
+    AgentRollbackResponse,
+    AgentVersionListResponse,
+    AgentVersionResponse,
+)
 
 logger = structlog.get_logger()
 
@@ -133,6 +140,202 @@ async def get_agent(agent_id: str, db: AsyncSession = Depends(get_db)) -> AgentD
     return AgentDetailResponse(**agent_dict)
 
 
+@router.get(
+    "/agents/{agent_id}/versions",
+    response_model=AgentVersionListResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def list_agent_versions(
+    agent_id: str, db: AsyncSession = Depends(get_db)
+) -> AgentVersionListResponse:
+    agent_query = select(Agent).where(Agent.id == agent_id)
+    agent_result = await db.execute(agent_query)
+    agent = agent_result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agent {agent_id} not found"
+        )
+
+    versions_query = (
+        select(AgentVersion)
+        .where(AgentVersion.agent_id == agent_id)
+        .order_by(AgentVersion.version.desc())
+    )
+    versions_result = await db.execute(versions_query)
+    historical_versions = versions_result.scalars().all()
+
+    response_versions = [
+        AgentVersionResponse(**version_record.to_dict(), is_current=False)
+        for version_record in historical_versions
+        if version_record.version != agent.version
+    ]
+
+    response_versions.append(
+        AgentVersionResponse(
+            id=None,
+            agent_id=agent.id,
+            version=agent.version,
+            flow_code=agent.flow_code,
+            agents_yaml=agent.agents_yaml,
+            state_class=agent.state_class,
+            requirements=agent.requirements or [],
+            validation_status=agent.validation_status or {},
+            flow_diagram=agent.flow_diagram,
+            created_at=agent.updated_at,
+            change_summary="Current active version",
+            is_current=True,
+        )
+    )
+    response_versions.sort(key=lambda record: record.version, reverse=True)
+
+    return AgentVersionListResponse(
+        agent_id=agent.id,
+        current_version=agent.version,
+        latest_version=agent.latest_version,
+        versions=response_versions,
+    )
+
+
+@router.get(
+    "/agents/{agent_id}/versions/{version}",
+    response_model=AgentVersionResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def get_agent_version(
+    agent_id: str, version: int, db: AsyncSession = Depends(get_db)
+) -> AgentVersionResponse:
+    agent_query = select(Agent).where(Agent.id == agent_id)
+    agent_result = await db.execute(agent_query)
+    agent = agent_result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agent {agent_id} not found"
+        )
+
+    if version == agent.version:
+        return AgentVersionResponse(
+            id=None,
+            agent_id=agent.id,
+            version=agent.version,
+            flow_code=agent.flow_code,
+            agents_yaml=agent.agents_yaml,
+            state_class=agent.state_class,
+            requirements=agent.requirements or [],
+            validation_status=agent.validation_status or {},
+            flow_diagram=agent.flow_diagram,
+            created_at=agent.updated_at,
+            change_summary="Current active version",
+            is_current=True,
+        )
+
+    version_query = select(AgentVersion).where(
+        AgentVersion.agent_id == agent_id,
+        AgentVersion.version == version,
+    )
+    version_result = await db.execute(version_query)
+    version_record = version_result.scalar_one_or_none()
+
+    if not version_record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Version {version} not found for agent {agent_id}",
+        )
+
+    return AgentVersionResponse(**version_record.to_dict(), is_current=False)
+
+
+@router.post(
+    "/agents/{agent_id}/versions/{version}/rollback",
+    response_model=AgentRollbackResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def rollback_agent_version(
+    agent_id: str, version: int, db: AsyncSession = Depends(get_db)
+) -> AgentRollbackResponse:
+    agent_query = select(Agent).where(Agent.id == agent_id)
+    agent_result = await db.execute(agent_query)
+    agent = agent_result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Agent {agent_id} not found"
+        )
+
+    if version == agent.version:
+        return AgentRollbackResponse(
+            agent_id=agent.id,
+            from_version=agent.version,
+            rolled_back_to_version=version,
+            new_version=agent.version,
+        )
+
+    version_query = select(AgentVersion).where(
+        AgentVersion.agent_id == agent_id,
+        AgentVersion.version == version,
+    )
+    version_result = await db.execute(version_query)
+    target_version = version_result.scalar_one_or_none()
+
+    if not target_version:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Version {version} not found for agent {agent_id}",
+        )
+
+    current_snapshot_query = select(AgentVersion).where(
+        AgentVersion.agent_id == agent.id,
+        AgentVersion.version == agent.version,
+    )
+    current_snapshot_result = await db.execute(current_snapshot_query)
+    current_snapshot = current_snapshot_result.scalar_one_or_none()
+    if not current_snapshot:
+        db.add(
+            AgentVersion(
+                agent_id=agent.id,
+                version=agent.version,
+                flow_code=agent.flow_code,
+                agents_yaml=agent.agents_yaml,
+                state_class=agent.state_class,
+                requirements=agent.requirements or [],
+                validation_status=agent.validation_status or {},
+                flow_diagram=agent.flow_diagram,
+                change_summary=f"Saved before rollback to version {version}",
+            )
+        )
+
+    previous_version = agent.version
+    next_version = max(agent.latest_version, agent.version) + 1
+
+    agent.flow_code = target_version.flow_code or ""
+    agent.agents_yaml = target_version.agents_yaml
+    agent.state_class = target_version.state_class
+    agent.requirements = target_version.requirements or []
+    agent.validation_status = target_version.validation_status or {}
+    agent.flow_diagram = target_version.flow_diagram
+    agent.version = next_version
+    agent.latest_version = next_version
+    agent.updated_at = datetime.now(UTC)
+
+    await db.commit()
+
+    logger.info(
+        "Agent rolled back to historical version",
+        agent_id=agent_id,
+        from_version=previous_version,
+        restored_version=version,
+        new_version=next_version,
+    )
+
+    return AgentRollbackResponse(
+        agent_id=agent.id,
+        from_version=previous_version,
+        rolled_back_to_version=version,
+        new_version=next_version,
+    )
+
+
 @router.put("/agents/{agent_id}", status_code=status.HTTP_200_OK)
 async def update_agent(
     agent_id: str, request: AgentUpdateRequest, db: AsyncSession = Depends(get_db)
@@ -164,14 +367,21 @@ async def update_agent(
     if request.is_active is not None:
         agent.is_active = request.is_active
     if request.tags is not None:
-        # Store tags in requirements or add as JSON field
-        if agent.requirements is None:
-            agent.requirements = {}
-        agent.requirements["tags"] = request.tags
+        requirements_data: dict[str, Any] = {}
+        if isinstance(agent.requirements, dict):
+            requirements_data.update(agent.requirements)
+        elif isinstance(agent.requirements, list):
+            requirements_data["packages"] = agent.requirements
+        requirements_data["tags"] = request.tags
+        agent.requirements = requirements_data
     if request.version_notes is not None:
-        if agent.requirements is None:
-            agent.requirements = {}
-        agent.requirements["version_notes"] = request.version_notes
+        requirements_data: dict[str, Any] = {}
+        if isinstance(agent.requirements, dict):
+            requirements_data.update(agent.requirements)
+        elif isinstance(agent.requirements, list):
+            requirements_data["packages"] = agent.requirements
+        requirements_data["version_notes"] = request.version_notes
+        agent.requirements = requirements_data
 
     agent.updated_at = datetime.now(UTC)
     await db.commit()

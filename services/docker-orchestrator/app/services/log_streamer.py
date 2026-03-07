@@ -6,7 +6,7 @@ Provides async log streaming with filtering and parsing.
 
 import json
 from collections.abc import AsyncGenerator
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 import docker
@@ -178,7 +178,7 @@ class LogStreamer:
             except ValueError:
                 timestamp = timestamp_str
         else:
-            timestamp = datetime.utcnow().isoformat() + "Z"
+            timestamp = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             message = line
 
         # Detect log level from message

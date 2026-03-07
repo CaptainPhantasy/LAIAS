@@ -211,6 +211,41 @@ class AgentDetailResponse(BaseModel):
     updated_at: datetime | None = Field(default=None, description="Last update time")
 
 
+class AgentVersionResponse(BaseModel):
+    id: int | None = Field(default=None, description="Version row ID")
+    agent_id: str = Field(..., description="Agent identifier")
+    version: int = Field(..., description="Version number")
+    flow_code: str = Field(..., description="Generated flow code for this version")
+    agents_yaml: str | None = Field(default=None, description="Agents YAML for this version")
+    state_class: str | None = Field(default=None, description="State class code for this version")
+    requirements: list[Any] | dict[str, Any] = Field(
+        default_factory=list, description="Requirements for this version"
+    )
+    validation_status: dict[str, Any] = Field(
+        default_factory=dict, description="Validation status for this version"
+    )
+    flow_diagram: str | None = Field(default=None, description="Flow diagram for this version")
+    created_at: datetime | None = Field(default=None, description="Version creation timestamp")
+    change_summary: str | None = Field(default=None, description="Summary of changes")
+    is_current: bool = Field(default=False, description="Whether this is current agent version")
+
+
+class AgentVersionListResponse(BaseModel):
+    agent_id: str = Field(..., description="Agent identifier")
+    current_version: int = Field(..., description="Current version number")
+    latest_version: int = Field(..., description="Latest version number")
+    versions: list[AgentVersionResponse] = Field(
+        default_factory=list, description="Version history"
+    )
+
+
+class AgentRollbackResponse(BaseModel):
+    agent_id: str = Field(..., description="Agent identifier")
+    from_version: int = Field(..., description="Version before rollback")
+    rolled_back_to_version: int = Field(..., description="Historical version used for rollback")
+    new_version: int = Field(..., description="New current version after rollback")
+
+
 class ErrorResponse(BaseModel):
     """Standard error response."""
 

@@ -4,7 +4,7 @@ Response models for Docker Orchestrator API.
 Pydantic models for API response serialization.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
@@ -127,7 +127,7 @@ class HealthResponse(BaseModel):
     redis_connected: bool = Field(..., description="Redis connection status")
     uptime_seconds: float = Field(..., description="Service uptime in seconds")
     container_count: int = Field(..., description="Current number of containers")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config: ClassVar[ConfigDict] = ConfigDict()
 
@@ -142,7 +142,7 @@ class ErrorResponse(BaseModel):
     error_code: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable error message")
     detail: str | None = Field(None, description="Additional error details")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
     model_config: ClassVar[ConfigDict] = ConfigDict()
 

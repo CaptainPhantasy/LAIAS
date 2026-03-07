@@ -5,16 +5,16 @@ POST /api/generate-agent
 Generates CrewAI agent code from natural language description.
 """
 
-
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import DevUser, get_current_user
 from app.database.session import get_db
 from app.middleware.rate_limit import RATE_LIMITS, limiter
-from app.models.database import Agent
+from app.models.database import Agent, AgentVersion
 from app.models.requests import GenerateAgentRequest
 from app.models.responses import GenerateAgentResponse
 from app.services.code_generator import get_code_generator
@@ -83,34 +83,89 @@ async def generate_agent(
         try:
             import uuid as uuid_lib
 
-            agent_record = Agent(
-                id=response.agent_id,
-                name=response.agent_name,
-                description=body.description,
-                flow_code=response.flow_code,
-                agents_yaml=response.agents_yaml,
-                state_class=response.state_class,
-                complexity=body.complexity,
-                task_type=body.task_type,
-                tools=[t.model_dump() for t in response.agents_created]
-                if response.agents_created
-                else [],
-                requirements=response.requirements,
-                llm_provider=body.llm_provider,
-                model=body.model
-                if body.model and body.model.lower() != "default"
-                else get_llm_service()._get_model_for_provider(body.llm_provider),
-                estimated_cost_per_run=response.estimated_cost_per_run,
-                complexity_score=response.complexity_score,
-                validation_status=response.validation_status.model_dump()
-                if response.validation_status
-                else {},
-                flow_diagram=response.flow_diagram,
-                owner_id=uuid_lib.UUID(current_user.id)
+            owner_id = (
+                uuid_lib.UUID(current_user.id)
                 if current_user.id != "00000000-0000-0000-0000-000000000000"
-                else None,
+                else None
             )
-            db.add(agent_record)
+            query = select(Agent).where(Agent.id == response.agent_id)
+            result = await db.execute(query)
+            existing_agent = result.scalar_one_or_none()
+
+            if existing_agent:
+                db.add(
+                    AgentVersion(
+                        agent_id=existing_agent.id,
+                        version=existing_agent.version,
+                        flow_code=existing_agent.flow_code,
+                        agents_yaml=existing_agent.agents_yaml,
+                        state_class=existing_agent.state_class,
+                        requirements=existing_agent.requirements or [],
+                        validation_status=existing_agent.validation_status or {},
+                        flow_diagram=existing_agent.flow_diagram,
+                        change_summary="Previous version saved before regeneration",
+                    )
+                )
+                next_version = max(existing_agent.latest_version, existing_agent.version) + 1
+                existing_agent.name = response.agent_name
+                existing_agent.description = body.description
+                existing_agent.flow_code = response.flow_code
+                existing_agent.agents_yaml = response.agents_yaml
+                existing_agent.state_class = response.state_class
+                existing_agent.complexity = body.complexity
+                existing_agent.task_type = body.task_type
+                existing_agent.tools = (
+                    [t.model_dump() for t in response.agents_created]
+                    if response.agents_created
+                    else []
+                )
+                existing_agent.requirements = response.requirements
+                existing_agent.llm_provider = body.llm_provider
+                existing_agent.model = (
+                    body.model
+                    if body.model and body.model.lower() != "default"
+                    else get_llm_service()._get_model_for_provider(body.llm_provider)
+                )
+                existing_agent.estimated_cost_per_run = response.estimated_cost_per_run
+                existing_agent.complexity_score = response.complexity_score
+                existing_agent.validation_status = (
+                    response.validation_status.model_dump() if response.validation_status else {}
+                )
+                existing_agent.flow_diagram = response.flow_diagram
+                if existing_agent.owner_id is None:
+                    existing_agent.owner_id = owner_id
+                existing_agent.version = next_version
+                existing_agent.latest_version = next_version
+            else:
+                agent_record = Agent(
+                    id=response.agent_id,
+                    name=response.agent_name,
+                    description=body.description,
+                    flow_code=response.flow_code,
+                    agents_yaml=response.agents_yaml,
+                    state_class=response.state_class,
+                    complexity=body.complexity,
+                    task_type=body.task_type,
+                    tools=[t.model_dump() for t in response.agents_created]
+                    if response.agents_created
+                    else [],
+                    requirements=response.requirements,
+                    llm_provider=body.llm_provider,
+                    model=body.model
+                    if body.model and body.model.lower() != "default"
+                    else get_llm_service()._get_model_for_provider(body.llm_provider),
+                    estimated_cost_per_run=response.estimated_cost_per_run,
+                    complexity_score=response.complexity_score,
+                    validation_status=response.validation_status.model_dump()
+                    if response.validation_status
+                    else {},
+                    flow_diagram=response.flow_diagram,
+                    owner_id=owner_id,
+                    version=1,
+                    latest_version=1,
+                )
+                db.add(agent_record)
+
             await db.commit()
             logger.info("Agent persisted to database", agent_id=response.agent_id)
         except Exception as db_err:
@@ -159,7 +214,7 @@ async def generate_and_deploy(
 
     # Persist to database
     try:
-        from datetime import datetime as dt
+        from datetime import UTC, datetime
 
         agent_record = Agent(
             id=response.agent_id,
@@ -169,7 +224,7 @@ async def generate_and_deploy(
             agents_yaml=response.agents_yaml,
             requirements=response.requirements,
             owner_id=current_user.id,
-            created_at=dt.utcnow(),
+            created_at=datetime.now(UTC),
         )
         db.add(agent_record)
         await db.commit()
@@ -204,9 +259,9 @@ async def generate_and_deploy(
             agent_record = result.scalar_one_or_none()
             if agent_record:
                 agent_record.deployed_count = (agent_record.deployed_count or 0) + 1
-                from datetime import datetime as dt
+                from datetime import UTC, datetime
 
-                agent_record.last_deployed = dt.utcnow()
+                agent_record.last_deployed = datetime.now(UTC)
                 await db.commit()
         except Exception:
             pass  # Non-fatal
@@ -289,7 +344,11 @@ async def deploy_agent_proxy(request: Request, body: DeployProxyRequest):
 @limiter.limit(RATE_LIMITS["generation"])
 @router.post("/regenerate", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK)
 async def regenerate_agent(
-    request: Request, agent_id: str, feedback: str, previous_code: str
+    request: Request,
+    agent_id: str,
+    feedback: str,
+    previous_code: str,
+    db: AsyncSession = Depends(get_db),
 ) -> GenerateAgentResponse:
     """
     Regenerate an agent based on feedback.
@@ -306,9 +365,50 @@ async def regenerate_agent(
             agent_id=agent_id, feedback=feedback, previous_code=previous_code
         )
 
+        query = select(Agent).where(Agent.id == agent_id)
+        result = await db.execute(query)
+        agent_record = result.scalar_one_or_none()
+        if not agent_record:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Agent {agent_id} not found",
+            )
+
+        db.add(
+            AgentVersion(
+                agent_id=agent_record.id,
+                version=agent_record.version,
+                flow_code=agent_record.flow_code,
+                agents_yaml=agent_record.agents_yaml,
+                state_class=agent_record.state_class,
+                requirements=agent_record.requirements or [],
+                validation_status=agent_record.validation_status or {},
+                flow_diagram=agent_record.flow_diagram,
+                change_summary=feedback,
+            )
+        )
+
+        next_version = max(agent_record.latest_version, agent_record.version) + 1
+        agent_record.flow_code = response.flow_code
+        agent_record.agents_yaml = response.agents_yaml
+        agent_record.state_class = response.state_class
+        agent_record.requirements = response.requirements
+        agent_record.validation_status = (
+            response.validation_status.model_dump() if response.validation_status else {}
+        )
+        agent_record.flow_diagram = response.flow_diagram
+        agent_record.estimated_cost_per_run = response.estimated_cost_per_run
+        agent_record.complexity_score = response.complexity_score
+        agent_record.version = next_version
+        agent_record.latest_version = next_version
+        await db.commit()
+
         return response
 
+    except HTTPException:
+        raise
     except Exception as e:
+        await db.rollback()
         logger.error("Agent regeneration failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

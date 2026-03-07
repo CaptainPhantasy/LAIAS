@@ -1,131 +1,150 @@
-"""
-In-memory analytics storage service.
-
-Stores analytics events for the dashboard.
-Can be extended to use PostgreSQL for persistence.
-"""
-
 import asyncio
 from collections import deque
+from collections.abc import Coroutine
 from datetime import UTC, datetime, timedelta
+from threading import Thread
+from typing import Any, TypeVar
 
-MIN_UTC_DATETIME = datetime.min.replace(tzinfo=UTC)
+from sqlalchemy import delete, func, select
+
+from app.database import async_session_factory
+from app.models.database import AnalyticsEvent
+
+T = TypeVar("T")
 
 
 class AnalyticsStore:
-    """
-    In-memory store for analytics events.
-
-    Events are stored in a deque with max size to prevent memory issues.
-    For production, this should be replaced with PostgreSQL.
-    """
-
     def __init__(self, max_events: int = 10000):
-        self._events: deque = deque(maxlen=max_events)
+        self._max_events = max_events
+        self._events: deque[dict[str, Any]] = deque(maxlen=max_events)
         self._lock = asyncio.Lock()
 
-    async def add_event(self, event_type: str, event_data: dict) -> dict:
-        """
-        Add an analytics event.
+    @staticmethod
+    def _to_event_dict(event: AnalyticsEvent) -> dict[str, Any]:
+        created_at = event.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=UTC)
 
-        Args:
-            event_type: Type of event (api_call, llm_call, deployment, etc.)
-            event_data: Event-specific data
+        return {
+            "event_type": event.event_type,
+            "event_data": event.event_data or {},
+            "created_at": created_at,
+        }
 
-        Returns:
-            The created event record
-        """
-        async with self._lock:
-            event = {
-                "event_type": event_type,
-                "event_data": event_data,
-                "created_at": datetime.now(UTC),
-            }
-            self._events.append(event)
-            return event
+    async def add_event(self, event_type: str, event_data: dict[str, Any]) -> dict[str, Any]:
+        record = AnalyticsEvent(
+            event_type=event_type,
+            event_data=event_data,
+            created_at=datetime.now(UTC),
+        )
 
-    async def get_events_since(self, since: datetime) -> list[dict]:
-        """
-        Get all events since a given timestamp.
+        async with async_session_factory() as session:
+            session.add(record)
+            await session.commit()
+            await session.refresh(record)
 
-        Args:
-            since: Datetime to filter from
+        return self._to_event_dict(record)
 
-        Returns:
-            List of events
-        """
-        async with self._lock:
-            return [e for e in self._events if e.get("created_at", MIN_UTC_DATETIME) >= since]
+    async def get_events_since(self, since: datetime) -> list[dict[str, Any]]:
+        statement = (
+            select(AnalyticsEvent)
+            .where(AnalyticsEvent.created_at >= since)
+            .order_by(AnalyticsEvent.created_at.asc(), AnalyticsEvent.id.asc())
+        )
+
+        async with async_session_factory() as session:
+            result = await session.execute(statement)
+            events = result.scalars().all()
+
+        return [self._to_event_dict(event) for event in events]
 
     async def get_events_by_type(
         self, event_type: str, since: datetime | None = None
-    ) -> list[dict]:
-        """
-        Get events of a specific type.
+    ) -> list[dict[str, Any]]:
+        statement = select(AnalyticsEvent).where(AnalyticsEvent.event_type == event_type)
+        if since is not None:
+            statement = statement.where(AnalyticsEvent.created_at >= since)
 
-        Args:
-            event_type: Type of event to filter
-            since: Optional datetime filter
+        statement = statement.order_by(AnalyticsEvent.created_at.asc(), AnalyticsEvent.id.asc())
 
-        Returns:
-            List of filtered events
-        """
-        events = (
-            await self.get_events_since(since or MIN_UTC_DATETIME) if since else list(self._events)
+        async with async_session_factory() as session:
+            result = await session.execute(statement)
+            events = result.scalars().all()
+
+        return [self._to_event_dict(event) for event in events]
+
+    async def get_recent_events(self, limit: int = 100) -> list[dict[str, Any]]:
+        if limit <= 0:
+            return []
+
+        statement = (
+            select(AnalyticsEvent)
+            .order_by(AnalyticsEvent.created_at.desc(), AnalyticsEvent.id.desc())
+            .limit(limit)
         )
 
-        return [e for e in events if e.get("event_type") == event_type]
+        async with async_session_factory() as session:
+            result = await session.execute(statement)
+            events = result.scalars().all()
 
-    async def get_recent_events(self, limit: int = 100) -> list[dict]:
-        """
-        Get the most recent events.
-
-        Args:
-            limit: Maximum number of events to return
-
-        Returns:
-            List of recent events
-        """
-        async with self._lock:
-            events = list(self._events)
-            return events[-limit:] if limit < len(events) else events
+        event_dicts = [self._to_event_dict(event) for event in events]
+        event_dicts.reverse()
+        return event_dicts
 
     async def clear_old_events(self, older_than_days: int = 90) -> int:
-        """
-        Remove events older than specified days.
-
-        Args:
-            older_than_days: Remove events older than this many days
-
-        Returns:
-            Number of events removed
-        """
         cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
-        removed = 0
 
-        async with self._lock:
-            original_size = len(self._events)
-            self._events = deque(
-                (e for e in self._events if e.get("created_at", MIN_UTC_DATETIME) >= cutoff),
-                maxlen=self._events.maxlen,
-            )
-            removed = original_size - len(self._events)
+        statement = delete(AnalyticsEvent).where(AnalyticsEvent.created_at < cutoff)
 
-        return removed
+        async with async_session_factory() as session:
+            result = await session.execute(statement)
+            await session.commit()
 
-    def get_stats(self) -> dict:
-        """
-        Get storage statistics.
+        return int(result.rowcount or 0)
 
-        Returns:
-            Dict with count and max size
-        """
+    async def _count_events(self) -> int:
+        statement = select(func.count()).select_from(AnalyticsEvent)
+
+        async with async_session_factory() as session:
+            result = await session.execute(statement)
+            total_events = result.scalar_one()
+
+        return int(total_events)
+
+    def _run_sync(self, coroutine: Coroutine[Any, Any, T]) -> T:
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(coroutine)
+
+        output: dict[str, Any] = {}
+        failure: dict[str, Exception] = {}
+
+        def runner() -> None:
+            try:
+                output["value"] = asyncio.run(coroutine)
+            except Exception as exc:
+                failure["error"] = exc
+
+        thread = Thread(target=runner, daemon=True)
+        thread.start()
+        thread.join()
+
+        if "error" in failure:
+            raise failure["error"]
+
+        return output["value"]
+
+    def get_stats(self) -> dict[str, int | float]:
+        total_events = self._run_sync(self._count_events())
+        max_events = int(self._max_events)
+        utilization = round((total_events / max_events) * 100, 2) if max_events > 0 else 0.0
+
         return {
-            "total_events": len(self._events),
-            "max_events": self._events.maxlen,
-            "utilization": round(len(self._events) / self._events.maxlen * 100, 2),
+            "total_events": total_events,
+            "max_events": max_events,
+            "utilization": utilization,
         }
 
 
-# Global singleton instance
 analytics_store = AnalyticsStore()

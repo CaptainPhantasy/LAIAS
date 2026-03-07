@@ -1,12 +1,13 @@
 import os
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 
+from app.api.auth import verify_api_key
 from app.config import settings
 from app.models.responses import FileBrowserEntry, FileBrowserResponse
 
-router = APIRouter(prefix="/api", tags=["filesystem"])
+router = APIRouter(prefix="/api", tags=["filesystem"], dependencies=[Depends(verify_api_key)])
 
 
 class MkdirRequest(BaseModel):

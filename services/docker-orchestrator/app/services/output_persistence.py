@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import aiofiles
@@ -110,7 +110,7 @@ class OutputPersistenceService:
         deployment_id: str,
         event: OutputEventIngestRequest,
     ) -> bool:
-        event_timestamp = event.timestamp or datetime.utcnow()
+        event_timestamp = event.timestamp or datetime.now(UTC)
 
         metadata = {
             "run_id": event.run_id,
@@ -203,7 +203,7 @@ class OutputPersistenceService:
             return False
 
     async def _write_files(self, deployment_id: str, event: OutputEventIngestRequest) -> bool:
-        event_timestamp = event.timestamp or datetime.utcnow()
+        event_timestamp = event.timestamp or datetime.now(UTC)
         deployment_config = self._load_deployment_config(deployment_id)
         output_path = str(deployment_config.get("output_path", settings.AGENT_OUTPUT_PATH))
         output_format = str(deployment_config.get("output_format", "markdown")).lower()

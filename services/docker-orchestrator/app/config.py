@@ -4,10 +4,14 @@ Configuration management for Docker Orchestrator.
 Uses pydantic-settings for type-safe configuration with environment variables.
 """
 
+import importlib
 from typing import ClassVar
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+
+pydantic_settings = importlib.import_module("pydantic_settings")
+BaseSettings = pydantic_settings.BaseSettings
+SettingsConfigDict = pydantic_settings.SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -48,6 +52,10 @@ class Settings(BaseSettings):
     DOCKER_NETWORK: str = Field(
         default="laias-network", description="Docker network for agent containers"
     )
+    CONTAINER_RUNTIME: str = Field(
+        default="docker",
+        description="Container runtime backend (currently supported: docker)",
+    )
     AGENT_IMAGE_BASE: str = Field(
         default="laias/agent-runner:latest", description="Base image for agent containers"
     )
@@ -78,8 +86,24 @@ class Settings(BaseSettings):
     CONTAINER_STOP_TIMEOUT: int = Field(
         default=10, ge=1, le=60, description="Seconds to wait before force stopping container"
     )
+    CONTAINER_MAX_RESTART_COUNT: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Maximum on-failure restart attempts per container",
+    )
     MAX_CONTAINERS: int = Field(
         default=50, ge=1, le=200, description="Maximum number of concurrent agent containers"
+    )
+    GC_INTERVAL_SECONDS: int = Field(
+        default=3600,
+        ge=60,
+        description="Interval in seconds between container garbage collection runs",
+    )
+    GC_MAX_AGE_HOURS: int = Field(
+        default=24,
+        ge=1,
+        description="Maximum age in hours for stopped/error containers before cleanup",
     )
 
     # -----------------------------------------------------------------------------
@@ -157,6 +181,18 @@ class Settings(BaseSettings):
         if not re.match(r"^\d+[mg]$", v.lower()):
             raise ValueError(f"Invalid memory limit format: {v}")
         return v.lower()
+
+    @field_validator("CONTAINER_RUNTIME")
+    @classmethod
+    def validate_container_runtime(cls, v: str) -> str:
+        """Validate supported container runtime values."""
+        value = v.lower()
+        supported_runtimes = {"docker"}
+        if value not in supported_runtimes:
+            raise ValueError(
+                f"Unsupported CONTAINER_RUNTIME '{v}'. Supported values: {sorted(supported_runtimes)}"
+            )
+        return value
 
 
 # Global settings instance

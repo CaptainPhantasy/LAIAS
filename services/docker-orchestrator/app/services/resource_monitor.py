@@ -5,7 +5,7 @@ Provides real-time CPU, memory, and network metrics.
 """
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 import structlog
@@ -57,7 +57,7 @@ class ResourceMonitor:
 
         # Calculate uptime
         created = datetime.fromisoformat(container.attrs["Created"].replace("Z", "+00:00"))
-        uptime_seconds = int((datetime.utcnow() - created).total_seconds())
+        uptime_seconds = int((datetime.now(UTC) - created).total_seconds())
 
         # Build response
         metrics = MetricsResponse(
@@ -68,7 +68,7 @@ class ResourceMonitor:
             network_rx_bytes=stats["network_rx_bytes"],
             network_tx_bytes=stats["network_tx_bytes"],
             uptime_seconds=uptime_seconds,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
         )
 
         # Cache the result
@@ -76,9 +76,7 @@ class ResourceMonitor:
 
         return metrics
 
-    async def get_metrics_batch(
-        self, container_ids: list[str]
-    ) -> dict[str, MetricsResponse]:
+    async def get_metrics_batch(self, container_ids: list[str]) -> dict[str, MetricsResponse]:
         """
         Get metrics for multiple containers concurrently.
 
@@ -88,10 +86,7 @@ class ResourceMonitor:
         Returns:
             Dict mapping container_id to MetricsResponse
         """
-        tasks = [
-            self._get_metrics_safe(cid)
-            for cid in container_ids
-        ]
+        tasks = [self._get_metrics_safe(cid) for cid in container_ids]
 
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -109,9 +104,7 @@ class ResourceMonitor:
 
         return metrics_map
 
-    async def _get_metrics_safe(
-        self, container_id: str
-    ) -> MetricsResponse | None:
+    async def _get_metrics_safe(self, container_id: str) -> MetricsResponse | None:
         """Get metrics safely, returning None on error."""
         try:
             return await self.get_metrics(container_id)
@@ -152,9 +145,7 @@ class ResourceMonitor:
 
         return snapshots
 
-    async def get_resource_summary(
-        self, container_ids: list[str] = None
-    ) -> dict[str, Any]:
+    async def get_resource_summary(self, container_ids: list[str] = None) -> dict[str, Any]:
         """
         Get aggregate resource summary for all or specified containers.
 
@@ -189,7 +180,7 @@ class ResourceMonitor:
             "total_memory_mb": round(total_memory, 2),
             "total_network_rx": total_rx,
             "total_network_tx": total_tx,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
 
     async def detect_high_usage(
@@ -208,11 +199,7 @@ class ResourceMonitor:
             List of containers exceeding thresholds
         """
         containers = await self.docker_service.list_containers(all=True)
-        running_ids = [
-            c["container_id"]
-            for c in containers
-            if c["status"] == "running"
-        ]
+        running_ids = [c["container_id"] for c in containers if c["status"] == "running"]
 
         metrics = await self.get_metrics_batch(running_ids)
         alerts = []
@@ -232,14 +219,16 @@ class ResourceMonitor:
                 issues.append(f"Memory {memory_percent:.1f}% > {memory_threshold}%")
 
             if issues:
-                alerts.append({
-                    "container_id": cid,
-                    "container_name": container.name,
-                    "deployment_id": container.labels.get("deployment_id", ""),
-                    "issues": issues,
-                    "cpu_percent": m.cpu_percent,
-                    "memory_percent": round(memory_percent, 1),
-                })
+                alerts.append(
+                    {
+                        "container_id": cid,
+                        "container_name": container.name,
+                        "deployment_id": container.labels.get("deployment_id", ""),
+                        "issues": issues,
+                        "cpu_percent": m.cpu_percent,
+                        "memory_percent": round(memory_percent, 1),
+                    }
+                )
 
         return alerts
 
@@ -247,14 +236,14 @@ class ResourceMonitor:
         """Get metrics from cache if not expired."""
         if container_id in self._cache:
             metrics, timestamp = self._cache[container_id]
-            age = (datetime.utcnow() - timestamp).total_seconds()
+            age = (datetime.now(UTC) - timestamp).total_seconds()
             if age < self._cache_ttl:
                 return metrics
         return None
 
     def _add_to_cache(self, container_id: str, metrics: MetricsResponse) -> None:
         """Add metrics to cache."""
-        self._cache[container_id] = (metrics, datetime.utcnow())
+        self._cache[container_id] = (metrics, datetime.now(UTC))
 
     def clear_cache(self, container_id: str | None = None) -> None:
         """Clear cache for a container or all containers."""

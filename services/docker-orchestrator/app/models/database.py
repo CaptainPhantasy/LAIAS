@@ -5,11 +5,21 @@ These models would be used if orchestrator needs to persist
 deployment records. For now, Docker labels provide the source of truth.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.orm import declarative_base, relationship
 
 Base = declarative_base()
 
@@ -40,7 +50,7 @@ class DeploymentRecord(Base):
     auto_start = Column(Boolean, default=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     started_at = Column(DateTime)
     stopped_at = Column(DateTime)
 
@@ -65,9 +75,18 @@ class DeploymentLog(Base):
     deployment_id = Column(String, ForeignKey("deployments.id"), index=True)
 
     # Log entry
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    timestamp = Column(DateTime, default=lambda: datetime.now(UTC), index=True)
     level = Column(String, index=True)  # DEBUG, INFO, WARNING, ERROR
     message = Column(Text)
     source = Column(String)  # flow, agent, system
 
     deployment = relationship("DeploymentRecord", back_populates="logs")
+
+
+class AnalyticsEvent(Base):
+    __tablename__ = "analytics_events"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    event_type = Column(String, index=True, nullable=False)
+    event_data = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC), index=True, nullable=False)

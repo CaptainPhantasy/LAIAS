@@ -7,12 +7,13 @@ Provides a stateless endpoint for converting content between formats
 
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from app.api.auth import verify_api_key
 from app.services.format_converter import get_format_converter
 
-router = APIRouter(prefix="/api", tags=["convert"])
+router = APIRouter(prefix="/api", tags=["convert"], dependencies=[Depends(verify_api_key)])
 
 
 # =============================================================================

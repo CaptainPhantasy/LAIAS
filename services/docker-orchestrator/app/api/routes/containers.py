@@ -4,9 +4,9 @@ Container management endpoints.
 Provides CRUD operations for agent containers.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.models.responses import ContainerInfo, ContainerListResponse
 from app.services.docker_service import get_docker_service
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/api", tags=["containers"])
     description="List all LAIAS agent containers",
 )
 async def list_containers(
-    status: str | None = None,
+    status_filter: str | None = Query(default=None, alias="status"),
     all_containers: bool = True,
     limit: int = 100,
     offset: int = 0,
@@ -47,13 +47,15 @@ async def list_containers(
         containers = await get_docker_service().list_containers(all=all_containers)
 
         # Apply status filter if provided (and not 'all')
-        if status and status.lower() != 'all':
+        if status_filter and status_filter.lower() != "all":
             # Handle both exact match and partial match (e.g., "running" matches "running")
-            containers = [c for c in containers if status.lower() in c.get("status", "").lower()]
+            containers = [
+                c for c in containers if status_filter.lower() in c.get("status", "").lower()
+            ]
 
         # Apply pagination
         total = len(containers)
-        containers = containers[offset:offset + limit]
+        containers = containers[offset : offset + limit]
 
         # Enrich with metrics
         enriched_containers = []
@@ -137,30 +139,31 @@ async def get_container(container_id: str) -> ContainerInfo:
     """
     try:
         container = await get_docker_service().get_container(container_id)
+        if not container:
+            raise exception_to_http_response(ContainerNotFoundError(container_id))
+        assert container is not None
 
         # Get metrics
         metrics = await get_resource_monitor().get_metrics(container_id)
+        labels = container.labels
 
         return ContainerInfo(
             container_id=container.id,
-            deployment_id=container.labels.get("deployment_id", "unknown"),
-            agent_id=container.labels.get("agent_id", "unknown"),
-            agent_name=container.labels.get("agent_name", "unknown"),
+            deployment_id=labels.get("laias.deployment_id")
+            or labels.get("deployment_id", "unknown"),
+            agent_id=labels.get("laias.agent_id") or labels.get("agent_id", "unknown"),
+            agent_name=labels.get("laias.agent_name") or labels.get("agent_name", container.name),
             status=container.status,
             cpu_usage=metrics.cpu_percent,
             memory_usage=f"{int(metrics.memory_usage_mb)}m",
             uptime_seconds=metrics.uptime_seconds,
-            created_at=datetime.fromisoformat(
-                container.attrs["Created"].replace("Z", "+00:00")
-            ),
+            created_at=datetime.fromisoformat(container.attrs["Created"].replace("Z", "+00:00")),
             last_activity=None,
         )
 
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -176,7 +179,7 @@ async def get_container(container_id: str) -> ContainerInfo:
     summary="Start container",
     description="Start a stopped container",
 )
-async def start_container(container_id: str) -> dict:
+async def start_container(container_id: str) -> dict[str, str]:
     """
     Start a container.
 
@@ -191,13 +194,11 @@ async def start_container(container_id: str) -> dict:
         return {
             "container_id": container_id,
             "status": "started",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -216,7 +217,7 @@ async def start_container(container_id: str) -> dict:
 async def stop_container(
     container_id: str,
     timeout: int = 10,
-) -> dict:
+) -> dict[str, str]:
     """
     Stop a container.
 
@@ -232,18 +233,121 @@ async def stop_container(
         return {
             "container_id": container_id,
             "status": "stopped",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "error_code": "STOP_FAILED",
                 "message": f"Failed to stop container {container_id}",
+                "detail": str(e),
+            },
+        )
+
+
+@router.post(
+    "/containers/{container_id}/pause",
+    summary="Pause container",
+    description="Pause a running container",
+)
+async def pause_container(container_id: str) -> dict[str, str]:
+    """
+    Pause a running container.
+
+    Args:
+        container_id: Container ID
+
+    Returns:
+        dict: Operation result
+    """
+    try:
+        await get_docker_service().pause_container(container_id)
+        return {
+            "container_id": container_id,
+            "status": "paused",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error_code": "PAUSE_FAILED",
+                "message": f"Failed to pause container {container_id}",
+                "detail": str(e),
+            },
+        )
+
+
+@router.post(
+    "/containers/{container_id}/resume",
+    summary="Resume container",
+    description="Resume a paused container",
+)
+async def resume_container(container_id: str) -> dict[str, str]:
+    """
+    Resume a paused container.
+
+    Args:
+        container_id: Container ID
+
+    Returns:
+        dict: Operation result
+    """
+    try:
+        await get_docker_service().resume_container(container_id)
+        return {
+            "container_id": container_id,
+            "status": "resumed",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error_code": "RESUME_FAILED",
+                "message": f"Failed to resume container {container_id}",
+                "detail": str(e),
+            },
+        )
+
+
+@router.post(
+    "/containers/{container_id}/cancel",
+    summary="Cancel container",
+    description="Cancel execution by stopping and removing a container",
+)
+async def cancel_container(container_id: str) -> dict[str, str]:
+    """
+    Cancel a container execution.
+
+    Args:
+        container_id: Container ID
+
+    Returns:
+        dict: Operation result
+    """
+    try:
+        await get_docker_service().cancel_container(container_id)
+        return {
+            "container_id": container_id,
+            "status": "cancelled",
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
+    except Exception as e:
+        if "not found" in str(e).lower():
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error_code": "CANCEL_FAILED",
+                "message": f"Failed to cancel container {container_id}",
                 "detail": str(e),
             },
         )
@@ -257,7 +361,7 @@ async def stop_container(
 async def restart_container(
     container_id: str,
     timeout: int = 10,
-) -> dict:
+) -> dict[str, str]:
     """
     Restart a container.
 
@@ -273,13 +377,11 @@ async def restart_container(
         return {
             "container_id": container_id,
             "status": "restarted",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -298,7 +400,7 @@ async def restart_container(
 async def remove_container(
     container_id: str,
     force: bool = False,
-) -> dict:
+) -> dict[str, str]:
     """
     Remove a container.
 
@@ -314,13 +416,11 @@ async def remove_container(
         return {
             "container_id": container_id,
             "status": "removed",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -352,9 +452,7 @@ async def get_container_metrics(container_id: str):
         return metrics
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
