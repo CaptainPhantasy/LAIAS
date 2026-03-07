@@ -15,12 +15,12 @@ A Dockerized platform for generating, deploying, and monitoring AI agents using 
 ┌────────────────────────┬─────────┬─────────────────────────────┐
 │ Service                │ Status  │ URL                         │
 ├────────────────────────┼─────────┼─────────────────────────────┤
-│ Agent Generator        │ Healthy │ http://localhost:8001       │
-│ Docker Orchestrator    │ Healthy │ http://localhost:8002       │
-│ PostgreSQL             │ Healthy │ localhost:5432              │
-│ Redis                  │ Healthy │ localhost:6379              │
-│ Studio UI              │ WIP     │ http://localhost:3000       │
-│ Control Room           │ WIP     │ http://localhost:3001       │
+│ Studio UI              │ Healthy │ http://localhost:4527       │
+│ Control Room           │ Healthy │ http://localhost:4528       │
+│ Agent Generator        │ Healthy │ http://localhost:4521       │
+│ Docker Orchestrator    │ Healthy │ http://localhost:4522       │
+│ PostgreSQL             │ Healthy │ localhost:5432 (local only) │
+│ Redis                  │ Healthy │ localhost:6379 (local only) │
 └────────────────────────┴─────────┴─────────────────────────────┘
 ```
 
@@ -31,12 +31,15 @@ LAIAS/
 ├── services/
 │   ├── agent-generator/     # FastAPI service for code generation (8001)
 │   └── docker-orchestrator/ # FastAPI service for container management (8002)
-├── frontend/                # Phase 3 - In Development
-│   ├── studio-ui/           # Chat-to-agent interface
-│   └── control-room/        # Agent monitoring dashboard
+├── frontend/
+│   ├── studio-ui/           # Chat-to-agent interface (port 3000)
+│   ├── control-room/        # Agent monitoring dashboard (port 3001)
+│   └── shared/              # Shared types and utilities
 ├── infrastructure/
 │   ├── init.sql             # PostgreSQL schema
-│   └── redis.conf           # Redis configuration
+│   ├── redis.conf           # Redis configuration
+│   ├── backup.sh            # Database backup script
+│   └── restore.sh           # Database restore script
 ├── templates/
 │   ├── godzilla_reference.py # Gold standard agent template
 │   └── agents/              # 126 production-ready agent configs
@@ -59,12 +62,38 @@ LAIAS/
 ### 1. Configure Environment
 ```bash
 cp .env.example .env
-# Edit .env with your API keys:
-# - ZAI_API_KEY (default provider)
-# - OPENAI_API_KEY
-# - ANTHROPIC_API_KEY
-# - COMPOSIO_API_KEY (for MCP tools)
+
+# Generate required security secrets:
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+# Run this 3 times and paste the values into .env for:
+#   JWT_SECRET_KEY=<generated>
+#   POSTGRES_PASSWORD=<generated>
+#   ORCHESTRATOR_SECRET_KEY=<generated>
+
+# Set a Redis password:
+#   REDIS_PASSWORD=<generated>
+
+# Add at least one LLM provider API key:
+#   ZAI_API_KEY=<your-key>       (default provider)
+#   OPENAI_API_KEY=<your-key>
+#   ANTHROPIC_API_KEY=<your-key>
+#   COMPOSIO_API_KEY=<your-key>  (optional, for MCP tools)
+
+# Stack Auth (frontend authentication):
+#   Create a project at https://app.stack-auth.com
+#   NEXT_PUBLIC_STACK_PROJECT_ID=<your-project-id>
+#   STACK_SECRET_SERVER_KEY=<your-server-key>
 ```
+
+> **Security note:** Without `JWT_SECRET_KEY`, the auth system generates an ephemeral
+> key on each restart (sessions won't survive restarts). `POSTGRES_PASSWORD` and
+> `REDIS_PASSWORD` secure the data stores. All three are strongly recommended for any
+> non-throwaway deployment.
+>
+> **Authentication:** Both frontend apps require Stack Auth for login. Create a free
+> project at [app.stack-auth.com](https://app.stack-auth.com), enable your preferred
+> OAuth providers (GitHub, Google, etc.), and add the project ID and secret server key
+> to `.env`. Without these, the frontends will not build.
 
 ### 2. Build Agent Runner Image
 
@@ -86,17 +115,22 @@ docker-compose up -d
 
 ### 4. Verify Health
 ```bash
-curl http://localhost:8001/health  # Agent Generator
-curl http://localhost:8002/health  # Docker Orchestrator
+# Backend services
+curl http://localhost:4521/health  # Agent Generator
+curl http://localhost:4522/health  # Docker Orchestrator
+
+# Frontend apps (login required — you'll be redirected to Stack Auth sign-in)
+# Studio UI:    http://localhost:4527
+# Control Room: http://localhost:4528
 ```
 
 ### 5. Access API Documentation
-- Agent Generator: http://localhost:8001/api/docs
-- Docker Orchestrator: http://localhost:8002/api/docs
+- Agent Generator: http://localhost:4521/api/docs
+- Docker Orchestrator: http://localhost:4522/api/docs
 
 ## API Endpoints
 
-### Agent Generator (Port 8001)
+### Agent Generator (Port 4521)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/generate-agent` | POST | Generate agent code from description |
@@ -105,7 +139,7 @@ curl http://localhost:8002/health  # Docker Orchestrator
 | `/api/agents/{id}` | GET/PUT/DELETE | Manage individual agents |
 | `/health` | GET | Service health check |
 
-### Docker Orchestrator (Port 8002)
+### Docker Orchestrator (Port 4522)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/deploy` | POST | Deploy agent to container |
