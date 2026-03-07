@@ -107,7 +107,7 @@ class LLMProvider:
     PROVIDER_CONFIGS: Dict[ProviderType, Dict[str, Any]] = {
         ProviderType.ZAI: {
             "base_url": "https://api.z.ai/api/paas/v4",  # Standard endpoint (not coding)
-            "default_model": "GLM-5",  # Produces valid JSON for code gen; GLM-4-Plus has escaping bugs
+            "default_model": "glm-5",  # Produces valid JSON for code gen; case-sensitive API
             "api_key_env": "ZAI_API_KEY",
             "header_prefix": "Bearer",
             "supports_streaming": True,

@@ -104,9 +104,11 @@ class LLMService:
             }
             provider_type = provider_map.get(provider.lower(), self._default_provider)
 
+        resolved_model = model if model and model.lower() != "default" else self._default_model
+
         config = LLMConfig(
             provider=provider_type,
-            model=model or self._default_model,
+            model=resolved_model,
             temperature=config_kwargs.get("temperature", settings.temperature),
             max_tokens=config_kwargs.get("max_tokens", settings.max_tokens),
             timeout=config_kwargs.get("timeout", settings.timeout_seconds),
