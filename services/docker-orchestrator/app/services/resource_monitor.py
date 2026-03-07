@@ -5,16 +5,14 @@ Provides real-time CPU, memory, and network metrics.
 """
 
 import asyncio
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
+from datetime import datetime
+from typing import Any, Optional
 
-import docker
-from docker.errors import NotFound
 import structlog
+from docker.errors import NotFound
 
-from app.services.docker_service import DockerService
 from app.models.responses import MetricsResponse
-
+from app.services.docker_service import DockerService
 
 logger = structlog.get_logger()
 
@@ -32,7 +30,7 @@ class ResourceMonitor:
 
     def __init__(self):
         self.docker_service = DockerService()
-        self._cache: Dict[str, tuple] = {}  # (stats, timestamp)
+        self._cache: dict[str, tuple] = {}  # (stats, timestamp)
         self._cache_ttl = 5  # seconds
 
     async def get_metrics(self, container_id: str) -> MetricsResponse:
@@ -79,8 +77,8 @@ class ResourceMonitor:
         return metrics
 
     async def get_metrics_batch(
-        self, container_ids: List[str]
-    ) -> Dict[str, MetricsResponse]:
+        self, container_ids: list[str]
+    ) -> dict[str, MetricsResponse]:
         """
         Get metrics for multiple containers concurrently.
 
@@ -113,7 +111,7 @@ class ResourceMonitor:
 
     async def _get_metrics_safe(
         self, container_id: str
-    ) -> Optional[MetricsResponse]:
+    ) -> MetricsResponse | None:
         """Get metrics safely, returning None on error."""
         try:
             return await self.get_metrics(container_id)
@@ -125,7 +123,7 @@ class ResourceMonitor:
         container_id: str,
         duration_seconds: int = 300,
         interval_seconds: int = 5,
-    ) -> List[MetricsResponse]:
+    ) -> list[MetricsResponse]:
         """
         Get historical metrics for a container.
 
@@ -155,8 +153,8 @@ class ResourceMonitor:
         return snapshots
 
     async def get_resource_summary(
-        self, container_ids: List[str] = None
-    ) -> Dict[str, Any]:
+        self, container_ids: list[str] = None
+    ) -> dict[str, Any]:
         """
         Get aggregate resource summary for all or specified containers.
 
@@ -198,7 +196,7 @@ class ResourceMonitor:
         self,
         cpu_threshold: float = 80.0,
         memory_threshold: float = 90.0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Detect containers with high resource usage.
 
@@ -245,7 +243,7 @@ class ResourceMonitor:
 
         return alerts
 
-    def _get_from_cache(self, container_id: str) -> Optional[MetricsResponse]:
+    def _get_from_cache(self, container_id: str) -> MetricsResponse | None:
         """Get metrics from cache if not expired."""
         if container_id in self._cache:
             metrics, timestamp = self._cache[container_id]
@@ -258,7 +256,7 @@ class ResourceMonitor:
         """Add metrics to cache."""
         self._cache[container_id] = (metrics, datetime.utcnow())
 
-    def clear_cache(self, container_id: Optional[str] = None) -> None:
+    def clear_cache(self, container_id: str | None = None) -> None:
         """Clear cache for a container or all containers."""
         if container_id:
             self._cache.pop(container_id, None)
@@ -269,7 +267,7 @@ class ResourceMonitor:
         self,
         container_id: str,
         interval_seconds: int = 1,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Calculate rate-based metrics (bytes/sec, etc.).
 

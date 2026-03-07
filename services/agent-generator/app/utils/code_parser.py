@@ -6,7 +6,7 @@ Provides AST-based code analysis and validation.
 
 import ast
 import re
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any
 
 
 class CodeParser:
@@ -36,7 +36,7 @@ class CodeParser:
             (r"@persist", "Consider adding @persist for state persistence"),
         ]
 
-    def parse(self, code: str) -> Optional[ast.Module]:
+    def parse(self, code: str) -> ast.Module | None:
         """
         Parse Python code into AST.
 
@@ -51,7 +51,7 @@ class CodeParser:
         except SyntaxError:
             return None
 
-    def validate_syntax(self, code: str) -> Tuple[bool, List[str]]:
+    def validate_syntax(self, code: str) -> tuple[bool, list[str]]:
         """
         Validate Python syntax.
 
@@ -71,7 +71,7 @@ class CodeParser:
 
         return len(errors) == 0, errors
 
-    def validate_godzilla_pattern(self, code: str) -> Tuple[bool, float, List[str], List[str]]:
+    def validate_godzilla_pattern(self, code: str) -> tuple[bool, float, list[str], list[str]]:
         """
         Validate code against Godzilla architectural pattern.
 
@@ -110,7 +110,7 @@ class CodeParser:
 
         return is_valid, compliance_score, errors, warnings
 
-    def extract_imports(self, code: str) -> Dict[str, List[str]]:
+    def extract_imports(self, code: str) -> dict[str, list[str]]:
         """
         Extract import statements from code.
 
@@ -136,7 +136,7 @@ class CodeParser:
 
         return imports
 
-    def extract_classes(self, code: str) -> List[Dict[str, Any]]:
+    def extract_classes(self, code: str) -> list[dict[str, Any]]:
         """
         Extract class definitions from code.
 
@@ -165,7 +165,7 @@ class CodeParser:
 
         return classes
 
-    def extract_functions(self, code: str) -> List[Dict[str, Any]]:
+    def extract_functions(self, code: str) -> list[dict[str, Any]]:
         """
         Extract function definitions from code.
 
@@ -198,7 +198,7 @@ class CodeParser:
 
         return functions
 
-    def detect_decorators(self, code: str) -> Dict[str, List[str]]:
+    def detect_decorators(self, code: str) -> dict[str, list[str]]:
         """
         Detect CrewAI Flow decorators in code.
 
@@ -229,7 +229,7 @@ class CodeParser:
 
         return decorators
 
-    def estimate_complexity(self, code: str) -> Dict[str, int]:
+    def estimate_complexity(self, code: str) -> dict[str, int]:
         """
         Estimate code complexity metrics.
 
@@ -268,13 +268,13 @@ class CodeParser:
 
 
 # Convenience functions
-def parse_python_code(code: str) -> Optional[ast.Module]:
+def parse_python_code(code: str) -> ast.Module | None:
     """Parse Python code into AST."""
     parser = CodeParser()
     return parser.parse(code)
 
 
-def validate_godzilla(code: str) -> Tuple[bool, float, List[str], List[str]]:
+def validate_godzilla(code: str) -> tuple[bool, float, list[str], list[str]]:
     """Validate code against Godzilla pattern."""
     parser = CodeParser()
     return parser.validate_godzilla_pattern(code)

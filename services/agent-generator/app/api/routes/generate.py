@@ -5,20 +5,20 @@ POST /api/generate-agent
 Generates CrewAI agent code from natural language description.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from datetime import datetime
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-import structlog
 
-from app.models.requests import GenerateAgentRequest
-from app.models.responses import GenerateAgentResponse, ErrorResponse
-from app.models.database import Agent
+from app.api.auth import DevUser, get_current_user
 from app.database.session import get_db
-from app.api.auth import get_current_user, DevUser
+from app.middleware.rate_limit import RATE_LIMITS, limiter
+from app.models.database import Agent
+from app.models.requests import GenerateAgentRequest
+from app.models.responses import GenerateAgentResponse
 from app.services.code_generator import get_code_generator
-from app.config import settings
-from app.middleware.rate_limit import limiter, RATE_LIMITS
+from app.services.llm_service import get_llm_service
 
 logger = structlog.get_logger()
 
@@ -97,7 +97,9 @@ async def generate_agent(
                 else [],
                 requirements=response.requirements,
                 llm_provider=body.llm_provider,
-                model=body.model or "gpt-4o",
+                model=body.model
+                if body.model and body.model.lower() != "default"
+                else get_llm_service()._get_model_for_provider(body.llm_provider),
                 estimated_cost_per_run=response.estimated_cost_per_run,
                 complexity_score=response.complexity_score,
                 validation_status=response.validation_status.model_dump()
@@ -178,7 +180,7 @@ async def generate_and_deploy(
         )
 
     # Step 2: Deploy via internal HTTP to Docker Orchestrator
-    from app.services.orchestrator_client import get_orchestrator_client, OrchestratorError
+    from app.services.orchestrator_client import OrchestratorError, get_orchestrator_client
 
     try:
         deployment = await get_orchestrator_client().deploy_agent(
@@ -256,7 +258,7 @@ async def deploy_agent_proxy(request: Request, body: DeployProxyRequest):
     Allows the frontend to deploy through a single service (agent-generator)
     instead of needing direct access to the orchestrator.
     """
-    from app.services.orchestrator_client import get_orchestrator_client, OrchestratorError
+    from app.services.orchestrator_client import OrchestratorError, get_orchestrator_client
 
     try:
         deployment = await get_orchestrator_client().deploy_agent(

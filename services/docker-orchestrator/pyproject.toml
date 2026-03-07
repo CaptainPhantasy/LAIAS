@@ -39,7 +39,14 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "E402",   # Module-level imports not at top (intentional for env loading in main.py)
+    "N805",   # First argument should be self (Pydantic v1 validators use cls)
+    "N806",   # Variable in function should be lowercase (constants in functions)
+    "N818",   # Exception name should end with Error (breaking change)
+    "N999",   # Invalid module name (legacy analyticsSeeder.py)
+]
 
 [tool.mypy]
 python_version = "3.11"

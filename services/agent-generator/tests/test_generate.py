@@ -2,12 +2,12 @@
 Tests for agent generation endpoint.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.main import create_app
-from app.models.requests import GenerateAgentRequest
 
 
 @pytest.fixture
@@ -53,12 +53,6 @@ def test_root_endpoint(client):
 @pytest.mark.asyncio
 async def test_generate_agent_success(client, mock_llm_provider):
     """Test successful agent generation."""
-    request_data = {
-        "description": "Create a research agent that searches the web",
-        "agent_name": "TestResearchFlow",
-        "complexity": "simple",
-        "task_type": "research"
-    }
 
     # Note: This would require async test setup
     # response = await client.post("/api/generate-agent", json=request_data)

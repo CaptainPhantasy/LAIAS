@@ -4,9 +4,10 @@ Web Scraping & Browsing Tools Configuration
 Tools for extracting data from websites and browser automation.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass, field
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -35,14 +36,14 @@ class WebToolsConfig:
     playwright_timeout: int = 30000  # milliseconds
 
     # Firecrawl settings
-    firecrawl_formats: List[str] = field(default_factory=lambda: ["markdown", "html"])
+    firecrawl_formats: list[str] = field(default_factory=lambda: ["markdown", "html"])
     firecrawl_max_crawl_pages: int = 100
 
     # Browserbase settings
     browserbase_timeout: int = 30000
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all Web Scraping tool configurations."""
         return [
             ToolConfig(
@@ -117,7 +118,7 @@ class WebToolsConfig:
             ),
         ]
 
-    def get_web_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_web_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated web scraping tools.
 
@@ -143,7 +144,7 @@ class WebToolsConfig:
 
         return tools
 
-    def get_selenium_config(self) -> Dict[str, Any]:
+    def get_selenium_config(self) -> dict[str, Any]:
         """Get Selenium configuration."""
         return {
             "headless": self.selenium_headless,
@@ -151,7 +152,7 @@ class WebToolsConfig:
             "page_load_timeout": self.selenium_page_load_timeout,
         }
 
-    def get_playwright_config(self) -> Dict[str, Any]:
+    def get_playwright_config(self) -> dict[str, Any]:
         """Get Playwright configuration."""
         return {
             "headless": self.playwright_headless,

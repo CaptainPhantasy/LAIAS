@@ -5,9 +5,10 @@ Pydantic models for validating incoming API requests.
 """
 
 import os
-from typing import Dict, List, Optional, Literal
-from pydantic import BaseModel, Field, validator
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field, validator
 
 
 class DeployAgentRequest(BaseModel):
@@ -35,11 +36,11 @@ class DeployAgentRequest(BaseModel):
         description="Agent YAML configuration",
         min_length=1,
     )
-    requirements: List[str] = Field(
+    requirements: list[str] = Field(
         default_factory=list,
         description="Python package requirements (already in base image)",
     )
-    environment_vars: Dict[str, str] = Field(
+    environment_vars: dict[str, str] = Field(
         default_factory=dict,
         description="Environment variables for the container",
     )
@@ -57,11 +58,11 @@ class DeployAgentRequest(BaseModel):
         default=True,
         description="Automatically start container after creation",
     )
-    output_config: Dict[str, bool] = Field(
+    output_config: dict[str, bool] = Field(
         default_factory=lambda: {"postgres": True, "files": True},
         description="Per-deployment output routing destinations",
     )
-    output_path: Optional[str] = Field(
+    output_path: str | None = Field(
         default=None,
         description="User-chosen output directory path",
     )
@@ -71,7 +72,7 @@ class DeployAgentRequest(BaseModel):
     )
 
     @validator("memory_limit")
-    def validate_memory_limit(cls, v: str) -> str:
+    def validate_memory_limit(cls, v: str) -> str:  # noqa: N805
         """Validate memory limit format."""
         import re
 
@@ -80,7 +81,7 @@ class DeployAgentRequest(BaseModel):
         return v.lower()
 
     @validator("environment_vars")
-    def validate_environment_vars(cls, v: Dict[str, str]) -> Dict[str, str]:
+    def validate_environment_vars(cls, v: dict[str, str]) -> dict[str, str]:  # noqa: N805
         """Validate environment variable names."""
         import re
 
@@ -91,7 +92,7 @@ class DeployAgentRequest(BaseModel):
         return v
 
     @validator("output_config")
-    def validate_output_config(cls, v: Dict[str, bool]) -> Dict[str, bool]:
+    def validate_output_config(cls, v: dict[str, bool]) -> dict[str, bool]:  # noqa: N805
         allowed_destinations = {"postgres", "files"}
         unknown_destinations = set(v.keys()) - allowed_destinations
         if unknown_destinations:
@@ -105,14 +106,14 @@ class DeployAgentRequest(BaseModel):
         return normalized
 
     @validator("output_format")
-    def validate_output_format(cls, v: str) -> str:
+    def validate_output_format(cls, v: str) -> str:  # noqa: N805
         """Validate output format is markdown or html."""
         if v not in {"markdown", "html"}:
             raise ValueError(f"output_format must be 'markdown' or 'html', got '{v}'")
         return v
 
     @validator("output_path")
-    def validate_output_path(cls, v: Optional[str]) -> Optional[str]:
+    def validate_output_path(cls, v: str | None) -> str | None:  # noqa: N805
         """Validate output path is absolute and safe."""
         if v is not None:
             if not os.path.isabs(v):
@@ -150,11 +151,11 @@ class LogsRequest(BaseModel):
         le=10000,
         description="Number of lines to retrieve from the end",
     )
-    since: Optional[datetime] = Field(
+    since: datetime | None = Field(
         default=None,
         description="Only return logs since this timestamp",
     )
-    level: Optional[Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]] = Field(
+    level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] | None = Field(
         default=None,
         description="Filter by log level",
     )
@@ -170,6 +171,6 @@ class OutputEventIngestRequest(BaseModel):
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(default="INFO")
     message: str = Field(..., min_length=1)
     source: str = Field(default="agent", min_length=1, max_length=120)
-    payload: Dict[str, object] = Field(default_factory=dict)
-    destinations: Optional[Dict[str, bool]] = Field(default=None)
-    timestamp: Optional[datetime] = Field(default=None)
+    payload: dict[str, object] = Field(default_factory=dict)
+    destinations: dict[str, bool] | None = Field(default=None)
+    timestamp: datetime | None = Field(default=None)

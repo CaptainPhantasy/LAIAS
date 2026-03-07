@@ -6,10 +6,10 @@ deployment records. For now, Docker labels provide the source of truth.
 """
 
 from datetime import datetime
-from typing import Optional
-from sqlalchemy import Column, String, DateTime, Integer, Float, Text, Boolean, JSON, ForeignKey
-from sqlalchemy.orm import relationship
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 

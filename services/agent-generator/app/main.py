@@ -14,6 +14,7 @@ Version: 1.0.0
 # pydantic-settings loads .env into model fields but does NOT export to os.environ
 # LLMProvider uses os.getenv() which requires vars in actual environment
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 _CONFIG_DIR = Path(__file__).parent.parent  # app/main.py -> services/agent-generator
@@ -21,21 +22,19 @@ _ENV_FILE = _CONFIG_DIR / ".env"
 load_dotenv(_ENV_FILE)  # Export .env to os.environ
 
 # Now safe to import settings (which will also read from the now-loaded env)
-from app.config import settings
-
 # =============================================================================
 # Remaining imports
 # =============================================================================
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+
+import structlog
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import structlog
-from time import time
+
 from app import __version__
+from app.config import settings
 
 # =============================================================================
 # Logging Configuration
@@ -145,17 +144,18 @@ def create_app() -> FastAPI:
     # =============================================================================
     # Include Routers
     # =============================================================================
-    from app.api.routes.generate import router as generate_router
-    from app.api.routes.validate import router as validate_router
-    from app.api.routes.health import router as health_router
     from app.api.routes.agents import router as agents_router
-    from app.api.routes.tools import router as tools_router
-    from app.api.routes.users import router as users_router
-    from app.api.routes.teams import router as teams_router
-    from app.api.routes.templates import router as templates_router
+
     # business_dev routes disabled - functionality moved to Docker Orchestrator
     # from app.api.routes.business_dev import router as business_dev_router
     from app.api.routes.auth import router as auth_router
+    from app.api.routes.generate import router as generate_router
+    from app.api.routes.health import router as health_router
+    from app.api.routes.teams import router as teams_router
+    from app.api.routes.templates import router as templates_router
+    from app.api.routes.tools import router as tools_router
+    from app.api.routes.users import router as users_router
+    from app.api.routes.validate import router as validate_router
 
     app.include_router(auth_router)
     app.include_router(generate_router)

@@ -4,26 +4,23 @@ Tests for authentication module.
 Tests password utilities, token handling, and dev-mode auth.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import datetime, timedelta, timezone
 import uuid
+from datetime import UTC, datetime, timedelta
 
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from httpx import AsyncClient, ASGITransport
 
 from app.api.auth import (
-    verify_password,
-    hash_password,
+    ALGORITHM,
+    SECRET_KEY,
+    CurrentUser,
+    TokenPayload,
     create_access_token,
     create_refresh_token,
     decode_token,
-    get_current_user,
-    CurrentUser,
-    TokenPayload,
-    SECRET_KEY,
-    ALGORITHM,
+    hash_password,
+    verify_password,
 )
 from app.main import create_app
 
@@ -100,7 +97,7 @@ class TestTokenCreation:
 
         # Token should be valid for ~2 hours
         assert payload.exp is not None
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         expected_exp = now + custom_delta
         # Allow 1 minute tolerance
         assert abs((payload.exp - expected_exp).total_seconds()) < 60
@@ -130,12 +127,12 @@ class TestTokenDecoding:
         """Decode expired token raises HTTPException."""
         # Create token that's already expired
         import jose.jwt as jwt
-        expired_time = datetime.now(timezone.utc) - timedelta(hours=1)
+        expired_time = datetime.now(UTC) - timedelta(hours=1)
         payload = {
             "sub": "user-123",
             "email": "test@example.com",
             "exp": expired_time,
-            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "iat": datetime.now(UTC) - timedelta(hours=2),
             "type": "access"
         }
         expired_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

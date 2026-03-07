@@ -5,17 +5,14 @@ Provides high-level operations for managing agent containers
 including creation, start, stop, restart, and removal.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime
 import asyncio
+from datetime import datetime
+from typing import Any, Optional
 
-import docker
-from docker.errors import DockerException, NotFound
 import structlog
+from docker.errors import NotFound
 
 from app.services.docker_service import DockerService
-from app.config import settings
-
 
 logger = structlog.get_logger()
 
@@ -31,8 +28,10 @@ class ContainerManager:
     - Auto-restart logic
     """
 
-    def __init__(self):
-        self.docker_service = DockerService()
+    def __init__(self, docker_service: Optional["DockerService"] = None):
+        if docker_service is None:
+            docker_service = DockerService()
+        self.docker_service = docker_service
 
     async def create_and_start(
         self,
@@ -41,11 +40,11 @@ class ContainerManager:
         agent_name: str,
         flow_code: str,
         agents_yaml: str,
-        requirements: List[str] = None,
-        environment_vars: Dict[str, str] = None,
+        requirements: list[str] | None = None,
+        environment_vars: dict[str, str] | None = None,
         cpu_limit: float = 1.0,
         memory_limit: str = "512m",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Create and start a container in one operation.
 
@@ -75,16 +74,14 @@ class ContainerManager:
             "created_at": datetime.utcnow().isoformat() + "Z",
         }
 
-    async def restart_container(
-        self, container_id: str, timeout: int = 10
-    ) -> None:
+    async def restart_container(self, container_id: str, timeout: int = 10) -> None:
         """Restart a container."""
         await self.docker_service.stop_container(container_id, timeout=timeout)
         await asyncio.sleep(1)  # Brief pause
         await self.docker_service.start_container(container_id)
         logger.info("Container restarted", container_id=container_id)
 
-    async def get_container_state(self, container_id: str) -> Dict[str, Any]:
+    async def get_container_state(self, container_id: str) -> dict[str, Any]:
         """
         Get comprehensive container state.
 
@@ -121,20 +118,13 @@ class ContainerManager:
         health = container.attrs.get("State", {}).get("Health", {})
         return health.get("Status", "unknown")
 
-    async def get_deployment_containers(
-        self, deployment_id: str
-    ) -> List[Dict[str, Any]]:
+    async def get_deployment_containers(self, deployment_id: str) -> list[dict[str, Any]]:
         """Get all containers for a specific deployment."""
         all_containers = await self.docker_service.list_containers(all=True)
 
-        return [
-            c for c in all_containers
-            if c.get("deployment_id") == deployment_id
-        ]
+        return [c for c in all_containers if c.get("deployment_id") == deployment_id]
 
-    async def stop_all_deployment_containers(
-        self, deployment_id: str
-    ) -> int:
+    async def stop_all_deployment_containers(self, deployment_id: str) -> int:
         """Stop all containers for a deployment. Returns count stopped."""
         containers = await self.get_deployment_containers(deployment_id)
         stopped = 0
@@ -160,9 +150,7 @@ class ContainerManager:
 
         for container in containers:
             try:
-                await self.docker_service.remove_container(
-                    container["container_id"], force=True
-                )
+                await self.docker_service.remove_container(container["container_id"], force=True)
                 removed += 1
             except Exception as e:
                 logger.warning(
@@ -175,7 +163,7 @@ class ContainerManager:
 
     async def get_container_logs_since(
         self, container_id: str, since_seconds: int = 300
-    ) -> List[str]:
+    ) -> list[str]:
         """Get logs from the last N seconds."""
         from datetime import timedelta
 
@@ -188,9 +176,7 @@ class ContainerManager:
             since=since_str,
         )
 
-    async def execute_in_container(
-        self, container_id: str, command: str
-    ) -> Dict[str, Any]:
+    async def execute_in_container(self, container_id: str, command: str) -> dict[str, Any]:
         """
         Execute a command inside a running container.
 
@@ -211,6 +197,25 @@ class ContainerManager:
             logger.error("Exec failed", container_id=container_id, error=str(e))
             raise
 
+    async def cleanup_deployment(self, deployment_id: str) -> None:
+        """Clean up a failed deployment by removing any created containers."""
+        try:
+            containers = self.docker_service.client.containers.list(
+                all=True, filters={"label": f"laias.deployment_id={deployment_id}"}
+            )
+            for container in containers:
+                try:
+                    container.remove(force=True)
+                    logger.info(
+                        "Cleaned up container",
+                        deployment_id=deployment_id,
+                        container_id=container.id,
+                    )
+                except Exception as e:
+                    logger.warning("Failed to remove container during cleanup", error=str(e))
+        except Exception as e:
+            logger.error("Deployment cleanup failed", deployment_id=deployment_id, error=str(e))
+
 
 # Singleton instance
 _container_manager: Optional["ContainerManager"] = None
@@ -221,9 +226,10 @@ def get_container_manager() -> "ContainerManager":
     global _container_manager
     if _container_manager is None:
         from app.services.docker_service import get_docker_service
+
         _container_manager = ContainerManager(get_docker_service())
     return _container_manager
 
 
 # For backwards compatibility with imports
-container_manager = property(get_container_manager)
+container_manager = get_container_manager

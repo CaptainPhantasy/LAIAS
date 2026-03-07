@@ -4,9 +4,10 @@ AI & Machine Learning Tools Configuration
 Tools for AI-powered operations, code interpretation, and RAG.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass, field
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -31,7 +32,7 @@ class AIToolsConfig:
     # Code Interpreter settings
     code_timeout: int = 60  # seconds
     code_max_output_size: int = 10000  # characters
-    code_allowed_modules: List[str] = field(default_factory=lambda: [
+    code_allowed_modules: list[str] = field(default_factory=lambda: [
         "math", "random", "datetime", "json", "re", "collections",
         "itertools", "functools", "statistics", "decimal", "fractions"
     ])
@@ -46,10 +47,10 @@ class AIToolsConfig:
     langchain_verbose: bool = False
 
     # LlamaIndex settings
-    llamacloud_api_key: Optional[str] = None
+    llamacloud_api_key: str | None = None
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all AI & Machine Learning tool configurations."""
         return [
             # Image Generation
@@ -187,7 +188,7 @@ class AIToolsConfig:
             ),
         ]
 
-    def get_ai_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_ai_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated AI tools.
 
@@ -213,7 +214,7 @@ class AIToolsConfig:
 
         return tools
 
-    def get_dalle_config(self) -> Dict[str, Any]:
+    def get_dalle_config(self) -> dict[str, Any]:
         """Get DALL-E configuration."""
         return {
             "model": self.dalle_model,
@@ -222,7 +223,7 @@ class AIToolsConfig:
             "style": self.dalle_style,
         }
 
-    def get_rag_config(self) -> Dict[str, Any]:
+    def get_rag_config(self) -> dict[str, Any]:
         """Get RAG configuration."""
         return {
             "chunk_size": self.rag_chunk_size,
@@ -231,7 +232,7 @@ class AIToolsConfig:
             "top_k": self.rag_top_k,
         }
 
-    def get_code_interpreter_config(self) -> Dict[str, Any]:
+    def get_code_interpreter_config(self) -> dict[str, Any]:
         """Get Code Interpreter configuration."""
         return {
             "timeout": self.code_timeout,

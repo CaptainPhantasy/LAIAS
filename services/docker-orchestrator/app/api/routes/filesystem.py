@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 from app.config import settings
 from app.models.responses import FileBrowserEntry, FileBrowserResponse
 
-
 router = APIRouter(prefix="/api", tags=["filesystem"])
 
 

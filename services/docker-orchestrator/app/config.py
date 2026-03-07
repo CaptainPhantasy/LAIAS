@@ -4,9 +4,8 @@ Configuration management for Docker Orchestrator.
 Uses pydantic-settings for type-safe configuration with environment variables.
 """
 
-from typing import List, Optional
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field, field_validator, validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -33,7 +32,7 @@ class Settings(BaseSettings):
     API_HOST: str = Field(default="0.0.0.0", description="API bind host")
     API_PORT: int = Field(default=8002, description="API bind port")
     API_PREFIX: str = Field(default="/api", description="API route prefix")
-    CORS_ORIGINS: List[str] = Field(
+    CORS_ORIGINS: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:8000"],
         description="CORS allowed origins",
     )
@@ -41,7 +40,7 @@ class Settings(BaseSettings):
     # -----------------------------------------------------------------------------
     # Docker Configuration
     # -----------------------------------------------------------------------------
-    DOCKER_HOST: Optional[str] = Field(
+    DOCKER_HOST: str | None = Field(
         default=None, description="Docker daemon socket URL (None for default)"
     )
     DOCKER_NETWORK: str = Field(
@@ -117,10 +116,10 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = Field(
         default="X-API-Key", description="Header name for API key authentication"
     )
-    API_KEYS: List[str] = Field(default=[], description="Valid API keys (empty = disabled)")
+    API_KEYS: list[str] = Field(default=[], description="Valid API keys (empty = disabled)")
 
     @validator("AGENT_CODE_PATH")
-    def validate_agent_code_path(cls, v: str) -> str:
+    def validate_agent_code_path(cls, v: str) -> str:  # noqa: N805
         """Ensure agent code path is absolute."""
         import os
 
@@ -129,7 +128,7 @@ class Settings(BaseSettings):
         return v
 
     @validator("AGENT_OUTPUT_PATH")
-    def validate_agent_output_path(cls, v: str) -> str:
+    def validate_agent_output_path(cls, v: str) -> str:  # noqa: N805
         import os
 
         if not os.path.isabs(v):
@@ -146,7 +145,7 @@ class Settings(BaseSettings):
         return v
 
     @validator("DEFAULT_MEMORY_LIMIT")
-    def validate_memory_limit(cls, v: str) -> str:
+    def validate_memory_limit(cls, v: str) -> str:  # noqa: N805
         """Validate memory limit format."""
         import re
 

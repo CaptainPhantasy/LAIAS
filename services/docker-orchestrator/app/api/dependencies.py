@@ -4,8 +4,7 @@ API dependencies for dependency injection.
 Provides reusable dependencies for FastAPI routes.
 """
 
-from typing import AsyncGenerator
-from fastapi import Depends
+from collections.abc import AsyncGenerator
 
 from app.services.docker_service import DockerService
 

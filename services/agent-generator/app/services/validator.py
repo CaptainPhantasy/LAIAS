@@ -6,12 +6,11 @@ syntax checking, and quality assessment.
 """
 
 import ast
-import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
 import structlog
 
 from app.utils.code_parser import CodeParser
-from app.utils.exceptions import CodeValidationError
 
 logger = structlog.get_logger()
 
@@ -35,7 +34,7 @@ class CodeValidator:
         code: str,
         check_pattern_compliance: bool = True,
         check_syntax: bool = True
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Validate code against Godzilla pattern.
 
@@ -104,9 +103,9 @@ class CodeValidator:
     def _generate_suggestions(
         self,
         code: str,
-        errors: List[str],
-        warnings: List[str]
-    ) -> List[str]:
+        errors: list[str],
+        warnings: list[str]
+    ) -> list[str]:
         """Generate improvement suggestions based on validation results."""
         suggestions = []
 
@@ -142,7 +141,7 @@ class CodeValidator:
         except:
             return False
 
-    def extract_flow_info(self, code: str) -> Dict[str, Any]:
+    def extract_flow_info(self, code: str) -> dict[str, Any]:
         """Extract information about the flow structure."""
         classes = self.parser.extract_classes(code)
         functions = self.parser.extract_functions(code)
@@ -164,7 +163,7 @@ class CodeValidator:
 
 
 # Global service instance
-_validator: Optional[CodeValidator] = None
+_validator: CodeValidator | None = None
 
 
 def get_validator() -> CodeValidator:

@@ -4,25 +4,25 @@ Agent deployment endpoints.
 Handles deployment of generated agents to Docker containers.
 """
 
-from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Request, Depends
-from typing import Dict
-import uuid
 import json
+import uuid
 from datetime import datetime
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database.session import get_db
+from app.middleware.rate_limit import RATE_LIMITS, limiter
 from app.models.requests import DeployAgentRequest
 from app.models.responses import DeploymentResponse
-from app.services.docker_service import get_docker_service
 from app.services.container_manager import get_container_manager
-from app.database.session import get_db
+from app.services.docker_service import get_docker_service
 from app.utils.exceptions import (
     DeploymentError,
     ResourceLimitError,
     exception_to_http_response,
 )
-from app.middleware.rate_limit import limiter, RATE_LIMITS
 
 router = APIRouter(prefix="/api", tags=["deploy"])
 
@@ -223,19 +223,6 @@ async def deploy_agent(
                     "detail": str(e),
                 },
             )
-
-        # Record failed deployment analytics
-        from app.services.analytics_store import analytics_store
-
-        await analytics_store.add_event(
-            "deployment",
-            {
-                "deployment_id": deployment_id,
-                "agent_id": body.agent_id,
-                "agent_name": body.agent_name,
-                "status": "error",
-            },
-        )
 
 
 @router.delete(

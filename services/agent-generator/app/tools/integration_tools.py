@@ -4,9 +4,10 @@ Integration Tools Configuration
 Tools for integrating with external services and platforms.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -19,26 +20,26 @@ class IntegrationToolsConfig:
     """Configuration for Integration tools."""
 
     # Communication tools settings
-    slack_channel: Optional[str] = None
-    discord_channel: Optional[str] = None
-    telegram_chat_id: Optional[str] = None
+    slack_channel: str | None = None
+    discord_channel: str | None = None
+    telegram_chat_id: str | None = None
 
     # Email settings
-    smtp_from_email: Optional[str] = None
+    smtp_from_email: str | None = None
     email_template_dir: str = "./templates/email"
 
     # Project management settings
-    jira_project_key: Optional[str] = None
-    linear_team_id: Optional[str] = None
-    asana_workspace_id: Optional[str] = None
-    trello_board_id: Optional[str] = None
+    jira_project_key: str | None = None
+    linear_team_id: str | None = None
+    asana_workspace_id: str | None = None
+    trello_board_id: str | None = None
 
     # CRM settings
-    hubspot_portal_id: Optional[str] = None
+    hubspot_portal_id: str | None = None
     salesforce_sandbox: bool = False
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all Integration tool configurations."""
         return [
             # Communication - Chat
@@ -363,7 +364,7 @@ class IntegrationToolsConfig:
             ),
         ]
 
-    def get_integration_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_integration_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated integration tools.
 
@@ -389,14 +390,14 @@ class IntegrationToolsConfig:
 
         return tools
 
-    def get_slack_config(self, env_vars: Dict[str, str]) -> Dict[str, Any]:
+    def get_slack_config(self, env_vars: dict[str, str]) -> dict[str, Any]:
         """Get Slack configuration."""
         return {
             "bot_token": env_vars.get("SLACK_BOT_TOKEN"),
             "default_channel": self.slack_channel,
         }
 
-    def get_jira_config(self, env_vars: Dict[str, str]) -> Dict[str, Any]:
+    def get_jira_config(self, env_vars: dict[str, str]) -> dict[str, Any]:
         """Get Jira configuration."""
         return {
             "api_token": env_vars.get("JIRA_API_TOKEN"),
@@ -405,7 +406,7 @@ class IntegrationToolsConfig:
             "project_key": self.jira_project_key,
         }
 
-    def get_hubspot_config(self, env_vars: Dict[str, str]) -> Dict[str, Any]:
+    def get_hubspot_config(self, env_vars: dict[str, str]) -> dict[str, Any]:
         """Get HubSpot configuration."""
         return {
             "api_key": env_vars.get("HUBSPOT_API_KEY"),

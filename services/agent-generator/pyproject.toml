@@ -15,7 +15,14 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
-ignore = ["E501"]
+ignore = [
+    "E501",   # Line too long (handled by formatter)
+    "E402",   # Module-level imports not at top (intentional for env loading in main.py)
+    "E722",   # Bare except (used in AST parse safety checks)
+    "N806",   # Variable in function should be lowercase (constants in functions)
+    "N811",   # Constant imported as non-constant (UUID as PyUUID alias)
+    "N818",   # Exception name should end with Error (breaking change)
+]
 
 [tool.mypy]
 python_version = "3.11"

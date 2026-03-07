@@ -4,9 +4,10 @@ Search & Research Tools Configuration
 Tools for web search, code search, and research across various sources.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass, field
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -27,7 +28,7 @@ class SearchToolsConfig:
     serper_search_type: str = "search"  # search, images, videos, news
 
     # Google settings
-    google_search_engine_id: Optional[str] = None
+    google_search_engine_id: str | None = None
 
     # DuckDuckGo settings
     ddg_region: str = "us-en"
@@ -39,14 +40,14 @@ class SearchToolsConfig:
 
     # Tavily settings
     tavily_search_depth: str = "basic"  # basic, advanced
-    tavily_include_domains: List[str] = field(default_factory=list)
-    tavily_exclude_domains: List[str] = field(default_factory=list)
+    tavily_include_domains: list[str] = field(default_factory=list)
+    tavily_exclude_domains: list[str] = field(default_factory=list)
 
     # GitHub settings
     github_search_type: str = "repository"  # repository, code, issues
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all Search & Research tool configurations."""
         return [
             ToolConfig(
@@ -153,7 +154,7 @@ class SearchToolsConfig:
             ),
         ]
 
-    def get_search_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_search_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated search tools.
 
@@ -179,7 +180,7 @@ class SearchToolsConfig:
 
         return tools
 
-    def get_tavily_config(self) -> Dict[str, Any]:
+    def get_tavily_config(self) -> dict[str, Any]:
         """Get Tavily configuration."""
         return {
             "search_depth": self.tavily_search_depth,

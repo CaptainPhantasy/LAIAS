@@ -4,22 +4,20 @@ Team API Routes.
 Team management with RBAC - create, list, update, delete teams and members.
 """
 
-from typing import Optional, List
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr, Field
 import uuid
 
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
-from sqlalchemy.orm import selectinload
 
-from app.database import get_db
 from app.api.auth import (
-    get_current_user, DevUser,
-    verify_team_ownership, verify_team_ownership_or_admin,
-    require_admin_or_owner
+    DevUser,
+    get_current_user,
+    verify_team_ownership,
+    verify_team_ownership_or_admin,
 )
+from app.database import get_db
 from app.models.team import Team, TeamMember, User
 
 router = APIRouter(prefix="/api/teams", tags=["teams"])
@@ -32,19 +30,19 @@ router = APIRouter(prefix="/api/teams", tags=["teams"])
 class TeamCreate(BaseModel):
     """Create team request."""
     name: str = Field(..., min_length=1, max_length=255)
-    slug: Optional[str] = Field(None, min_length=1, max_length=100)
+    slug: str | None = Field(None, min_length=1, max_length=100)
 
 
 class TeamUpdate(BaseModel):
     """Update team request."""
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
+    name: str | None = Field(None, min_length=1, max_length=255)
 
 
 class TeamMemberResponse(BaseModel):
     """Team member response."""
     user_id: str
     email: str
-    name: Optional[str] = None
+    name: str | None = None
     role: str
     joined_at: str
 
@@ -54,7 +52,7 @@ class TeamResponse(BaseModel):
     id: str
     name: str
     slug: str
-    owner_id: Optional[str] = None
+    owner_id: str | None = None
     created_at: str
     members_count: int = 0
 
@@ -64,7 +62,7 @@ class TeamResponse(BaseModel):
 
 class TeamDetailResponse(TeamResponse):
     """Team detail with members."""
-    members: List[TeamMemberResponse] = []
+    members: list[TeamMemberResponse] = []
 
 
 class AddMemberRequest(BaseModel):
@@ -88,7 +86,7 @@ def _slugify(name: str) -> str:
     return "".join(c for c in slug if c.isalnum() or c == "-")
 
 
-async def _get_members_with_users(team_id: uuid.UUID, db: AsyncSession) -> List[dict]:
+async def _get_members_with_users(team_id: uuid.UUID, db: AsyncSession) -> list[dict]:
     """
     Get team members with actual user data from users table.
 
@@ -118,11 +116,11 @@ async def _get_members_with_users(team_id: uuid.UUID, db: AsyncSession) -> List[
 # Routes
 # =============================================================================
 
-@router.get("", response_model=List[TeamResponse])
+@router.get("", response_model=list[TeamResponse])
 async def list_teams(
     current_user: DevUser = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
-) -> List[TeamResponse]:
+) -> list[TeamResponse]:
     """
     List all teams the current user is a member of.
     """
@@ -419,7 +417,7 @@ async def remove_team_member(
         )
 
     # Delete member
-    result = await db.execute(
+    await db.execute(
         delete(TeamMember).where(
             TeamMember.team_id == team.id,
             TeamMember.user_id == target_user_uuid

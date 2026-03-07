@@ -4,17 +4,16 @@ Log streaming endpoints.
 Provides REST and WebSocket access to container logs.
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, HTTPException, status
-from typing import Optional, List
-from datetime import datetime
 import asyncio
+from datetime import datetime
 
-from app.models.responses import LogsResponse, LogEntry
-from app.services.log_streamer import get_log_streamer
+from fastapi import APIRouter, HTTPException, Query, WebSocket, WebSocketDisconnect, status
+
+from app.models.responses import LogEntry, LogsResponse
 from app.services.docker_service import get_docker_service
+from app.services.log_streamer import get_log_streamer
 from app.utils.exceptions import (
     ContainerNotFoundError,
-    LogStreamingError,
     exception_to_http_response,
 )
 
@@ -30,12 +29,11 @@ router = APIRouter(prefix="/api", tags=["logs"])
 async def get_container_logs(
     container_id: str,
     tail: int = Query(100, ge=1, le=10000, description="Number of lines from end"),
-    since: Optional[str] = Query(None, description="ISO timestamp to start from"),
-    level: Optional[str] = Query(None, description="Filter by log level"),
-    offset: Optional[int] = Query(0, ge=0, description="Offset from start of logs"),
+    since: str | None = Query(None, description="ISO timestamp to start from"),
+    level: str | None = Query(None, description="Filter by log level"),
+    offset: int = Query(0, ge=0, description="Offset from start of logs"),
 ) -> LogsResponse:
     """
-    Get container logs with pagination support.
 
     Args:
         container_id: Container ID
@@ -88,7 +86,9 @@ async def get_container_logs(
                 if level is None or entry["level"].upper() == level.upper():
                     log_entries.append(
                         LogEntry(
-                            timestamp=entry["timestamp"],
+                            timestamp=datetime.fromisoformat(entry["timestamp"])
+                            if isinstance(entry["timestamp"], str)
+                            else entry["timestamp"],
                             level=entry["level"],
                             message=entry["message"],
                             source=entry["source"],
@@ -109,9 +109,7 @@ async def get_container_logs(
 
     except Exception as e:
         if "not found" in str(e).lower():
-            raise exception_to_http_response(
-                ContainerNotFoundError(container_id, detail=str(e))
-            )
+            raise exception_to_http_response(ContainerNotFoundError(container_id, detail=str(e)))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
@@ -148,9 +146,7 @@ async def stream_container_logs(
         await get_docker_service().get_container(container_id)
 
         # Create log streaming task
-        stream_task = asyncio.create_task(
-            _log_stream_handler(websocket, container_id, tail)
-        )
+        stream_task = asyncio.create_task(_log_stream_handler(websocket, container_id, tail))
 
         # Wait for client disconnect
         try:
@@ -172,10 +168,12 @@ async def stream_container_logs(
                 pass
 
     except Exception as e:
-        await websocket.send_json({
-            "type": "error",
-            "error": str(e),
-        })
+        await websocket.send_json(
+            {
+                "type": "error",
+                "error": str(e),
+            }
+        )
         await websocket.close()
 
 
@@ -193,6 +191,7 @@ async def _log_stream_handler(
         tail: Number of previous lines to include
     """
     import structlog
+
     logger = structlog.get_logger()
 
     try:
@@ -206,17 +205,21 @@ async def _log_stream_handler(
                 if line.strip():
                     entry = get_log_streamer()._parse_log_line(line)
                     if entry:
-                        await websocket.send_json({
-                            "type": "log",
-                            "data": entry,
-                        })
+                        await websocket.send_json(
+                            {
+                                "type": "log",
+                                "data": entry,
+                            }
+                        )
 
         # Stream new logs
         async for log_entry in get_log_streamer().stream_logs(container_id):
-            await websocket.send_json({
-                "type": "log",
-                "data": log_entry,
-            })
+            await websocket.send_json(
+                {
+                    "type": "log",
+                    "data": log_entry,
+                }
+            )
 
     except asyncio.CancelledError:
         # Normal shutdown
@@ -224,9 +227,11 @@ async def _log_stream_handler(
     except Exception as e:
         logger.error("Log stream error", container_id=container_id, error=str(e))
         try:
-            await websocket.send_json({
-                "type": "error",
-                "error": str(e),
-            })
+            await websocket.send_json(
+                {
+                    "type": "error",
+                    "error": str(e),
+                }
+            )
         except Exception:
             pass

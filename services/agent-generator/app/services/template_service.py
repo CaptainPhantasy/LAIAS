@@ -7,7 +7,6 @@ and provides template-based generation capabilities.
 
 import os
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import structlog
 import yaml
@@ -42,8 +41,8 @@ class TemplateService:
 
     def __init__(self):
         """Initialize the template service and load YAML templates."""
-        self._templates: Dict[str, Dict] = {}
-        self._categories: List[str] = []
+        self._templates: dict[str, dict] = {}
+        self._categories: list[str] = []
         self._load_templates()
 
     def _load_templates(self):
@@ -60,7 +59,7 @@ class TemplateService:
 
         for template_file in sorted(TEMPLATES_DIR.glob("*.yaml")):
             try:
-                with open(template_file, "r") as f:
+                with open(template_file) as f:
                     data = yaml.safe_load(f)
 
                 if not isinstance(data, dict):
@@ -106,7 +105,7 @@ class TemplateService:
         )
 
     @staticmethod
-    def _sanitize_template(data: Dict, template_id: str) -> None:
+    def _sanitize_template(data: dict, template_id: str) -> None:
         """Fill missing optional fields with sensible defaults."""
         if not data.get("name"):
             data["name"] = template_id.replace("_", " ").title()
@@ -156,17 +155,17 @@ class TemplateService:
     # Template Retrieval
     # =========================================================================
 
-    def get_template(self, template_id: str) -> Optional[Dict]:
+    def get_template(self, template_id: str) -> dict | None:
         """Get a single template by ID."""
         return self._templates.get(template_id)
 
     def list_templates(
         self,
-        category: Optional[str] = None,
-        complexity: Optional[str] = None,
-        task_type: Optional[str] = None,
-        search: Optional[str] = None,
-    ) -> List[Dict]:
+        category: str | None = None,
+        complexity: str | None = None,
+        task_type: str | None = None,
+        search: str | None = None,
+    ) -> list[dict]:
         """
         List templates with optional filtering.
 
@@ -198,7 +197,7 @@ class TemplateService:
 
         return templates
 
-    def list_categories(self) -> List[str]:
+    def list_categories(self) -> list[str]:
         """Get all unique template categories."""
         return list(self._categories)
 
@@ -214,7 +213,7 @@ class TemplateService:
         """Get the Godzilla pattern reference."""
         return GODZILLA_TEMPLATE_REFERENCE
 
-    def get_validation_rules(self) -> Dict[str, List[tuple]]:
+    def get_validation_rules(self) -> dict[str, list[tuple]]:
         """Get pattern validation rules."""
         return GODZILLA_VALIDATION_RULES
 
@@ -230,7 +229,7 @@ class TemplateService:
         self,
         task_type: str,
         complexity: str,
-    ) -> Optional[Dict]:
+    ) -> dict | None:
         """Suggest a template based on task type and complexity."""
         templates = self.list_templates(
             category=task_type,
@@ -238,7 +237,7 @@ class TemplateService:
         )
         return templates[0] if templates else None
 
-    def get_default_tools(self, task_type: str) -> List[str]:
+    def get_default_tools(self, task_type: str) -> list[str]:
         """Get default tools for a task type from loaded templates."""
         templates = self.list_templates(category=task_type)
         if templates:
@@ -311,7 +310,7 @@ class TemplateService:
 # Global Service Instance
 # =============================================================================
 
-_template_service: Optional[TemplateService] = None
+_template_service: TemplateService | None = None
 
 
 def get_template_service() -> TemplateService:

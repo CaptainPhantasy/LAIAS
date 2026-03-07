@@ -7,7 +7,7 @@ falls back to localhost:4522 for local development.
 """
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 import structlog
@@ -35,15 +35,15 @@ class OrchestratorClient:
         agent_name: str,
         flow_code: str,
         agents_yaml: str,
-        requirements: Optional[list[str]] = None,
-        environment_vars: Optional[Dict[str, str]] = None,
-        output_config: Optional[Dict[str, bool]] = None,
+        requirements: list[str] | None = None,
+        environment_vars: dict[str, str] | None = None,
+        output_config: dict[str, bool] | None = None,
         output_path: str | None = None,
         output_format: str = "markdown",
         auto_start: bool = True,
         memory_limit: str = "512m",
         cpu_limit: float = 1.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Deploy an agent by calling the Docker Orchestrator's /api/deploy endpoint.
 
@@ -103,7 +103,7 @@ class OrchestratorClient:
         )
         raise OrchestratorError(f"Deployment failed (HTTP {response.status_code}): {error_detail}")
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """Check orchestrator health."""
         async with httpx.AsyncClient(timeout=5.0) as client:
             response = await client.get(f"{self.base_url}/health")
@@ -117,7 +117,7 @@ class OrchestratorError(Exception):
 
 
 # Singleton
-_client: Optional[OrchestratorClient] = None
+_client: OrchestratorClient | None = None
 
 
 def get_orchestrator_client() -> OrchestratorClient:

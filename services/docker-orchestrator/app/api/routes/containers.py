@@ -4,11 +4,10 @@ Container management endpoints.
 Provides CRUD operations for agent containers.
 """
 
-from fastapi import APIRouter, HTTPException, status
-from typing import Optional, List
 from datetime import datetime
 
-from app.models.requests import ContainerActionRequest
+from fastapi import APIRouter, HTTPException, status
+
 from app.models.responses import ContainerInfo, ContainerListResponse
 from app.services.docker_service import get_docker_service
 from app.services.resource_monitor import get_resource_monitor
@@ -27,7 +26,7 @@ router = APIRouter(prefix="/api", tags=["containers"])
     description="List all LAIAS agent containers",
 )
 async def list_containers(
-    status: Optional[str] = None,
+    status: str | None = None,
     all_containers: bool = True,
     limit: int = 100,
     offset: int = 0,
@@ -347,7 +346,6 @@ async def get_container_metrics(container_id: str):
     Returns:
         MetricsResponse: Container metrics
     """
-    from app.models.responses import MetricsResponse
 
     try:
         metrics = await get_resource_monitor().get_metrics(container_id)

@@ -4,9 +4,10 @@ Automation Tools Configuration
 Tools for workflow automation and external service integration.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass, field
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -23,23 +24,23 @@ class AutomationToolsConfig:
     apify_memory_mbytes: int = 2048
 
     # Composio settings
-    composio_integration_ids: List[str] = field(default_factory=list)
+    composio_integration_ids: list[str] = field(default_factory=list)
 
     # MultiOn settings
     multion_timeout: int = 60
     multion_headless: bool = True
 
     # Zapier settings
-    zapier_actions: List[str] = field(default_factory=list)
+    zapier_actions: list[str] = field(default_factory=list)
 
     # n8n settings
     n8n_timeout: int = 300
 
     # Make settings
-    make_scenario_ids: List[str] = field(default_factory=list)
+    make_scenario_ids: list[str] = field(default_factory=list)
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all Automation tool configurations."""
         return [
             # Web Automation
@@ -167,7 +168,7 @@ class AutomationToolsConfig:
             ),
         ]
 
-    def get_automation_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_automation_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated automation tools.
 
@@ -193,14 +194,14 @@ class AutomationToolsConfig:
 
         return tools
 
-    def get_apify_config(self) -> Dict[str, Any]:
+    def get_apify_config(self) -> dict[str, Any]:
         """Get Apify configuration."""
         return {
             "timeout_secs": self.apify_timeout_secs,
             "memory_mbytes": self.apify_memory_mbytes,
         }
 
-    def get_multion_config(self) -> Dict[str, Any]:
+    def get_multion_config(self) -> dict[str, Any]:
         """Get MultiOn configuration."""
         return {
             "timeout": self.multion_timeout,

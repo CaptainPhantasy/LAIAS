@@ -5,11 +5,10 @@ Agent template management and listing.
 Uses TemplateService as the single source of truth for YAML-based templates.
 """
 
-from typing import Optional
 
+import structlog
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
-import structlog
 
 from app.models.requests import GenerateAgentRequest
 from app.services.template_service import get_template_service
@@ -53,7 +52,7 @@ class TemplateApplyRequest(BaseModel):
 
     template_id: str
     agent_name: str
-    customizations: Optional[dict] = None
+    customizations: dict | None = None
 
 
 # =============================================================================
@@ -63,8 +62,8 @@ class TemplateApplyRequest(BaseModel):
 
 @router.get("", response_model=TemplateListResponse, status_code=status.HTTP_200_OK)
 async def list_templates(
-    category: Optional[str] = Query(None, description="Filter by category"),
-    search: Optional[str] = Query(None, description="Search in name and description"),
+    category: str | None = Query(None, description="Filter by category"),
+    search: str | None = Query(None, description="Search in name and description"),
 ) -> TemplateListResponse:
     """
     List all available agent templates.

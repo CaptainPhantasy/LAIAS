@@ -4,9 +4,10 @@ File & Document Tools Configuration
 Tools for reading, writing, and searching various file formats.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass, field
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -19,9 +20,9 @@ class FileToolsConfig:
     """Configuration for File & Document tools."""
 
     # Base paths for file operations
-    allowed_directories: List[str] = field(default_factory=lambda: ["./data", "./workspace"])
+    allowed_directories: list[str] = field(default_factory=lambda: ["./data", "./workspace"])
     max_file_size_mb: int = 100
-    allowed_extensions: List[str] = field(default_factory=lambda: [
+    allowed_extensions: list[str] = field(default_factory=lambda: [
         ".txt", ".pdf", ".docx", ".doc", ".xlsx", ".xls",
         ".csv", ".json", ".xml", ".md", ".html", ".rtf"
     ])
@@ -42,7 +43,7 @@ class FileToolsConfig:
     xml_remove_namespaces: bool = True
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all File & Document tool configurations."""
         return [
             ToolConfig(
@@ -122,7 +123,7 @@ class FileToolsConfig:
             ),
         ]
 
-    def get_file_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_file_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated file tools.
 

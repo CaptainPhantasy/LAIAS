@@ -4,26 +4,25 @@ Authentication routes for LAIAS.
 Provides login, register, and token refresh endpoints.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 import structlog
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.api.auth import (
-    Token,
+    CurrentUser,
     LoginRequest,
     RegisterRequest,
-    CurrentUser,
-    verify_password,
-    hash_password,
+    Token,
     create_access_token,
     create_refresh_token,
     decode_token,
     get_current_user,
+    hash_password,
+    verify_password,
 )
+from app.database import get_db
 from app.models.team import User
-
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -36,7 +35,7 @@ async def register(
 ):
     """
     Register a new user.
-    
+
     Creates a user account and returns JWT tokens.
     """
     # Check if user already exists
@@ -48,7 +47,7 @@ async def register(
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered"
         )
-    
+
     # Create user
     user = User(
         email=request.email,
@@ -58,13 +57,13 @@ async def register(
     db.add(user)
     await db.commit()
     await db.refresh(user)
-    
+
     logger.info("user_registered", user_id=str(user.id), email=user.email)
-    
+
     # Generate tokens
     access_token = create_access_token(str(user.id), user.email)
     refresh_token = create_refresh_token(str(user.id))
-    
+
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -79,7 +78,7 @@ async def login(
 ):
     """
     Login with email and password.
-    
+
     Returns JWT tokens on successful authentication.
     """
     # Find user
@@ -87,26 +86,26 @@ async def login(
         select(User).where(User.email == request.email)
     )
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-    
+
     # Verify password
     if not user.password_hash or not verify_password(request.password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
-    
+
     logger.info("user_login", user_id=str(user.id), email=user.email)
-    
+
     # Generate tokens
     access_token = create_access_token(str(user.id), user.email)
     refresh_token = create_refresh_token(str(user.id))
-    
+
     return Token(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -121,18 +120,18 @@ async def refresh_token(
 ):
     """
     Refresh access token using a refresh token.
-    
+
     Returns new JWT tokens.
     """
     # Decode and validate refresh token
     payload = decode_token(refresh_token)
-    
+
     if payload.type != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type. Use refresh token."
         )
-    
+
     # Verify user still exists
     from uuid import UUID
     try:
@@ -142,20 +141,20 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID in token"
         )
-    
+
     result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalar_one_or_none()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
-    
+
     # Generate new tokens
     new_access_token = create_access_token(str(user.id), user.email)
     new_refresh_token = create_refresh_token(str(user.id))
-    
+
     return Token(
         access_token=new_access_token,
         refresh_token=new_refresh_token,
@@ -169,7 +168,7 @@ async def get_me(
 ):
     """
     Get current authenticated user.
-    
+
     Returns the user info from the JWT token.
     """
     return user

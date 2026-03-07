@@ -4,17 +4,14 @@ Real-time log streaming for containers.
 Provides async log streaming with filtering and parsing.
 """
 
-import asyncio
 import json
-from typing import AsyncGenerator, Optional, List
+from collections.abc import AsyncGenerator
 from datetime import datetime
+from typing import Optional
 
 import docker
-from docker.errors import DockerException, NotFound
 import structlog
-
-from app.config import settings
-
+from docker.errors import DockerException, NotFound
 
 logger = structlog.get_logger()
 
@@ -32,15 +29,15 @@ class LogStreamer:
 
     def __init__(self):
         self.client = docker.from_env()
-        self._active_streams: dict = {}
+        self._active_streams: dict[str, bool] = {}
 
     async def stream_logs(
         self,
         container_id: str,
         tail: int = 0,
         follow: bool = True,
-        since: Optional[str] = None,
-    ) -> AsyncGenerator[dict, None]:
+        since: str | None = None,
+    ) -> AsyncGenerator[dict[str, str], None]:
         """
         Stream logs from container as async generator.
 
@@ -69,12 +66,13 @@ class LogStreamer:
 
         try:
             # Get logs with timestamps
+            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00")) if since else None
             log_generator = container.logs(
                 stream=True,
                 follow=follow,
                 timestamps=True,
-                tail=tail if tail > 0 else None,
-                since=since,
+                tail=tail if tail > 0 else "all",
+                since=since_dt,
             )
 
             for line in log_generator:
@@ -107,8 +105,8 @@ class LogStreamer:
         self,
         container_id: str,
         tail: int = 100,
-        level_filter: Optional[str] = None,
-    ) -> List[dict]:
+        level_filter: str | None = None,
+    ) -> list[dict[str, str]]:
         """
         Get historical logs without streaming.
 
@@ -142,9 +140,8 @@ class LogStreamer:
 
         return result
 
-    def _parse_log_line(self, line: str) -> dict:
-        """
-        Parse a log line into structured format.
+    def _parse_log_line(self, line: str) -> dict[str, str]:
+        """Parse a log line into structured format.
 
         Docker logs format: "2026-02-13T10:30:00.123456789Z message"
 
@@ -238,12 +235,11 @@ class LogStreamer:
     async def stream_logs_with_filter(
         self,
         container_id: str,
-        level_filter: Optional[str] = None,
-        source_filter: Optional[str] = None,
-        text_filter: Optional[str] = None,
-    ) -> AsyncGenerator[dict, None]:
-        """
-        Stream logs with multiple filters.
+        level_filter: str | None = None,
+        source_filter: str | None = None,
+        text_filter: str | None = None,
+    ) -> AsyncGenerator[dict[str, str], None]:
+        """Stream logs with multiple filters.
 
         Args:
             container_id: Container ID

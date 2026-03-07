@@ -5,11 +5,11 @@ Integration with MCP servers for accessing external tools.
 Supports STDIO, SSE, and HTTP transports.
 """
 
+import os
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Type
-import asyncio
-import os
+from typing import Any
+
 import structlog
 
 logger = structlog.get_logger()
@@ -30,13 +30,13 @@ class MCPServerConfig:
     transport: MCPTransportType
 
     # STDIO transport
-    command: Optional[str] = None
-    args: List[str] = field(default_factory=list)
-    env: Dict[str, str] = field(default_factory=dict)
+    command: str | None = None
+    args: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
 
     # SSE/HTTP transport
-    url: Optional[str] = None
-    headers: Dict[str, str] = field(default_factory=dict)
+    url: str | None = None
+    headers: dict[str, str] = field(default_factory=dict)
 
     # General settings
     timeout: int = 30
@@ -48,8 +48,8 @@ class MCPServerConfig:
         cls,
         name: str,
         command: str,
-        args: Optional[List[str]] = None,
-        env: Optional[Dict[str, str]] = None,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
         **kwargs
     ) -> "MCPServerConfig":
         """Create STDIO transport config."""
@@ -67,7 +67,7 @@ class MCPServerConfig:
         cls,
         name: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         **kwargs
     ) -> "MCPServerConfig":
         """Create SSE transport config."""
@@ -84,7 +84,7 @@ class MCPServerConfig:
         cls,
         name: str,
         url: str,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         **kwargs
     ) -> "MCPServerConfig":
         """Create HTTP transport config."""
@@ -106,9 +106,9 @@ class MCPToolsAdapter:
     """
 
     def __init__(self):
-        self._servers: Dict[str, MCPServerConfig] = {}
-        self._connected_servers: Dict[str, Any] = {}
-        self._tools_cache: Dict[str, List[Any]] = {}
+        self._servers: dict[str, MCPServerConfig] = {}
+        self._connected_servers: dict[str, Any] = {}
+        self._tools_cache: dict[str, list[Any]] = {}
 
         # Register common MCP servers
         self._register_default_servers()
@@ -201,11 +201,11 @@ class MCPToolsAdapter:
         self._servers[config.name] = config
         logger.debug("mcp_server_registered", name=config.name, transport=config.transport.value)
 
-    def get_server_config(self, name: str) -> Optional[MCPServerConfig]:
+    def get_server_config(self, name: str) -> MCPServerConfig | None:
         """Get server configuration by name."""
         return self._servers.get(name)
 
-    def list_servers(self) -> List[Dict[str, Any]]:
+    def list_servers(self) -> list[dict[str, Any]]:
         """List all registered MCP servers."""
         return [
             {
@@ -218,7 +218,7 @@ class MCPToolsAdapter:
             for config in self._servers.values()
         ]
 
-    def get_available_servers(self) -> List[str]:
+    def get_available_servers(self) -> list[str]:
         """Get names of servers that can be connected to."""
         available = []
         for name, config in self._servers.items():
@@ -257,8 +257,8 @@ class MCPToolsAdapter:
         try:
             if config.transport == MCPTransportType.STDIO:
                 # Use MCPServerAdapter from crewai_tools
-                from mcp import StdioServerParameters
                 from crewai_tools import MCPServerAdapter
+                from mcp import StdioServerParameters
 
                 server_params = StdioServerParameters(
                     command=config.command,
@@ -345,7 +345,7 @@ class MCPToolsAdapter:
         for name in list(self._connected_servers.keys()):
             await self.disconnect_from_server(name)
 
-    def get_tools_from_server(self, name: str) -> List[Any]:
+    def get_tools_from_server(self, name: str) -> list[Any]:
         """
         Get tools from a connected MCP server.
 
@@ -361,7 +361,7 @@ class MCPToolsAdapter:
 
         return self._tools_cache.get(name, [])
 
-    def get_all_tools(self) -> List[Any]:
+    def get_all_tools(self) -> list[Any]:
         """
         Get all tools from all connected MCP servers.
 
@@ -373,7 +373,7 @@ class MCPToolsAdapter:
             all_tools.extend(tools)
         return all_tools
 
-    async def connect_to_multiple(self, names: List[str]) -> Dict[str, bool]:
+    async def connect_to_multiple(self, names: list[str]) -> dict[str, bool]:
         """
         Connect to multiple MCP servers.
 
@@ -388,7 +388,7 @@ class MCPToolsAdapter:
             results[name] = await self.connect_to_server(name)
         return results
 
-    def get_server_tools_info(self, name: str) -> List[Dict[str, Any]]:
+    def get_server_tools_info(self, name: str) -> list[dict[str, Any]]:
         """
         Get information about tools from a server.
 
@@ -494,6 +494,6 @@ def get_mcp_adapter() -> MCPToolsAdapter:
     return MCPToolsAdapter()
 
 
-def list_mcp_presets() -> Dict[str, Dict[str, Any]]:
+def list_mcp_presets() -> dict[str, dict[str, Any]]:
     """List available MCP server presets."""
     return MCP_SERVER_PRESETS

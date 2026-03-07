@@ -39,7 +39,7 @@ const FETCH_TIMEOUT = 8000; // 8 second timeout for template loading
 // ============================================================================
 
 const formSchema = z.object({
-  description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
+  description: z.string().min(10, 'Description must be at least 10 characters').max(5000),
   agent_name: z.string().optional(), // Auto-generated from description if not provided
   complexity: z.enum(['simple', 'moderate', 'complex']),
   task_type: z.enum(['research', 'development', 'automation', 'analysis', 'general']),
@@ -569,7 +569,7 @@ function CreateAgentPageContent() {
             />
             <div className="flex justify-between items-center mt-2">
               <span className="text-xs text-text-muted">
-                {watchedDescription?.length || 0}/2000
+                {watchedDescription?.length || 0}/5000
               </span>
             </div>
             <div className="mt-4">

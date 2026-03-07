@@ -4,9 +4,10 @@ Database & Data Tools Configuration
 Tools for SQL databases, vector stores, and data warehouses.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -52,7 +53,7 @@ class DatabaseToolsConfig:
     pinecone_index_name: str = "laias-index"
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all Database & Data tool configurations."""
         return [
             # SQL Databases
@@ -181,7 +182,7 @@ class DatabaseToolsConfig:
             ),
         ]
 
-    def get_database_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_database_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated database tools.
 
@@ -207,7 +208,7 @@ class DatabaseToolsConfig:
 
         return tools
 
-    def get_postgres_connection_string(self, env_vars: Dict[str, str]) -> str:
+    def get_postgres_connection_string(self, env_vars: dict[str, str]) -> str:
         """Build PostgreSQL connection string."""
         host = env_vars.get("PG_HOST", self.pg_host)
         port = env_vars.get("PG_PORT", str(self.pg_port))
@@ -217,7 +218,7 @@ class DatabaseToolsConfig:
 
         return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
-    def get_mysql_connection_string(self, env_vars: Dict[str, str]) -> str:
+    def get_mysql_connection_string(self, env_vars: dict[str, str]) -> str:
         """Build MySQL connection string."""
         host = env_vars.get("MYSQL_HOST", self.mysql_host)
         port = env_vars.get("MYSQL_PORT", str(self.mysql_port))

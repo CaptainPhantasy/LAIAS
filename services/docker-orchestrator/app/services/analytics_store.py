@@ -5,10 +5,10 @@ Stores analytics events for the dashboard.
 Can be extended to use PostgreSQL for persistence.
 """
 
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-from collections import deque
 import asyncio
+from collections import deque
+from datetime import datetime, timedelta
+
 
 class AnalyticsStore:
     """
@@ -22,7 +22,7 @@ class AnalyticsStore:
         self._events: deque = deque(maxlen=max_events)
         self._lock = asyncio.Lock()
 
-    async def add_event(self, event_type: str, event_data: Dict) -> Dict:
+    async def add_event(self, event_type: str, event_data: dict) -> dict:
         """
         Add an analytics event.
 
@@ -42,7 +42,7 @@ class AnalyticsStore:
             self._events.append(event)
             return event
 
-    async def get_events_since(self, since: datetime) -> List[Dict]:
+    async def get_events_since(self, since: datetime) -> list[dict]:
         """
         Get all events since a given timestamp.
 
@@ -59,8 +59,8 @@ class AnalyticsStore:
             ]
 
     async def get_events_by_type(
-        self, event_type: str, since: Optional[datetime] = None
-    ) -> List[Dict]:
+        self, event_type: str, since: datetime | None = None
+    ) -> list[dict]:
         """
         Get events of a specific type.
 
@@ -78,7 +78,7 @@ class AnalyticsStore:
             if e.get("event_type") == event_type
         ]
 
-    async def get_recent_events(self, limit: int = 100) -> List[Dict]:
+    async def get_recent_events(self, limit: int = 100) -> list[dict]:
         """
         Get the most recent events.
 
@@ -115,7 +115,7 @@ class AnalyticsStore:
 
         return removed
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """
         Get storage statistics.
 

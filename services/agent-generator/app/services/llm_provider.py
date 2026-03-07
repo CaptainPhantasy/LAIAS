@@ -14,19 +14,20 @@ Default provider: ZAI GLM-5
 
 import json
 import os
-from enum import Enum
-from typing import Any, AsyncIterator, Dict, List, Optional, Union
+from collections.abc import AsyncIterator
+from enum import StrEnum
+from typing import Any
 
 import httpx
+import structlog
 from pydantic import BaseModel, Field
 
 from app.utils.exceptions import LLMServiceException
-import structlog
 
 logger = structlog.get_logger()
 
 
-class ProviderType(str, Enum):
+class ProviderType(StrEnum):
     """Supported LLM provider types."""
 
     ZAI = "zai"
@@ -39,7 +40,7 @@ class ProviderType(str, Enum):
     CUSTOM = "custom"
 
 
-class MessageRole(str, Enum):
+class MessageRole(StrEnum):
     """Message roles for LLM conversations."""
 
     SYSTEM = "system"
@@ -56,13 +57,13 @@ class LLMConfig(BaseModel):
 
     provider: ProviderType = Field(default=ProviderType.ZAI, description="LLM provider type")
     model: str = Field(default="glm-5", description="Model name")
-    api_key: Optional[str] = Field(default=None, description="API key (overrides env var)")
-    base_url: Optional[str] = Field(default=None, description="Base URL (overrides default)")
+    api_key: str | None = Field(default=None, description="API key (overrides env var)")
+    base_url: str | None = Field(default=None, description="Base URL (overrides default)")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
     max_tokens: int = Field(default=4096, ge=1, description="Maximum tokens to generate")
     timeout: int = Field(default=120, ge=1, description="Request timeout in seconds")
     # Provider-specific options
-    extra: Dict[str, Any] = Field(
+    extra: dict[str, Any] = Field(
         default_factory=dict, description="Additional provider-specific options"
     )
 
@@ -73,9 +74,9 @@ class CompletionResponse(BaseModel):
     content: str
     model: str
     provider: ProviderType
-    tokens_used: Optional[int] = None
-    finish_reason: Optional[str] = None
-    raw_response: Optional[Dict[str, Any]] = None
+    tokens_used: int | None = None
+    finish_reason: str | None = None
+    raw_response: dict[str, Any] | None = None
 
 
 class StreamChunk(BaseModel):
@@ -83,7 +84,7 @@ class StreamChunk(BaseModel):
 
     content: str
     delta: str
-    finish_reason: Optional[str] = None
+    finish_reason: str | None = None
 
 
 class LLMProvider:
@@ -104,7 +105,7 @@ class LLMProvider:
     """
 
     # Provider-specific configurations
-    PROVIDER_CONFIGS: Dict[ProviderType, Dict[str, Any]] = {
+    PROVIDER_CONFIGS: dict[ProviderType, dict[str, Any]] = {
         ProviderType.ZAI: {
             "base_url": "https://api.z.ai/api/paas/v4",  # Standard endpoint (not coding)
             "default_model": "glm-5",  # Produces valid JSON for code gen; case-sensitive API
@@ -173,9 +174,9 @@ class LLMProvider:
     }
 
     # Runtime registry for custom providers
-    _custom_providers: Dict[str, Dict[str, Any]] = {}
+    _custom_providers: dict[str, dict[str, Any]] = {}
 
-    def __init__(self, config: Optional[LLMConfig] = None):
+    def __init__(self, config: LLMConfig | None = None):
         """
         Initialize LLM provider.
 
@@ -183,7 +184,7 @@ class LLMProvider:
             config: LLM configuration. Defaults to ZAI GLM-5.
         """
         self.config = config or self._default_config()
-        self._client: Optional[httpx.AsyncClient] = None
+        self._client: httpx.AsyncClient | None = None
         self._validate_config()
 
     @classmethod
@@ -270,7 +271,7 @@ class LLMProvider:
         """Async context manager exit."""
         await self.close()
 
-    async def complete(self, messages: List[Dict[str, str]], **kwargs) -> CompletionResponse:
+    async def complete(self, messages: list[dict[str, str]], **kwargs) -> CompletionResponse:
         """
         Generate a completion from the LLM.
 
@@ -317,15 +318,21 @@ class LLMProvider:
                 original_error=e,
             )
         except Exception as e:
-            logger.error("LLM request failed", provider=self.config.provider.value, error=str(e))
+            error_detail = str(e) or f"{type(e).__name__} (no message)"
+            logger.error(
+                "LLM request failed",
+                provider=self.config.provider.value,
+                error=error_detail,
+                error_type=type(e).__name__,
+            )
             raise LLMServiceException(
-                f"Request to {self.config.provider.value} failed: {str(e)}",
+                f"Request to {self.config.provider.value} failed: {error_detail}",
                 provider=self.config.provider.value,
                 original_error=e,
             )
 
     async def _complete_openai(
-        self, messages: List[Dict[str, str]], model: str, temperature: float, max_tokens: int
+        self, messages: list[dict[str, str]], model: str, temperature: float, max_tokens: int
     ) -> CompletionResponse:
         """Complete using OpenAI-compatible API (ZAI, OpenAI, OpenRouter, Mistral)."""
         provider_config = self.PROVIDER_CONFIGS.get(
@@ -399,7 +406,7 @@ class LLMProvider:
         )
 
     async def _complete_anthropic(
-        self, messages: List[Dict[str, str]], model: str, temperature: float, max_tokens: int
+        self, messages: list[dict[str, str]], model: str, temperature: float, max_tokens: int
     ) -> CompletionResponse:
         """Complete using Anthropic API."""
         headers = {
@@ -450,7 +457,7 @@ class LLMProvider:
         )
 
     async def _complete_google(
-        self, messages: List[Dict[str, str]], model: str, temperature: float, max_tokens: int
+        self, messages: list[dict[str, str]], model: str, temperature: float, max_tokens: int
     ) -> CompletionResponse:
         """Complete using Google Gemini API."""
         # Google API uses API key as query parameter
@@ -498,7 +505,7 @@ class LLMProvider:
             raw_response=data,
         )
 
-    async def stream(self, messages: List[Dict[str, str]], **kwargs) -> AsyncIterator[StreamChunk]:
+    async def stream(self, messages: list[dict[str, str]], **kwargs) -> AsyncIterator[StreamChunk]:
         """
         Stream a completion from the LLM.
 
@@ -557,7 +564,7 @@ class LLMProvider:
             )
 
     async def _stream_openai(
-        self, messages: List[Dict[str, str]], model: str, temperature: float, max_tokens: int
+        self, messages: list[dict[str, str]], model: str, temperature: float, max_tokens: int
     ) -> AsyncIterator[StreamChunk]:
         """Stream using OpenAI-compatible API."""
         provider_config = self.PROVIDER_CONFIGS.get(
@@ -614,7 +621,7 @@ class LLMProvider:
                         continue
 
     async def _stream_anthropic(
-        self, messages: List[Dict[str, str]], model: str, temperature: float, max_tokens: int
+        self, messages: list[dict[str, str]], model: str, temperature: float, max_tokens: int
     ) -> AsyncIterator[StreamChunk]:
         """Stream using Anthropic API."""
         headers = {
@@ -663,7 +670,7 @@ class LLMProvider:
                     except (json.JSONDecodeError, KeyError):
                         continue
 
-    def _format_messages_openai(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _format_messages_openai(self, messages: list[dict[str, str]]) -> list[dict[str, str]]:
         """Format messages for OpenAI-compatible APIs."""
         formatted = []
         for msg in messages:
@@ -674,7 +681,7 @@ class LLMProvider:
         return formatted
 
     @classmethod
-    def register_provider(cls, provider_type: str, config: Dict[str, Any]) -> None:
+    def register_provider(cls, provider_type: str, config: dict[str, Any]) -> None:
         """
         Register a custom provider.
 
@@ -717,7 +724,7 @@ class LLMProvider:
         logger.info("Registered custom LLM provider", provider=provider_type)
 
     @classmethod
-    def list_providers(cls) -> Dict[str, Dict[str, str]]:
+    def list_providers(cls) -> dict[str, dict[str, str]]:
         """
         List all available providers.
 
@@ -745,9 +752,9 @@ class LLMProvider:
 
 
 async def complete(
-    messages: List[Dict[str, str]],
-    provider: Optional[ProviderType] = None,
-    model: Optional[str] = None,
+    messages: list[dict[str, str]],
+    provider: ProviderType | None = None,
+    model: str | None = None,
     **kwargs,
 ) -> str:
     """
@@ -774,7 +781,7 @@ async def complete(
 
 
 def get_provider(
-    provider: Optional[ProviderType] = None, model: Optional[str] = None, **kwargs
+    provider: ProviderType | None = None, model: str | None = None, **kwargs
 ) -> LLMProvider:
     """
     Get a configured LLM provider instance.

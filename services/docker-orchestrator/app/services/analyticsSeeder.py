@@ -6,9 +6,9 @@ Run this to populate analytics with demo data.
 """
 
 from datetime import datetime, timedelta
-from random import randint, uniform, choices
-from app.services.analytics_store import analytics_store
+from random import choices, randint, uniform
 
+from app.services.analytics_store import analytics_store
 
 # Sample data
 LLM_PROVIDERS = ["anthropic", "openai", "openrouter"]
@@ -89,7 +89,7 @@ async def seed_analytics(days: int = 30):
             }, deploy_time)
 
     store_stats = analytics_store.get_stats()
-    print(f"Seeding complete!")
+    print("Seeding complete!")
     print(f"  Total events: {store_stats['total_events']}")
     print(f"  Max events: {store_stats['max_events']}")
     print(f"  Utilization: {store_stats['utilization']}%")
@@ -110,6 +110,7 @@ async def add_event_with_time(self, event_type: str, event_data: dict, timestamp
 
 # Patch the store temporarily
 import app.services.analytics_store as analytics_module
+
 original_add = analytics_module.AnalyticsStore.add_event
 analytics_module.AnalyticsStore.add_event = add_event_with_time
 

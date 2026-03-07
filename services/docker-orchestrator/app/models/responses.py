@@ -4,9 +4,10 @@ Response models for Docker Orchestrator API.
 Pydantic models for API response serialization.
 """
 
-from typing import List, Optional, Literal, Dict
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class DeploymentResponse(BaseModel):
@@ -19,16 +20,16 @@ class DeploymentResponse(BaseModel):
     status: Literal["created", "starting", "running", "stopped", "error"] = Field(
         ..., description="Container status"
     )
-    ports: Dict[str, int] = Field(default_factory=dict, description="Exposed ports")
+    ports: dict[str, int] = Field(default_factory=dict, description="Exposed ports")
     created_at: datetime = Field(..., description="Creation timestamp")
-    started_at: Optional[datetime] = Field(None, description="Start timestamp")
+    started_at: datetime | None = Field(None, description="Start timestamp")
     logs_endpoint: str = Field(..., description="WebSocket URL for logs")
     metrics_endpoint: str = Field(..., description="REST URL for metrics")
-    output_config: Dict[str, bool] = Field(
+    output_config: dict[str, bool] = Field(
         default_factory=dict,
         description="Output routing destinations enabled for this deployment",
     )
-    output_path: Optional[str] = Field(
+    output_path: str | None = Field(
         default=None,
         description="Configured output path",
     )
@@ -55,9 +56,9 @@ class ContainerInfo(BaseModel):
     status: str = Field(..., description="Container status")
     cpu_usage: float = Field(..., description="Current CPU usage percent")
     memory_usage: str = Field(..., description="Current memory usage")
-    uptime_seconds: Optional[int] = Field(None, description="Uptime in seconds")
+    uptime_seconds: int | None = Field(None, description="Uptime in seconds")
     created_at: datetime = Field(..., description="Creation timestamp")
-    last_activity: Optional[datetime] = Field(None, description="Last activity timestamp")
+    last_activity: datetime | None = Field(None, description="Last activity timestamp")
 
     model_config = {
         "populate_by_name": True,
@@ -70,7 +71,7 @@ class ContainerInfo(BaseModel):
 class ContainerListResponse(BaseModel):
     """Response listing all containers."""
 
-    containers: List[ContainerInfo] = Field(..., description="List of containers")
+    containers: list[ContainerInfo] = Field(..., description="List of containers")
     total: int = Field(..., description="Total number of containers")
     running: int = Field(..., description="Number of running containers")
     stopped: int = Field(..., description="Number of stopped containers")
@@ -96,7 +97,7 @@ class LogsResponse(BaseModel):
     """Response containing container logs."""
 
     container_id: str = Field(..., description="Container ID")
-    logs: List[LogEntry] = Field(..., description="Log entries")
+    logs: list[LogEntry] = Field(..., description="Log entries")
     has_more: bool = Field(..., description="Whether more logs exist")
 
 
@@ -145,7 +146,7 @@ class ErrorResponse(BaseModel):
 
     error_code: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable error message")
-    detail: Optional[str] = Field(None, description="Additional error details")
+    detail: str | None = Field(None, description="Additional error details")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
@@ -160,7 +161,7 @@ class OutputEventIngestResponse(BaseModel):
     deployment_id: str = Field(..., description="Deployment ID")
     run_id: str = Field(..., description="Run identifier")
     accepted: bool = Field(..., description="Whether event was accepted")
-    destinations: Dict[str, bool] = Field(..., description="Destination write status by backend")
+    destinations: dict[str, bool] = Field(..., description="Destination write status by backend")
 
 
 class OutputRunListItem(BaseModel):
@@ -172,15 +173,15 @@ class OutputRunListItem(BaseModel):
 
 class OutputRunListResponse(BaseModel):
     deployment_id: str = Field(..., description="Deployment ID")
-    runs: List[OutputRunListItem] = Field(..., description="Available runs")
+    runs: list[OutputRunListItem] = Field(..., description="Available runs")
 
 
 class OutputRunDetailResponse(BaseModel):
     deployment_id: str = Field(..., description="Deployment ID")
     run_id: str = Field(..., description="Run identifier")
     summary_markdown: str = Field(default="", description="Human-readable run summary")
-    metrics: Dict[str, object] = Field(default_factory=dict, description="Run metrics payload")
-    events: List[Dict[str, object]] = Field(
+    metrics: dict[str, object] = Field(default_factory=dict, description="Run metrics payload")
+    events: list[dict[str, object]] = Field(
         default_factory=list, description="Structured event stream"
     )
 
@@ -194,8 +195,8 @@ class FileBrowserEntry(BaseModel):
 
 class FileBrowserResponse(BaseModel):
     current_path: str = Field(..., description="Current absolute path")
-    parent_path: Optional[str] = Field(default=None, description="Parent absolute path")
-    entries: List[FileBrowserEntry] = Field(..., description="Directories in current path")
+    parent_path: str | None = Field(default=None, description="Parent absolute path")
+    entries: list[FileBrowserEntry] = Field(..., description="Directories in current path")
 
 
 # ============================================================================
@@ -219,12 +220,12 @@ class UsageStatsResponse(BaseModel):
     total_api_calls: int = Field(..., description="Total API calls in period")
     total_tokens_used: int = Field(..., description="Total tokens used")
     total_cost_usd: float = Field(..., description="Total estimated cost in USD")
-    cost_by_provider: Dict[str, float] = Field(..., description="Cost breakdown by provider")
-    tokens_by_provider: Dict[str, Dict[str, int]] = Field(
+    cost_by_provider: dict[str, float] = Field(..., description="Cost breakdown by provider")
+    tokens_by_provider: dict[str, dict[str, int]] = Field(
         ..., description="Token breakdown by provider (input/output)"
     )
-    api_calls_by_endpoint: Dict[str, int] = Field(..., description="API call count by endpoint")
-    daily_timeseries: List[UsageDataPoint] = Field(..., description="Daily usage data")
+    api_calls_by_endpoint: dict[str, int] = Field(..., description="API call count by endpoint")
+    daily_timeseries: list[UsageDataPoint] = Field(..., description="Daily usage data")
 
 
 class DeploymentDataPoint(BaseModel):
@@ -240,11 +241,11 @@ class DeploymentDataPoint(BaseModel):
 class DeploymentEvent(BaseModel):
     """A deployment event record."""
 
-    deployment_id: Optional[str] = None
-    agent_id: Optional[str] = None
-    agent_name: Optional[str] = None
+    deployment_id: str | None = None
+    agent_id: str | None = None
+    agent_name: str | None = None
     status: str = Field(..., description="Deployment status")
-    created_at: Optional[datetime] = None
+    created_at: datetime | None = None
 
     class Config:
         json_encoders = {
@@ -260,9 +261,9 @@ class DeploymentStatsResponse(BaseModel):
     successful_deployments: int = Field(..., description="Successful deployments")
     failed_deployments: int = Field(..., description="Failed deployments")
     success_rate: float = Field(..., description="Success rate percentage")
-    deployments_by_status: Dict[str, int] = Field(..., description="Deployment count by status")
-    daily_timeseries: List[DeploymentDataPoint] = Field(..., description="Daily deployment data")
-    recent_deployments: List[DeploymentEvent] = Field(..., description="Recent deployment events")
+    deployments_by_status: dict[str, int] = Field(..., description="Deployment count by status")
+    daily_timeseries: list[DeploymentDataPoint] = Field(..., description="Daily deployment data")
+    recent_deployments: list[DeploymentEvent] = Field(..., description="Recent deployment events")
 
 
 class PerformanceDataPoint(BaseModel):
@@ -282,7 +283,7 @@ class PerformanceMetricsResponse(BaseModel):
     p95_response_time_ms: float = Field(..., description="95th percentile response time")
     p99_response_time_ms: float = Field(..., description="99th percentile response time")
     total_requests: int = Field(..., description="Total requests measured")
-    daily_timeseries: List[PerformanceDataPoint] = Field(..., description="Daily performance data")
+    daily_timeseries: list[PerformanceDataPoint] = Field(..., description="Daily performance data")
 
 
 class AnalyticsResponse(BaseModel):

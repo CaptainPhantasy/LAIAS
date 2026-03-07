@@ -9,19 +9,19 @@ Default provider: ZAI GLM-5
 """
 
 import json
-from typing import Optional, Dict, Any, List
+from typing import Any
 
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 import structlog
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.config import settings
-from app.utils.exceptions import LLMServiceException
 from app.services.llm_provider import (
-    LLMProvider,
-    LLMConfig,
-    ProviderType,
     CompletionResponse,
+    LLMConfig,
+    LLMProvider,
+    ProviderType,
 )
+from app.utils.exceptions import LLMServiceException
 
 logger = structlog.get_logger()
 
@@ -78,7 +78,7 @@ class LLMService:
         return LLMProvider.PROVIDER_CONFIGS[self._default_provider]["default_model"]
 
     def _get_provider(
-        self, provider: Optional[str] = None, model: Optional[str] = None, **config_kwargs
+        self, provider: str | None = None, model: str | None = None, **config_kwargs
     ) -> LLMProvider:
         """
         Get a configured LLM provider instance.
@@ -104,7 +104,11 @@ class LLMService:
             }
             provider_type = provider_map.get(provider.lower(), self._default_provider)
 
-        resolved_model = model if model and model.lower() != "default" else self._default_model
+        # Use the selected provider's default model, not the global default
+        provider_default = LLMProvider.PROVIDER_CONFIGS.get(provider_type, {}).get(
+            "default_model", self._default_model
+        )
+        resolved_model = model if model and model.lower() != "default" else provider_default
 
         config = LLMConfig(
             provider=provider_type,
@@ -127,14 +131,14 @@ class LLMService:
         agent_name: str,
         complexity: str,
         task_type: str,
-        tools_requested: Optional[List[str]] = None,
-        provider: str = None,
-        model: Optional[str] = None,
+        tools_requested: list[str] | None = None,
+        provider: str | None = None,
+        model: str | None = None,
         include_memory: bool = True,
         include_analytics: bool = True,
         max_agents: int = 4,
-        few_shot_examples: List[Dict] = None,
-    ) -> Dict[str, Any]:
+        few_shot_examples: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """
         Generate agent code using LLM.
 
@@ -182,44 +186,77 @@ class LLMService:
 
         messages.append({"role": "user", "content": user_prompt})
 
-        # Determine provider and model
         provider_name = provider or self._default_provider.value
-        model_name = model or self._get_model_for_provider(provider_name)
+        fallback_chain = self._build_fallback_chain(provider_name)
 
-        logger.info(
-            "Generating agent code",
-            provider=provider_name,
-            model=model_name,
-            complexity=complexity,
-            task_type=task_type,
-            max_agents=max_agents,
-        )
-
-        try:
-            llm = self._get_provider(provider=provider, model=model_name)
-            response = await llm.complete(messages)
+        last_error: Exception | None = None
+        for attempt_provider in fallback_chain:
+            attempt_model = (
+                model
+                if model and model.lower() != "default" and attempt_provider == provider_name
+                else self._get_model_for_provider(attempt_provider)
+            )
 
             logger.info(
-                "LLM response received",
-                provider=response.provider.value,
-                model=response.model,
-                tokens_used=response.tokens_used,
+                "Generating agent code",
+                provider=attempt_provider,
+                model=attempt_model,
+                complexity=complexity,
+                task_type=task_type,
+                max_agents=max_agents,
             )
 
-            return self._parse_response(response.content)
+            try:
+                llm = self._get_provider(provider=attempt_provider, model=attempt_model)
+                response = await llm.complete(messages)
 
-        except LLMServiceException:
-            raise
-        except Exception as e:
-            logger.error("LLM generation failed", provider=provider_name, error=str(e))
-            raise LLMServiceException(
-                f"Failed to generate code: {str(e)}", provider=provider_name, original_error=e
-            )
+                logger.info(
+                    "LLM response received",
+                    provider=response.provider.value,
+                    model=response.model,
+                    tokens_used=response.tokens_used,
+                )
+
+                return self._parse_response(response.content)
+
+            except (LLMServiceException, Exception) as e:
+                error_detail = str(e) or f"{type(e).__name__} (no message)"
+                logger.warning(
+                    "Provider failed, trying next",
+                    failed_provider=attempt_provider,
+                    error=error_detail,
+                    remaining=len(fallback_chain) - fallback_chain.index(attempt_provider) - 1,
+                )
+                last_error = e
+
+        raise LLMServiceException(
+            f"All providers failed. Last error: {str(last_error)}",
+            provider=provider_name,
+            original_error=last_error,
+        )
+
+    def _build_fallback_chain(self, primary: str) -> list[str]:
+        """Build ordered provider fallback chain, skipping unconfigured providers."""
+        availability = {
+            "zai": settings.zai_available,
+            "openai": settings.openai_available,
+            "anthropic": settings.anthropic_available,
+            "openrouter": settings.openrouter_available,
+            "google": settings.google_available,
+            "mistral": settings.mistral_available,
+        }
+        preferred_order = ["zai", "openai", "anthropic", "openrouter", "google", "mistral"]
+        chain = [primary] if availability.get(primary, False) else []
+        for p in preferred_order:
+            if p != primary and availability.get(p, False):
+                chain.append(p)
+        if not chain:
+            chain = [primary]
+        return chain
 
     def _get_model_for_provider(self, provider: str) -> str:
-        """Get default model for a provider."""
         provider_map = {
-            "zai": "GLM-5",  # Reliable JSON output for code generation
+            "zai": "GLM-5",
             "portkey": "@zhipu/glm-4.7-flashx",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
@@ -241,7 +278,7 @@ class LLMService:
         agent_name: str,
         complexity: str,
         task_type: str,
-        tools_requested: Optional[List[str]],
+        tools_requested: list[str] | None,
         include_memory: bool,
         include_analytics: bool,
         max_agents: int,
@@ -280,7 +317,7 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
 - Post structured events to LAIAS_OUTPUT_INGEST_URL when postgres output is enabled.
 """
 
-    def _parse_response(self, content: str) -> Dict[str, Any]:
+    def _parse_response(self, content: str) -> dict[str, Any]:
         """Parse LLM response into structured data.
 
         Handles multiple response formats:
@@ -331,7 +368,9 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
             )
             raise ValueError(f"Invalid JSON response from LLM: {e}")
 
-    async def check_health(self) -> Dict[str, str]:
+        raise ValueError("Invalid JSON response from LLM: no JSON object found in content")
+
+    async def check_health(self) -> dict[str, str]:
         """
         Check health of configured LLM providers.
 
@@ -339,11 +378,30 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
             Dict mapping provider names to status strings
         """
         status = {}
-        providers_to_check = [
+        all_providers = [
             ("portkey", ProviderType.PORTKEY, "@zhipu/glm-4.7-flashx"),
             ("zai", ProviderType.ZAI, "glm-5"),
             ("openai", ProviderType.OPENAI, "gpt-4o-mini"),
             ("anthropic", ProviderType.ANTHROPIC, "claude-3-haiku-20240307"),
+            ("openrouter", ProviderType.OPENROUTER, "openai/gpt-4o-mini"),
+            ("google", ProviderType.GOOGLE, "gemini-2.0-flash"),
+            ("mistral", ProviderType.MISTRAL, "mistral-small-latest"),
+        ]
+
+        availability_map = {
+            "portkey": settings.portkey_available,
+            "zai": settings.zai_available,
+            "openai": settings.openai_available,
+            "anthropic": settings.anthropic_available,
+            "openrouter": settings.openrouter_available,
+            "google": settings.google_available,
+            "mistral": settings.mistral_available,
+        }
+
+        providers_to_check = [
+            (name, ptype, model)
+            for name, ptype, model in all_providers
+            if availability_map.get(name, False)
         ]
 
         for name, provider_type, test_model in providers_to_check:
@@ -361,9 +419,9 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
 
     async def stream_completion(
         self,
-        messages: List[Dict[str, str]],
-        provider: str = None,
-        model: Optional[str] = None,
+        messages: list[dict[str, str]],
+        provider: str | None = None,
+        model: str | None = None,
         **kwargs,
     ):
         """
@@ -384,9 +442,9 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
 
     async def complete(
         self,
-        messages: List[Dict[str, str]],
-        provider: str = None,
-        model: Optional[str] = None,
+        messages: list[dict[str, str]],
+        provider: str | None = None,
+        model: str | None = None,
         **kwargs,
     ) -> CompletionResponse:
         """
@@ -406,7 +464,7 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
 
 
 # Global service instance
-_llm_service: Optional[LLMService] = None
+_llm_service: LLMService | None = None
 
 
 def get_llm_service() -> LLMService:

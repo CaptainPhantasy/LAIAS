@@ -4,11 +4,11 @@ Rate limiting configuration for LAIAS Agent Generator.
 Uses slowapi (FastAPI-Limiter) to limit requests on expensive endpoints.
 """
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
-from fastapi import Request, HTTPException, status
 import structlog
+from fastapi import HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 logger = structlog.get_logger()
 

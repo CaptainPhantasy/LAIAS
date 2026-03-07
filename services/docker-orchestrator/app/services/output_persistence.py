@@ -2,7 +2,6 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
 
 import aiofiles
 import structlog
@@ -12,7 +11,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.models.requests import OutputEventIngestRequest
 from app.services.format_converter import get_format_converter
-
 
 logger = structlog.get_logger()
 
@@ -91,7 +89,7 @@ class OutputPersistenceService:
         db: AsyncSession,
         deployment_id: str,
         event: OutputEventIngestRequest,
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         destinations = {"postgres": True, "files": True}
         if event.destinations is not None:
             destinations.update(event.destinations)

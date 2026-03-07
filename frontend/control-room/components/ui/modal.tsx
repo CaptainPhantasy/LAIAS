@@ -63,6 +63,19 @@ const Modal = ({
     };
   }, [isOpen]);
 
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleEscape);
+      return () => window.removeEventListener('keydown', handleEscape);
+    }
+  }, [isOpen, onClose]);
+
   if (!isMounted || !isOpen) return null;
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -70,17 +83,6 @@ const Modal = ({
       onClose();
     }
   };
-
-  const handleEscape = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && onClose) {
-      onClose();
-    }
-  };
-
-  React.useEffect(() => {
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, []);
 
   return (
     <div

@@ -10,7 +10,6 @@ from app.models.responses import (
 )
 from app.services.output_persistence import get_output_persistence_service
 
-
 router = APIRouter(prefix="/api", tags=["outputs"])
 
 

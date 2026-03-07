@@ -5,8 +5,8 @@ POST /api/validate-code
 Validates Python code against Godzilla architectural pattern.
 """
 
-from fastapi import APIRouter, HTTPException, status
 import structlog
+from fastapi import APIRouter, HTTPException, status
 
 from app.models.requests import ValidateCodeRequest
 from app.models.responses import ValidateCodeResponse

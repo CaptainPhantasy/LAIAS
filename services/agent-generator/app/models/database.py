@@ -5,12 +5,12 @@ SQLAlchemy 2.0 style models for persistent storage of agents and generations.
 """
 
 from datetime import datetime
-from typing import Optional, List, Any
+from typing import Any
+from uuid import UUID as PyUUID
 
-from sqlalchemy import String, Text, Integer, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from uuid import UUID as PyUUID
 
 
 class Base(DeclarativeBase):
@@ -37,33 +37,33 @@ class Agent(Base):
 
     # === Generated Code (Godzilla pattern) ===
     flow_code: Mapped[str] = mapped_column(Text, nullable=False)
-    agents_yaml: Mapped[Optional[str]] = mapped_column(Text)
-    state_class: Mapped[Optional[str]] = mapped_column(Text)
+    agents_yaml: Mapped[str | None] = mapped_column(Text)
+    state_class: Mapped[str | None] = mapped_column(Text)
 
     # === Configuration ===
     complexity: Mapped[str] = mapped_column(String(20), nullable=False)
     task_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    tools: Mapped[List[Any]] = mapped_column(JSONB, default=list)
-    requirements: Mapped[List[Any]] = mapped_column(JSONB, default=list)
+    tools: Mapped[list[Any]] = mapped_column(JSONB, default=list)
+    requirements: Mapped[list[Any]] = mapped_column(JSONB, default=list)
 
     # === Metadata ===
     llm_provider: Mapped[str] = mapped_column(String(20), default="openai")
     model: Mapped[str] = mapped_column(String(50), default="gpt-4o")
-    estimated_cost_per_run: Mapped[Optional[float]] = mapped_column(Float)
-    complexity_score: Mapped[Optional[int]] = mapped_column(Integer)
+    estimated_cost_per_run: Mapped[float | None] = mapped_column(Float)
+    complexity_score: Mapped[int | None] = mapped_column(Integer)
 
     # === Validation ===
     validation_status: Mapped[dict] = mapped_column(JSONB, default=dict)
-    flow_diagram: Mapped[Optional[str]] = mapped_column(Text)
+    flow_diagram: Mapped[str | None] = mapped_column(Text)
 
     # === Status ===
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     deployed_count: Mapped[int] = mapped_column(Integer, default=0)
-    last_deployed: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    last_deployed: Mapped[datetime | None] = mapped_column(DateTime)
 
     # === Team / Ownership ===
-    owner_id: Mapped[Optional[PyUUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    team_id: Mapped[Optional[PyUUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    owner_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    team_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
 
     # === Timestamps ===
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -109,28 +109,28 @@ class Generation(Base):
 
     # === Request Details ===
     request_description: Mapped[str] = mapped_column(Text, nullable=False)
-    request_complexity: Mapped[Optional[str]] = mapped_column(String(20))
-    request_task_type: Mapped[Optional[str]] = mapped_column(String(50))
-    request_llm_provider: Mapped[Optional[str]] = mapped_column(String(20))
-    request_model: Mapped[Optional[str]] = mapped_column(String(50))
+    request_complexity: Mapped[str | None] = mapped_column(String(20))
+    request_task_type: Mapped[str | None] = mapped_column(String(50))
+    request_llm_provider: Mapped[str | None] = mapped_column(String(20))
+    request_model: Mapped[str | None] = mapped_column(String(50))
 
     # === Response Details ===
-    response_code: Mapped[Optional[str]] = mapped_column(Text)
-    validation_passed: Mapped[Optional[bool]] = mapped_column(Boolean)
-    pattern_compliance: Mapped[Optional[float]] = mapped_column(Float)
+    response_code: Mapped[str | None] = mapped_column(Text)
+    validation_passed: Mapped[bool | None] = mapped_column(Boolean)
+    pattern_compliance: Mapped[float | None] = mapped_column(Float)
 
     # === Timing ===
     started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
-    duration_ms: Mapped[Optional[int]] = mapped_column(Integer)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime)
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
 
     # === Status ===
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, completed, failed
-    error_message: Mapped[Optional[str]] = mapped_column(Text)
+    error_message: Mapped[str | None] = mapped_column(Text)
 
     # === Cost Tracking ===
-    tokens_used: Mapped[Optional[int]] = mapped_column(Integer)
-    estimated_cost: Mapped[Optional[float]] = mapped_column(Float)
+    tokens_used: Mapped[int | None] = mapped_column(Integer)
+    estimated_cost: Mapped[float | None] = mapped_column(Float)
 
     def to_dict(self) -> dict:
         """Convert model to dictionary."""

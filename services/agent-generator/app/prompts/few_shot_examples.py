@@ -5,7 +5,7 @@ Provides curated examples of generated agents to guide the LLM
 toward high-quality outputs following the Godzilla pattern.
 """
 
-from typing import List, Dict, Any
+from typing import Any
 
 # =============================================================================
 # Simple Examples
@@ -331,7 +331,7 @@ EXAMPLES_BY_COMPLEXITY = {
 class FewShotSelector:
     """Selects appropriate few-shot examples based on request parameters."""
 
-    def get_examples(self, complexity: str, task_type: str, count: int = 2) -> List[Dict[str, Any]]:
+    def get_examples(self, complexity: str, task_type: str, count: int = 2) -> list[dict[str, Any]]:
         """
         Get relevant few-shot examples.
 

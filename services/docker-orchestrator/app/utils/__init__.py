@@ -1,10 +1,10 @@
 """Utility modules for Docker Orchestrator."""
 
 from .exceptions import (
-    OrchestratorException,
     ContainerNotFoundError,
     DeploymentError,
     DockerConnectionError,
+    OrchestratorException,
     ResourceLimitError,
 )
 

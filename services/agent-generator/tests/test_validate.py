@@ -44,7 +44,7 @@ def test_validate_code_syntax_error(client):
     response = client.post("/api/validate-code", json=request_data)
     assert response.status_code == 200
     data = response.json()
-    assert data["is_valid"] == False
+    assert not data["is_valid"]
     assert len(data["syntax_errors"]) > 0
 
 

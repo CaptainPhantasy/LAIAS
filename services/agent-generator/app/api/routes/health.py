@@ -5,14 +5,13 @@ GET /health
 Service health check and status reporting.
 """
 
-from datetime import datetime
 import time
-import structlog
+from datetime import datetime
 
+import structlog
 from fastapi import APIRouter
 from redis.asyncio import Redis
-from sqlalchemy import text, select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, text
 
 from app.config import settings
 from app.database.session import AsyncSessionLocal
@@ -180,6 +179,7 @@ async def _get_total_agents() -> int:
     """
     try:
         from sqlalchemy import func
+
         from app.models.database import Agent
 
         async with AsyncSessionLocal() as session:

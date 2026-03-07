@@ -4,18 +4,17 @@ Tool Management API Routes
 Endpoints for discovering, configuring, and managing CrewAI tools.
 """
 
-from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.tools import (
-    ToolRegistry,
     ToolCategory,
-    get_tool_registry,
-    list_available_tools,
-    get_tools_by_category,
-    MCPToolsAdapter,
     get_mcp_adapter,
+    get_tool_registry,
+    get_tools_by_category,
+    list_available_tools,
     list_mcp_presets,
 )
 
@@ -30,8 +29,8 @@ class ToolInfo(BaseModel):
     category: str
     description: str
     available: bool
-    missing_config: List[str]
-    dependencies: List[str]
+    missing_config: list[str]
+    dependencies: list[str]
 
 
 class ToolCategorySummary(BaseModel):
@@ -58,12 +57,12 @@ class ConnectMCPServerRequest(BaseModel):
 class InstantiateToolRequest(BaseModel):
     """Request to instantiate a tool."""
     tool_name: str
-    config: Dict[str, Any] = Field(default_factory=dict)
+    config: dict[str, Any] = Field(default_factory=dict)
 
 
 # === Tool Registry Endpoints ===
 
-@router.get("/", response_model=Dict[str, Any])
+@router.get("/", response_model=dict[str, Any])
 async def list_tools():
     """
     List all available tools with their status.
@@ -82,7 +81,7 @@ async def list_tools():
     }
 
 
-@router.get("/categories", response_model=List[ToolCategorySummary])
+@router.get("/categories", response_model=list[ToolCategorySummary])
 async def list_categories():
     """
     List all tool categories with counts.
@@ -104,7 +103,7 @@ async def list_categories():
     return summaries
 
 
-@router.get("/category/{category}", response_model=List[ToolInfo])
+@router.get("/category/{category}", response_model=list[ToolInfo])
 async def get_tools_in_category(category: str):
     """
     Get all tools in a specific category.
@@ -129,7 +128,7 @@ async def get_tools_in_category(category: str):
     ]
 
 
-@router.get("/available", response_model=List[ToolInfo])
+@router.get("/available", response_model=list[ToolInfo])
 async def list_available():
     """
     List only tools that are available with current configuration.
@@ -153,7 +152,7 @@ async def list_available():
     ]
 
 
-@router.get("/unavailable", response_model=Dict[str, List[str]])
+@router.get("/unavailable", response_model=dict[str, list[str]])
 async def list_unavailable():
     """
     List tools that are unavailable due to missing configuration.
@@ -215,7 +214,7 @@ async def instantiate_tool(request: InstantiateToolRequest):
 
 # === MCP Server Endpoints ===
 
-@router.get("/mcp/servers", response_model=List[Dict[str, Any]])
+@router.get("/mcp/servers", response_model=list[dict[str, Any]])
 async def list_mcp_servers():
     """
     List all registered MCP servers.
@@ -236,7 +235,7 @@ async def list_mcp_servers():
     return result
 
 
-@router.get("/mcp/presets", response_model=Dict[str, Dict[str, Any]])
+@router.get("/mcp/presets", response_model=dict[str, dict[str, Any]])
 async def list_mcp_server_presets():
     """
     List available MCP server presets with configuration requirements.

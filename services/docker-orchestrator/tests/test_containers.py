@@ -4,14 +4,13 @@ Tests for container lifecycle management.
 Tests deployment, status, logs, and termination of agent containers.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-import docker
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.models.requests import DeployAgentRequest
-
 
 client = TestClient(app)
 
@@ -38,39 +37,48 @@ class TestContainerDeployment:
             "requirements": ["pydantic>=2.0"],
             "cpu_limit": 0.5,
             "memory_limit": "256m",
-            "auto_start": False
+            "auto_start": False,
         }
 
     def test_deploy_endpoint_exists(self):
         """Deploy endpoint is accessible."""
-        response = client.post("/api/deploy", json={
-            "agent_id": "test",
-            "agent_name": "Test",
-            "flow_code": "async def flow(ctx): pass",
-            "agents_yaml": "agents: []",
-            "requirements": []
-        })
+        response = client.post(
+            "/api/deploy",
+            json={
+                "agent_id": "test",
+                "agent_name": "Test",
+                "flow_code": "async def flow(ctx): pass",
+                "agents_yaml": "agents: []",
+                "requirements": [],
+            },
+        )
         # Should not be 404 (might be 400/500 if Docker unavailable)
         assert response.status_code != 404
 
     def test_deploy_missing_required_fields_returns_422(self):
         """Deploy with missing fields returns validation error."""
-        response = client.post("/api/deploy", json={
-            "agent_id": "test"
-            # Missing other required fields
-        })
+        response = client.post(
+            "/api/deploy",
+            json={
+                "agent_id": "test"
+                # Missing other required fields
+            },
+        )
         assert response.status_code == 422
 
     def test_deploy_invalid_memory_format_returns_422(self):
         """Deploy with invalid memory format returns validation error."""
-        response = client.post("/api/deploy", json={
-            "agent_id": "test",
-            "agent_name": "Test",
-            "flow_code": "async def flow(ctx): pass",
-            "agents_yaml": "agents: []",
-            "requirements": [],
-            "memory_limit": "invalid"  # Should be like "256m" or "1g"
-        })
+        response = client.post(
+            "/api/deploy",
+            json={
+                "agent_id": "test",
+                "agent_name": "Test",
+                "flow_code": "async def flow(ctx): pass",
+                "agents_yaml": "agents: []",
+                "requirements": [],
+                "memory_limit": "invalid",  # Should be like "256m" or "1g"
+            },
+        )
         # May or may not validate, depends on model
         # Just verify endpoint handles it gracefully
         assert response.status_code in [400, 422, 500]
@@ -160,7 +168,7 @@ class TestContainerResourceLimits:
             flow_code="pass",
             agents_yaml="agents: []",
             requirements=[],
-            cpu_limit=0.5  # Valid
+            cpu_limit=0.5,  # Valid
         )
         assert request.cpu_limit == 0.5
 
@@ -175,9 +183,9 @@ class TestContainerResourceLimits:
                 flow_code="pass",
                 agents_yaml="agents: []",
                 requirements=[],
-                memory_limit=limit
+                memory_limit=limit,
             )
-            assert request.memory_limit == limit
+            assert request.memory_limit == limit.lower()
 
 
 class TestContainerNaming:
@@ -194,12 +202,15 @@ class TestContainerNaming:
         ]
 
         for name in special_names:
-            response = client.post("/api/deploy", json={
-                "agent_id": "test-id",
-                "agent_name": name,
-                "flow_code": "async def flow(ctx): pass",
-                "agents_yaml": "agents: []",
-                "requirements": []
-            })
+            response = client.post(
+                "/api/deploy",
+                json={
+                    "agent_id": "test-id",
+                    "agent_name": name,
+                    "flow_code": "async def flow(ctx): pass",
+                    "agents_yaml": "agents: []",
+                    "requirements": [],
+                },
+            )
             # Should handle gracefully (not crash)
             assert response.status_code != 500 or "error" in response.text.lower()

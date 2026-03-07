@@ -4,14 +4,17 @@ Analytics endpoints for LAIAS.
 Provides usage statistics, deployment metrics, and performance data.
 """
 
-from fastapi import APIRouter, status, HTTPException
-from datetime import datetime, timedelta, date
-from typing import Dict, List, Optional
-from decimal import Decimal
 from collections import defaultdict
-import asyncio
+from datetime import date, datetime, timedelta
 
-from app.models.responses import AnalyticsResponse, UsageStatsResponse, DeploymentStatsResponse, PerformanceMetricsResponse
+from fastapi import APIRouter, status
+
+from app.models.responses import (
+    AnalyticsResponse,
+    DeploymentStatsResponse,
+    PerformanceMetricsResponse,
+    UsageStatsResponse,
+)
 from app.services.analytics_store import analytics_store
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
@@ -52,7 +55,7 @@ def calculate_cost(provider: str, model: str, input_tokens: int, output_tokens: 
 )
 async def get_usage_stats(
     days: int = 30,
-    provider: Optional[str] = None,
+    provider: str | None = None,
 ) -> UsageStatsResponse:
     """
     Get usage statistics for the specified time period.
@@ -317,7 +320,7 @@ async def get_performance_metrics(
     summary="Record analytics event",
     description="Record an analytics event (internal use)",
 )
-async def record_event(event_type: str, event_data: Dict) -> Dict[str, str]:
+async def record_event(event_type: str, event_data: dict) -> dict[str, str]:
     """
     Record an analytics event.
 
@@ -346,7 +349,7 @@ async def record_event(event_type: str, event_data: Dict) -> Dict[str, str]:
     summary="Seed sample analytics data",
     description="Generate sample analytics data for testing (development only)",
 )
-async def seed_sample_data(days: int = 30) -> Dict[str, str]:
+async def seed_sample_data(days: int = 30) -> dict[str, str]:
     """
     Seed the analytics store with sample data.
 
@@ -359,8 +362,8 @@ async def seed_sample_data(days: int = 30) -> Dict[str, str]:
     Returns:
         Confirmation message with counts
     """
-    from random import randint, choices
     from datetime import timedelta
+    from random import choices, randint
 
     LLM_PROVIDERS = ["anthropic", "openai", "openrouter"]
     API_ENDPOINTS = [
@@ -379,7 +382,7 @@ async def seed_sample_data(days: int = 30) -> Dict[str, str]:
 
         # API calls
         for _ in range(randint(10, 50)):
-            call_time = date + timedelta(
+            date + timedelta(
                 hours=randint(0, 23),
                 minutes=randint(0, 59),
             )
@@ -391,7 +394,7 @@ async def seed_sample_data(days: int = 30) -> Dict[str, str]:
 
         # LLM calls
         for _ in range(randint(5, 20)):
-            llm_time = date + timedelta(
+            date + timedelta(
                 hours=randint(0, 23),
                 minutes=randint(0, 59),
             )

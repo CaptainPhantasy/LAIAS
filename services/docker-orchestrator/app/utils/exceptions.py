@@ -4,7 +4,6 @@ Custom exceptions for Docker Orchestrator.
 Provides structured error handling with HTTP status codes.
 """
 
-from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
 
 
@@ -14,7 +13,7 @@ class OrchestratorException(Exception):
     def __init__(
         self,
         message: str,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         error_code: str = "ORCHESTRATOR_ERROR",
     ):
         self.message = message
@@ -26,7 +25,7 @@ class OrchestratorException(Exception):
 class ContainerNotFoundError(OrchestratorException):
     """Raised when a container cannot be found."""
 
-    def __init__(self, container_id: str, detail: Optional[str] = None):
+    def __init__(self, container_id: str, detail: str | None = None):
         super().__init__(
             message=f"Container not found: {container_id}",
             detail=detail,
@@ -42,7 +41,7 @@ class DeploymentError(OrchestratorException):
         self,
         agent_id: str,
         reason: str,
-        detail: Optional[str] = None,
+        detail: str | None = None,
     ):
         super().__init__(
             message=f"Deployment failed for agent {agent_id}: {reason}",
@@ -56,7 +55,7 @@ class DeploymentError(OrchestratorException):
 class DockerConnectionError(OrchestratorException):
     """Raised when connection to Docker daemon fails."""
 
-    def __init__(self, reason: str, detail: Optional[str] = None):
+    def __init__(self, reason: str, detail: str | None = None):
         super().__init__(
             message=f"Cannot connect to Docker daemon: {reason}",
             detail=detail,
@@ -73,7 +72,7 @@ class ResourceLimitError(OrchestratorException):
         limit_type: str,
         current: int,
         maximum: int,
-        detail: Optional[str] = None,
+        detail: str | None = None,
     ):
         super().__init__(
             message=f"{limit_type} limit exceeded: {current}/{maximum}",
@@ -88,7 +87,7 @@ class ResourceLimitError(OrchestratorException):
 class InvalidConfigurationError(OrchestratorException):
     """Raised when configuration is invalid."""
 
-    def __init__(self, field: str, reason: str, detail: Optional[str] = None):
+    def __init__(self, field: str, reason: str, detail: str | None = None):
         super().__init__(
             message=f"Invalid configuration for {field}: {reason}",
             detail=detail,
@@ -101,7 +100,7 @@ class InvalidConfigurationError(OrchestratorException):
 class LogStreamingError(OrchestratorException):
     """Raised when log streaming fails."""
 
-    def __init__(self, container_id: str, reason: str, detail: Optional[str] = None):
+    def __init__(self, container_id: str, reason: str, detail: str | None = None):
         super().__init__(
             message=f"Log streaming failed for container {container_id}: {reason}",
             detail=detail,
@@ -114,7 +113,7 @@ class LogStreamingError(OrchestratorException):
 def exception_to_http_response(exc: OrchestratorException) -> HTTPException:
     """Convert an OrchestratorException to an HTTPException."""
 
-    status_map: Dict[str, int] = {
+    status_map: dict[str, int] = {
         "CONTAINER_NOT_FOUND": status.HTTP_404_NOT_FOUND,
         "DEPLOYMENT_FAILED": status.HTTP_500_INTERNAL_SERVER_ERROR,
         "DOCKER_CONNECTION_ERROR": status.HTTP_503_SERVICE_UNAVAILABLE,

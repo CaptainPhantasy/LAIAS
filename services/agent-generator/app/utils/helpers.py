@@ -76,13 +76,6 @@ def validate_requirements(reqs: list) -> list:
         Normalized list of requirements
     """
     normalized = []
-    known_patterns = [
-        r"^crewai(\[tools\])?>=\d+\.\d+\.\d+",
-        r"^pydantic>=\d+\.\d+\.\d+",
-        r"^structlog>=\d+\.\d+\.\d+",
-        r"^openai>=",
-        r"^anthropic>=",
-    ]
 
     for req in reqs:
         req = req.strip()

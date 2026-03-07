@@ -5,10 +5,9 @@ Pydantic v2 models for API responses.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-
 
 # =============================================================================
 # Common Components
@@ -19,16 +18,16 @@ class AgentInfo(BaseModel):
 
     role: str = Field(..., description="Agent role (e.g., 'Senior Research Analyst')")
     goal: str = Field(..., description="Agent's primary goal")
-    tools: List[str] = Field(default_factory=list, description="Tools assigned to this agent")
-    llm_config: Dict[str, Any] = Field(default_factory=dict, description="LLM configuration")
-    backstory: Optional[str] = Field(default=None, description="Agent backstory")
+    tools: list[str] = Field(default_factory=list, description="Tools assigned to this agent")
+    llm_config: dict[str, Any] = Field(default_factory=dict, description="LLM configuration")
+    backstory: str | None = Field(default=None, description="Agent backstory")
 
 
 class ValidationResult(BaseModel):
     """Validation result for generated code."""
 
     is_valid: bool = Field(..., description="Whether code passes validation")
-    syntax_errors: List[str] = Field(default_factory=list, description="Syntax errors found")
+    syntax_errors: list[str] = Field(default_factory=list, description="Syntax errors found")
     pattern_compliance: float = Field(
         default=0.0,
         ge=0.0,
@@ -36,9 +35,9 @@ class ValidationResult(BaseModel):
         validation_alias="pattern_compliance_score",
         description="Pattern compliance score (0.0 to 1.0)"
     )
-    warnings: List[str] = Field(default_factory=list, description="Non-critical warnings")
-    suggestions: List[str] = Field(default_factory=list, description="Improvement suggestions")
-    missing_patterns: List[str] = Field(default_factory=list, description="Required patterns not found")
+    warnings: list[str] = Field(default_factory=list, description="Non-critical warnings")
+    suggestions: list[str] = Field(default_factory=list, description="Improvement suggestions")
+    missing_patterns: list[str] = Field(default_factory=list, description="Required patterns not found")
 
 
 # =============================================================================
@@ -63,7 +62,7 @@ class GenerateAgentResponse(BaseModel):
     state_class: str = Field(..., description="AgentState class definition")
 
     # === Dependencies ===
-    requirements: List[str] = Field(
+    requirements: list[str] = Field(
         default_factory=lambda: ["crewai[tools]>=0.80.0", "pydantic>=2.5.0", "structlog>=24.1.0"],
         description="Python packages needed"
     )
@@ -82,17 +81,17 @@ class GenerateAgentResponse(BaseModel):
     )
 
     # === Agent Details ===
-    agents_created: List[AgentInfo] = Field(
+    agents_created: list[AgentInfo] = Field(
         default_factory=list,
         description="Details of created agents"
     )
-    tools_included: List[str] = Field(
+    tools_included: list[str] = Field(
         default_factory=list,
         description="Tools included in the flow"
     )
 
     # === Visualization ===
-    flow_diagram: Optional[str] = Field(
+    flow_diagram: str | None = Field(
         default=None,
         description="Mermaid diagram showing the flow"
     )
@@ -105,7 +104,7 @@ class GenerateAgentResponse(BaseModel):
 
     # === Timestamps ===
     created_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
-    expires_at: Optional[datetime] = Field(default=None, description="Cache expiration")
+    expires_at: datetime | None = Field(default=None, description="Cache expiration")
 
     model_config = {
         "json_schema_extra": {
@@ -126,19 +125,19 @@ class ValidateCodeResponse(BaseModel):
     """Response from code validation endpoint."""
 
     is_valid: bool = Field(..., description="Whether code passes validation")
-    syntax_errors: List[str] = Field(default_factory=list, description="Syntax errors found")
+    syntax_errors: list[str] = Field(default_factory=list, description="Syntax errors found")
     pattern_compliance_score: float = Field(
         ...,
         ge=0.0,
         le=1.0,
         description="Pattern compliance score"
     )
-    missing_patterns: List[str] = Field(
+    missing_patterns: list[str] = Field(
         default_factory=list,
         description="Required patterns not found"
     )
-    suggestions: List[str] = Field(default_factory=list, description="Improvement suggestions")
-    warnings: List[str] = Field(default_factory=list, description="Non-critical warnings")
+    suggestions: list[str] = Field(default_factory=list, description="Improvement suggestions")
+    warnings: list[str] = Field(default_factory=list, description="Non-critical warnings")
     validated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -153,7 +152,7 @@ class HealthResponse(BaseModel):
     uptime_seconds: float = Field(..., description="Service uptime in seconds")
 
     # === Component Status ===
-    llm_status: Dict[str, str] = Field(
+    llm_status: dict[str, str] = Field(
         default_factory=dict,
         description="LLM provider status (openai, anthropic)"
     )
@@ -171,7 +170,7 @@ class HealthResponse(BaseModel):
 class AgentListResponse(BaseModel):
     """Response listing saved agents."""
 
-    agents: List[Dict[str, Any]] = Field(default_factory=list, description="List of agents")
+    agents: list[dict[str, Any]] = Field(default_factory=list, description="List of agents")
     total: int = Field(..., description="Total count")
     limit: int = Field(..., description="Results limit")
     offset: int = Field(..., description="Results offset")
@@ -217,11 +216,11 @@ class AgentDetailResponse(BaseModel):
     # === Status ===
     is_active: bool = Field(default=True, description="Whether agent is active")
     deployed_count: int = Field(default=0, description="Times deployed")
-    last_deployed: Optional[datetime] = Field(default=None, description="Last deployment time")
+    last_deployed: datetime | None = Field(default=None, description="Last deployment time")
 
     # === Timestamps ===
     created_at: datetime = Field(..., description="Creation time")
-    updated_at: Optional[datetime] = Field(default=None, description="Last update time")
+    updated_at: datetime | None = Field(default=None, description="Last update time")
 
 
 class ErrorResponse(BaseModel):
@@ -229,8 +228,8 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
-    detail: Optional[str] = Field(default=None, description="Detailed error information")
-    request_id: Optional[str] = Field(default=None, description="Request ID for tracing")
+    detail: str | None = Field(default=None, description="Detailed error information")
+    request_id: str | None = Field(default=None, description="Request ID for tracing")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -252,6 +251,6 @@ class TemplateInfo(BaseModel):
 
     template_name: str = Field(..., description="Template identifier")
     description: str = Field(..., description="Template description")
-    task_types: List[str] = Field(..., description="Compatible task types")
+    task_types: list[str] = Field(..., description="Compatible task types")
     complexity: str = Field(..., description="Best suited complexity")
     agent_count_range: tuple[int, int] = Field(..., description="Min/max agents")

@@ -4,13 +4,13 @@ Shared dependencies for API routes.
 Common dependencies for dependency injection in FastAPI routes.
 """
 
+
 from fastapi import Header, HTTPException, status
-from typing import Optional
 
 from app.config import settings
 
 
-async def get_api_key(x_api_key: Optional[str] = Header(None)) -> Optional[str]:
+async def get_api_key(x_api_key: str | None = Header(None)) -> str | None:
     """
     Optionally validate API key from header.
 
@@ -24,7 +24,7 @@ async def get_api_key(x_api_key: Optional[str] = Header(None)) -> Optional[str]:
     return x_api_key
 
 
-async def validate_content_length(content_length: Optional[int] = Header(None)) -> None:
+async def validate_content_length(content_length: int | None = Header(None)) -> None:
     """
     Validate content length is within acceptable limits.
 

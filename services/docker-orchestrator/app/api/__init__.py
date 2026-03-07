@@ -1,9 +1,9 @@
 """API package for Docker Orchestrator."""
 
 from .routes import (
-    health,
-    deploy,
     containers,
+    deploy,
+    health,
     logs,
 )
 

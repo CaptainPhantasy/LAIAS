@@ -4,12 +4,11 @@ User API Routes.
 Get and update current user information.
 """
 
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
-import uuid
 
-from app.api.auth import get_current_user, DevUser
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
+
+from app.api.auth import DevUser, get_current_user
 
 router = APIRouter(prefix="/api/users", tags=["users"])
 
@@ -22,7 +21,7 @@ class UserResponse(BaseModel):
     """User response schema."""
     id: str
     email: str
-    name: Optional[str] = None
+    name: str | None = None
 
     class Config:
         from_attributes = True
@@ -30,8 +29,8 @@ class UserResponse(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update schema."""
-    name: Optional[str] = None
-    email: Optional[str] = None
+    name: str | None = None
+    email: str | None = None
 
 
 # =============================================================================

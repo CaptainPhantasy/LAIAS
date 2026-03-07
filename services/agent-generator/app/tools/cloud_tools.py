@@ -4,9 +4,10 @@ Cloud & Storage Tools Configuration
 Tools for cloud services including AWS, Azure, GCP, and storage.
 """
 
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
 import os
+from dataclasses import dataclass
+from typing import Any
+
 import structlog
 
 from app.tools.registry import ToolCategory, ToolConfig
@@ -20,26 +21,26 @@ class CloudToolsConfig:
 
     # AWS settings
     aws_region: str = "us-east-1"
-    aws_s3_default_bucket: Optional[str] = None
+    aws_s3_default_bucket: str | None = None
     aws_s3_max_file_size: int = 100 * 1024 * 1024  # 100MB
 
     # Azure settings
-    azure_container_name: Optional[str] = None
+    azure_container_name: str | None = None
 
     # GCP settings
-    gcp_project_id: Optional[str] = None
-    gcp_bucket_name: Optional[str] = None
+    gcp_project_id: str | None = None
+    gcp_bucket_name: str | None = None
 
     # Cloudflare R2 settings
-    r2_account_id: Optional[str] = None
-    r2_bucket_name: Optional[str] = None
+    r2_account_id: str | None = None
+    r2_bucket_name: str | None = None
 
     # Amazon Bedrock settings
     bedrock_region: str = "us-east-1"
     bedrock_default_model: str = "anthropic.claude-3-sonnet-20240229-v1:0"
 
     @staticmethod
-    def get_tool_configs() -> List[ToolConfig]:
+    def get_tool_configs() -> list[ToolConfig]:
         """Get all Cloud & Storage tool configurations."""
         return [
             # AWS S3
@@ -196,7 +197,7 @@ class CloudToolsConfig:
             ),
         ]
 
-    def get_cloud_tools(self, env_vars: Optional[Dict[str, str]] = None) -> List[Any]:
+    def get_cloud_tools(self, env_vars: dict[str, str] | None = None) -> list[Any]:
         """
         Get instantiated cloud tools.
 
@@ -222,7 +223,7 @@ class CloudToolsConfig:
 
         return tools
 
-    def get_aws_config(self, env_vars: Dict[str, str]) -> Dict[str, Any]:
+    def get_aws_config(self, env_vars: dict[str, str]) -> dict[str, Any]:
         """Get AWS configuration."""
         return {
             "aws_access_key_id": env_vars.get("AWS_ACCESS_KEY_ID"),
@@ -230,7 +231,7 @@ class CloudToolsConfig:
             "region_name": env_vars.get("AWS_REGION", self.aws_region),
         }
 
-    def get_bedrock_config(self) -> Dict[str, Any]:
+    def get_bedrock_config(self) -> dict[str, Any]:
         """Get Amazon Bedrock configuration."""
         return {
             "region": self.bedrock_region,

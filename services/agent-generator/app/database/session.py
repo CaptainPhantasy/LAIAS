@@ -4,10 +4,9 @@ Database session management for Agent Generator Service.
 Provides async database session handling for SQLAlchemy.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.config import settings
 from app.models.database import Base
@@ -68,11 +67,11 @@ async def init_db() -> None:
     Initialize database tables.
 
     Creates all tables if they don't exist.
-    
+
     NOTE: For production, use Alembic migrations instead:
         cd services/agent-generator
         alembic upgrade head
-    
+
     This init_db() is kept for development/testing convenience.
     """
     async with engine.begin() as conn:

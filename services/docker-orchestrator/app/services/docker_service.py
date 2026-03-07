@@ -7,19 +7,18 @@ Implements the No-Build deployment strategy:
 - Spawns containers as siblings via host socket
 """
 
-import os
 import json
+import os
 import shutil
-import aiofiles
-from typing import Dict, Any, Optional, List
 from datetime import datetime
+from typing import Any, Optional, cast
 
+import aiofiles
 import docker
-from docker.errors import DockerException, NotFound, APIError
 import structlog
+from docker.errors import APIError, DockerException, NotFound
 
 from app.config import settings
-
 
 logger = structlog.get_logger()
 
@@ -52,7 +51,7 @@ class DockerService:
         deployment_id: str,
         output_path: str,
         output_format: str,
-        output_config: Dict[str, bool],
+        output_config: dict[str, bool],
     ) -> None:
         config_file = self._deployment_config_file(deployment_id)
         payload = {
@@ -79,7 +78,7 @@ class DockerService:
             logger.error("Docker ping failed", error=str(e))
             raise
 
-    async def get_info(self) -> Dict[str, Any]:
+    async def get_info(self) -> dict[str, Any]:
         """Get Docker system information."""
         try:
             return self.client.info()
@@ -102,10 +101,10 @@ class DockerService:
         agent_name: str,
         flow_code: str,
         agents_yaml: str,
-        requirements: Optional[List[str]] = None,
-        environment_vars: Optional[Dict[str, str]] = None,
-        output_config: Optional[Dict[str, bool]] = None,
-        output_path: Optional[str] = None,
+        requirements: list[str] | None = None,
+        environment_vars: dict[str, str] | None = None,
+        output_config: dict[str, bool] | None = None,
+        output_path: str | None = None,
         output_format: str = "markdown",
         cpu_limit: float = 1.0,
         memory_limit: str = "512m",
@@ -220,7 +219,7 @@ class DockerService:
         deploy_dir: str,
         flow_code: str,
         agents_yaml: str,
-        requirements: List[str],
+        requirements: list[str],
     ) -> None:
         """Write generated code to deployment directory."""
         os.makedirs(deploy_dir, exist_ok=True)
@@ -314,15 +313,16 @@ class DockerService:
         self,
         container_id: str,
         tail: int = 100,
-        since: Optional[str] = None,
-    ) -> List[str]:
+        since: str | None = None,
+    ) -> list[str]:
         """Get container logs."""
         try:
             container = self.client.containers.get(container_id)
 
+            since_dt = datetime.fromisoformat(since.replace("Z", "+00:00")) if since else None
             logs = container.logs(
-                tail=tail if tail > 0 else None,
-                since=since,
+                tail=tail if tail > 0 else "all",
+                since=since_dt,
                 timestamps=True,
             )
 
@@ -335,11 +335,11 @@ class DockerService:
             logger.error("Failed to get logs", container_id=container_id, error=str(e))
             raise
 
-    async def get_container_stats(self, container_id: str) -> Dict[str, Any]:
+    async def get_container_stats(self, container_id: str) -> dict[str, Any]:
         """Get container resource statistics."""
         try:
             container = self.client.containers.get(container_id)
-            stats = container.stats(stream=False)
+            stats = cast(dict[str, Any], container.stats(stream=False))  # type: ignore[arg-type]
 
             # Calculate CPU percentage
             cpu_delta = (
@@ -378,7 +378,7 @@ class DockerService:
             logger.error("Failed to get stats", container_id=container_id, error=str(e))
             raise
 
-    async def list_containers(self, all: bool = True) -> List[Dict[str, Any]]:
+    async def list_containers(self, all: bool = True) -> list[dict[str, Any]]:
         """List all LAIAS agent containers."""
         try:
             containers = self.client.containers.list(all=all, filters={"label": "laias=agent"})
@@ -400,7 +400,7 @@ class DockerService:
             logger.error("Failed to list containers", error=str(e))
             raise
 
-    async def get_container(self, container_id: str) -> Optional[Any]:
+    async def get_container(self, container_id: str) -> Any | None:
         """Get a container by ID."""
         try:
             return self.client.containers.get(container_id)
@@ -438,4 +438,4 @@ def get_docker_service() -> "DockerService":
 
 
 # For backwards compatibility with imports
-docker_service = property(get_docker_service)
+docker_service = get_docker_service

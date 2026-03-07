@@ -4,13 +4,13 @@ Health check endpoints.
 Provides service health status and connection checks.
 """
 
-from fastapi import APIRouter, status
-from datetime import datetime
-import time
 import logging
+import time
 
-from app.models.responses import HealthResponse
+from fastapi import APIRouter, status
+
 from app.config import settings
+from app.models.responses import HealthResponse
 
 router = APIRouter(tags=["health"])
 
@@ -29,9 +29,9 @@ async def _check_postgresql() -> bool:
     Returns True if connection succeeds, False otherwise.
     """
     try:
-        from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-        from sqlalchemy.orm import sessionmaker
         from sqlalchemy import text
+        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+        from sqlalchemy.orm import sessionmaker
 
         # Create async engine from DATABASE_URL
         # DATABASE_URL already uses postgresql+asyncpg:// scheme
@@ -108,7 +108,6 @@ async def get_health() -> HealthResponse:
         - Current container count
     """
     from app.services.docker_service import get_docker_service
-    from app.services.resource_monitor import get_resource_monitor
 
     # Check connections
     docker_ok = await get_docker_service().ping()

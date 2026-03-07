@@ -5,18 +5,17 @@ CRUD operations for saved agents.
 """
 
 from datetime import datetime
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-import structlog
 
+from app.api.auth import DevUser, get_current_user
 from app.database.session import get_db
-from app.api.auth import get_current_user, DevUser
 from app.models.database import Agent
-from app.models.requests import AgentListRequest, AgentUpdateRequest
-from app.models.responses import AgentListResponse, AgentDetailResponse
+from app.models.requests import AgentUpdateRequest
+from app.models.responses import AgentDetailResponse, AgentListResponse
 
 logger = structlog.get_logger()
 
@@ -29,10 +28,10 @@ async def list_agents(
     current_user: DevUser = Depends(get_current_user),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    task_type: Optional[str] = Query(None),
-    complexity: Optional[str] = Query(None),
-    search: Optional[str] = Query(None),
-    team_id: Optional[str] = Query(None)
+    task_type: str | None = Query(None),
+    complexity: str | None = Query(None),
+    search: str | None = Query(None),
+    team_id: str | None = Query(None)
 ) -> AgentListResponse:
     """
     List saved agents with optional filtering.
@@ -54,7 +53,7 @@ async def list_agents(
 
         # Filter by user's own agents or team-shared agents
         user_uuid = current_user.id
-        from sqlalchemy import cast, UUID
+        from sqlalchemy import UUID, cast
         user_filter = or_(
             Agent.owner_id == cast(user_uuid, UUID),
             Agent.team_id.is_(None)  # Public agents
@@ -252,7 +251,7 @@ async def share_agent_with_team(
         )
 
     # Verify ownership
-    from sqlalchemy import cast, UUID
+    from sqlalchemy import UUID, cast
     if agent.owner_id != cast(current_user.id, UUID):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -270,7 +269,7 @@ async def share_agent_with_team(
             detail="Invalid team ID format"
         )
 
-    from app.models.team import Team, TeamMember
+    from app.models.team import TeamMember
     team_result = await db.execute(
         select(TeamMember).where(
             TeamMember.team_id == team_uuid,
@@ -314,7 +313,7 @@ async def unshare_agent_from_team(
         )
 
     # Verify ownership
-    from sqlalchemy import cast, UUID
+    from sqlalchemy import UUID, cast
     if agent.owner_id != cast(current_user.id, UUID):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

@@ -7,13 +7,10 @@ GODZILLA_VALIDATION_RULES (what generated code is checked against).
 
 import re
 
-import pytest
-
 from app.prompts.godzilla_template import (
     GODZILLA_TEMPLATE_REFERENCE,
     GODZILLA_VALIDATION_RULES,
 )
-
 
 REFERENCE_FILE = "templates/godzilla_reference.py"
 

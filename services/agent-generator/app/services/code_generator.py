@@ -5,26 +5,15 @@ Orchestrates the code generation process using LLM service,
 template management, and validation.
 """
 
-from typing import Dict, Any, List, Optional
 import structlog
 
 from app.config import settings
+from app.models.responses import AgentInfo, GenerateAgentResponse, ValidationResult
 from app.services.llm_service import get_llm_service
-from app.services.validator import get_validator
 from app.services.template_service import get_template_service
-from app.prompts.few_shot_examples import get_few_shot_examples
-from app.models.responses import (
-    GenerateAgentResponse,
-    AgentInfo,
-    ValidationResult
-)
-from app.utils.helpers import (
-    generate_agent_id,
-    calculate_cost_estimate,
-    sanitize_agent_name,
-    format_mermaid_diagram
-)
+from app.services.validator import get_validator
 from app.utils.exceptions import LLMServiceException
+from app.utils.helpers import calculate_cost_estimate, generate_agent_id, sanitize_agent_name
 
 logger = structlog.get_logger()
 
@@ -52,9 +41,9 @@ class CodeGenerator:
         agent_name: str,
         complexity: str = "moderate",
         task_type: str = "general",
-        tools_requested: Optional[List[str]] = None,
+        tools_requested: list[str] | None = None,
         llm_provider: str = "openai",
-        model: Optional[str] = None,
+        model: str | None = None,
         include_memory: bool = True,
         include_analytics: bool = True,
         max_agents: int = 4
@@ -247,7 +236,7 @@ Generate improved code addressing the feedback while maintaining Godzilla patter
 
 
 # Global service instance
-_code_generator: Optional[CodeGenerator] = None
+_code_generator: CodeGenerator | None = None
 
 
 def get_code_generator() -> CodeGenerator:

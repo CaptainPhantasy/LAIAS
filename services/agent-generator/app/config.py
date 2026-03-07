@@ -7,7 +7,6 @@ Uses Pydantic Settings for type-safe environment variable loading.
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -88,7 +87,7 @@ class Settings(BaseSettings):
     # === Logging ===
     log_level: str = Field(default="INFO", description="Log level")
     log_format: str = Field(default="json", description="Log format (json or text)")
-    log_file: Optional[str] = Field(default=None, description="Log file path")
+    log_file: str | None = Field(default=None, description="Log file path")
 
     # === Monitoring ===
     enable_metrics: bool = Field(default=True, description="Enable Prometheus metrics")

@@ -6,11 +6,10 @@ via the Docker Orchestrator. Direct execution from the API is not supported.
 Use POST /api/deploy with the indiana_smb_business_development agent instead.
 """
 
+
+import structlog
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-from typing import Dict, Any, List, Optional
-from datetime import datetime
-import structlog
 
 logger = structlog.get_logger()
 
@@ -18,7 +17,7 @@ router = APIRouter(prefix="/api", tags=["business-dev"])
 
 
 class BusinessDevCampaignRequest(BaseModel):
-    target_industries: List[str] = Field(
+    target_industries: list[str] = Field(
         default=["Healthcare", "Manufacturing", "Professional Services"]
     )
     target_geography: str = Field(
@@ -27,8 +26,8 @@ class BusinessDevCampaignRequest(BaseModel):
     campaign_duration: int = Field(default=30)
     daily_outreach_limit: int = Field(default=10)
     budget_per_lead: int = Field(default=50)
-    service_focus: List[str] = Field(default=["software", "website"])
-    outreach_channels: List[str] = Field(default=["email", "linkedin"])
+    service_focus: list[str] = Field(default=["software", "website"])
+    outreach_channels: list[str] = Field(default=["email", "linkedin"])
 
 
 @router.post("/business-dev-campaign", status_code=status.HTTP_501_NOT_IMPLEMENTED)

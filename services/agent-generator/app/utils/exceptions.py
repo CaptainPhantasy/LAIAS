@@ -5,7 +5,7 @@ Provides domain-specific exceptions for better error handling
 and more meaningful error messages to clients.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
 class AgentGeneratorException(Exception):
@@ -14,7 +14,7 @@ class AgentGeneratorException(Exception):
     def __init__(
         self,
         message: str,
-        detail: Optional[str] = None,
+        detail: str | None = None,
         error_code: str = "AGENT_GENERATOR_ERROR"
     ):
         self.message = message
@@ -44,8 +44,8 @@ class LLMServiceException(AgentGeneratorException):
     def __init__(
         self,
         message: str,
-        provider: Optional[str] = None,
-        original_error: Optional[Exception] = None
+        provider: str | None = None,
+        original_error: Exception | None = None
     ):
         self.provider = provider
         self.original_error = original_error
@@ -61,8 +61,8 @@ class DatabaseException(AgentGeneratorException):
     def __init__(
         self,
         message: str,
-        query: Optional[str] = None,
-        original_error: Optional[Exception] = None
+        query: str | None = None,
+        original_error: Exception | None = None
     ):
         self.query = query
         self.original_error = original_error
@@ -78,7 +78,7 @@ class CacheException(AgentGeneratorException):
     def __init__(
         self,
         message: str,
-        key: Optional[str] = None
+        key: str | None = None
     ):
         self.key = key
         detail = f"Key: {key}" if key else None
@@ -91,8 +91,8 @@ class ValidationException(AgentGeneratorException):
     def __init__(
         self,
         message: str,
-        field: Optional[str] = None,
-        value: Optional[Any] = None
+        field: str | None = None,
+        value: Any | None = None
     ):
         self.field = field
         self.value = value
@@ -106,7 +106,7 @@ class RateLimitException(AgentGeneratorException):
     def __init__(
         self,
         message: str = "Rate limit exceeded",
-        retry_after: Optional[int] = None
+        retry_after: int | None = None
     ):
         self.retry_after = retry_after
         detail = f"Retry after: {retry_after}s" if retry_after else None
@@ -119,7 +119,7 @@ class ConfigurationException(AgentGeneratorException):
     def __init__(
         self,
         message: str,
-        setting: Optional[str] = None
+        setting: str | None = None
     ):
         self.setting = setting
         detail = f"Setting: {setting}" if setting else None
