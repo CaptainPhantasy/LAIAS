@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { StackProvider, StackTheme } from '@stackframe/stack';
+import { stackClientApp } from '@/stack/client';
 import '@/styles/globals.css';
 import '@/styles/variables.css';
 import { AppShell } from '@/components/layout';
@@ -39,7 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans antialiased">
-        <AppShell>{children}</AppShell>
+        <StackProvider app={stackClientApp}>
+          <StackTheme>
+            <AppShell>{children}</AppShell>
+          </StackTheme>
+        </StackProvider>
       </body>
     </html>
   );

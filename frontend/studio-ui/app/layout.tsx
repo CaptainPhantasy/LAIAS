@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { StackProvider, StackTheme } from '@stackframe/stack';
+import { stackClientApp } from '@/stack/client';
 import '@/styles/globals.css';
 import '@/styles/variables.css';
 import { ToastProvider } from '@/components/ui/toast';
@@ -33,9 +35,13 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="dark" className={inter.variable}>
       <body className="font-sans min-h-screen bg-bg-primary text-text-primary antialiased">
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <StackProvider app={stackClientApp}>
+          <StackTheme>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </StackTheme>
+        </StackProvider>
       </body>
     </html>
   );
