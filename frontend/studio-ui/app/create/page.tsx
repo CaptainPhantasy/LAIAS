@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-import { useBuilderStore } from '@/store';
+import { useBuilderStore, selectOutputConfig } from '@/store';
 import { studioApi } from '@/lib/api';
 import { AVAILABLE_TOOLS, PROMPT_SUGGESTIONS, MODELS_BY_PROVIDER } from '@/types';
 import type { AgentFormData, CodeTab } from '@/types';
@@ -25,7 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Input, Textarea, Select } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { AppShell } from '@/components/layout/app-shell';
-import { SectionPanel, ToolTile, PromptSuggestions } from '@/components/agent-builder';
+import { SectionPanel, ToolTile, PromptSuggestions, OutputConfigPanel } from '@/components/agent-builder';
 import { CodePanel } from '@/components/code-editor';
 import { cn, debounce } from '@/lib/utils';
 
@@ -75,14 +75,18 @@ function CreateAgentPageContent() {
     validationStatus,
     codeFiles,
     generatedCode,
+    outputConfig,
     setGenerationState,
     setGeneratedCode,
     setGenerationError,
     setValidationStatus,
     setActiveTab,
+    setOutputConfig,
     updateCodeContent,
     resetGeneration,
   } = useBuilderStore();
+
+  const persistedOutputConfig = useBuilderStore(selectOutputConfig);
 
   const {
     control,
@@ -378,13 +382,22 @@ function CreateAgentPageContent() {
 
     setGenerationState('generating');
     try {
+      const deployOutputConfig = persistedOutputConfig || outputConfig;
+      const normalizedOutputPath = deployOutputConfig.output_path.trim() || undefined;
+
       const deployment = await studioApi.deployAgent(
         agentId,
         agentName,
         flowCode,
         agentsYaml || '',
         codeFiles['requirements.txt']?.content,
-        { auto_start: true, memory_limit: '512m' }
+        {
+          auto_start: true,
+          memory_limit: '512m',
+          output_config: deployOutputConfig.output_destinations,
+          output_path: normalizedOutputPath,
+          output_format: deployOutputConfig.output_format,
+        }
       );
 
       setGenerationState('complete');
@@ -506,7 +519,8 @@ function CreateAgentPageContent() {
               { id: 'description', label: 'Description', icon: '1' },
               { id: 'type', label: 'Type', icon: '2' },
               { id: 'tools', label: 'Tools', icon: '3' },
-              { id: 'advanced', label: 'Advanced', icon: '4' },
+              { id: 'output', label: 'Output', icon: '4' },
+              { id: 'advanced', label: 'Advanced', icon: '5' },
             ].map((section) => (
               <li key={section.id}>
                 <a
@@ -696,6 +710,14 @@ function CreateAgentPageContent() {
               </div>
             )}
           </SectionPanel>
+          </div>
+
+          <div id="output">
+            <OutputConfigPanel
+              outputConfig={persistedOutputConfig || outputConfig}
+              onConfigChange={setOutputConfig}
+              disabled={loadingTemplate || isGenerating}
+            />
           </div>
 
           {/* Advanced Options */}

@@ -6,7 +6,7 @@ Uses pydantic-settings for type-safe configuration with environment variables.
 
 from typing import List, Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, validator
+from pydantic import Field, field_validator, validator
 
 
 class Settings(BaseSettings):
@@ -55,6 +55,9 @@ class Settings(BaseSettings):
     )
     AGENT_OUTPUT_PATH: str = Field(
         default="/var/laias/outputs", description="Path to persist agent run outputs"
+    )
+    FILESYSTEM_BROWSE_ROOT: str = Field(
+        default="/var/laias/outputs", description="Root path for file browser"
     )
     CONTAINER_PREFIX: str = Field(default="laias-agent-", description="Prefix for container names")
     INTERNAL_ORCHESTRATOR_URL: str = Field(
@@ -131,6 +134,15 @@ class Settings(BaseSettings):
 
         if not os.path.isabs(v):
             raise ValueError(f"AGENT_OUTPUT_PATH must be absolute: {v}")
+        return v
+
+    @field_validator("FILESYSTEM_BROWSE_ROOT")
+    @classmethod
+    def validate_browse_root(cls, v: str) -> str:
+        import os
+
+        if not os.path.isabs(v):
+            raise ValueError("FILESYSTEM_BROWSE_ROOT must be an absolute path")
         return v
 
     @validator("DEFAULT_MEMORY_LIMIT")

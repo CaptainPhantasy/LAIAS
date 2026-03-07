@@ -17,6 +17,7 @@ import type {
   RegenerateRequest,
   ErrorResponse,
   AgentSummary,
+  FileBrowserResponse,
 } from '../types';
 
 import type { GenerationState, ValidationStatus, CodeTab } from '../types';
@@ -206,6 +207,9 @@ export async function deployAgent(
     memory_limit?: string;
     cpu_limit?: number;
     environment_vars?: Record<string, string>;
+    output_config?: { postgres: boolean; files: boolean };
+    output_path?: string;
+    output_format?: 'markdown' | 'html';
   }
 ): Promise<DeploymentResponse> {
   const request = {
@@ -216,6 +220,9 @@ export async function deployAgent(
     auto_start: options?.auto_start ?? true,
     memory_limit: options?.memory_limit ?? '512m',
     cpu_limit: options?.cpu_limit ?? 1.0,
+    output_config: options?.output_config,
+    output_path: options?.output_path,
+    output_format: options?.output_format,
   };
 
   const response = await fetch(`${AGENT_API_URL}/api/deploy`, {
@@ -250,6 +257,29 @@ export async function healthCheck() {
   return handleResponse(response);
 }
 
+/**
+ * Browse filesystem directory
+ */
+export async function browseFilesystem(path?: string): Promise<FileBrowserResponse> {
+  const url = path
+    ? `${DOCKER_API_URL}/filesystem/browse?path=${encodeURIComponent(path)}`
+    : `${DOCKER_API_URL}/filesystem/browse`;
+  const response = await fetch(url);
+  return handleResponse<FileBrowserResponse>(response);
+}
+
+/**
+ * Create a directory in the filesystem
+ */
+export async function createDirectory(path: string): Promise<{ path: string }> {
+  const response = await fetch(`${DOCKER_API_URL}/filesystem/mkdir`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+  return handleResponse<{ path: string }>(response);
+}
+
 // ============================================================================
 // React Query / SWR Keys (if using those libraries)
 // ============================================================================
@@ -278,6 +308,8 @@ export const studioApi = {
   deployAgent,
   generateAndDeploy,
   healthCheck,
+  browseFilesystem,
+  createDirectory,
 } as const;
 
 export default studioApi;

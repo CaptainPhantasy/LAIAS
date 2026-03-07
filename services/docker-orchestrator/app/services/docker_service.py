@@ -42,6 +42,34 @@ class DockerService:
         self.code_path = settings.AGENT_CODE_PATH
         self.network = settings.DOCKER_NETWORK
 
+    def _deployment_config_file(self, deployment_id: str) -> str:
+        config_dir = os.path.join(settings.AGENT_OUTPUT_PATH, ".deployment-config")
+        os.makedirs(config_dir, exist_ok=True)
+        return os.path.join(config_dir, f"{deployment_id}.json")
+
+    def _write_deployment_config(
+        self,
+        deployment_id: str,
+        output_path: str,
+        output_format: str,
+        output_config: Dict[str, bool],
+    ) -> None:
+        config_file = self._deployment_config_file(deployment_id)
+        payload = {
+            "deployment_id": deployment_id,
+            "output_path": output_path,
+            "output_format": output_format,
+            "output_config": output_config,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        with open(config_file, "w", encoding="utf-8") as f:
+            json.dump(payload, f)
+
+    def _remove_deployment_config(self, deployment_id: str) -> None:
+        config_file = self._deployment_config_file(deployment_id)
+        if os.path.exists(config_file):
+            os.remove(config_file)
+
     async def ping(self) -> bool:
         """Verify Docker daemon is accessible."""
         try:
@@ -77,6 +105,8 @@ class DockerService:
         requirements: Optional[List[str]] = None,
         environment_vars: Optional[Dict[str, str]] = None,
         output_config: Optional[Dict[str, bool]] = None,
+        output_path: Optional[str] = None,
+        output_format: str = "markdown",
         cpu_limit: float = 1.0,
         memory_limit: str = "512m",
     ) -> Any:
@@ -96,6 +126,9 @@ class DockerService:
             agents_yaml: Agent configuration YAML
             requirements: List of pip requirements
             environment_vars: Environment variables for container
+            output_config: Output routing configuration
+            output_path: User-chosen output directory path
+            output_format: Output format (markdown or html)
             cpu_limit: CPU limit (0.1 - 4.0)
             memory_limit: Memory limit (e.g., "512m", "1g")
 
@@ -108,14 +141,20 @@ class DockerService:
 
         # Step 1: Write code to deployment directory
         deploy_dir = os.path.join(self.code_path, deployment_id)
-        output_dir = os.path.join(settings.AGENT_OUTPUT_PATH, deployment_id)
+        output_dir = os.path.realpath(
+            output_path or os.path.join(settings.AGENT_OUTPUT_PATH, deployment_id)
+        )
         await self._write_agent_code(deploy_dir, flow_code, agents_yaml, requirements)
         os.makedirs(output_dir, exist_ok=True)
+        self._write_deployment_config(deployment_id, output_dir, output_format, output_config)
 
         # Step 2: Create container with volume mount
         container_name = f"{settings.CONTAINER_PREFIX}{deployment_id[:12]}"
 
         # Build environment variables
+        ingest_url = (
+            f"{settings.INTERNAL_ORCHESTRATOR_URL}/api/deployments/{deployment_id}/outputs/events"
+        )
         env_vars = {
             "DEPLOYMENT_ID": deployment_id,
             "AGENT_ID": agent_id,
@@ -123,7 +162,9 @@ class DockerService:
             "LAIAS_DEPLOYMENT_ID": deployment_id,
             "LAIAS_OUTPUT_CONFIG": json.dumps(output_config),
             "LAIAS_OUTPUT_ROOT": "/app/outputs",
-            "LAIAS_OUTPUT_INGEST_URL": f"{settings.INTERNAL_ORCHESTRATOR_URL}/api/deployments/{deployment_id}/outputs/events",
+            "LAIAS_OUTPUT_FORMAT": output_format,
+            "LAIAS_OUTPUT_PATH": output_dir,
+            "LAIAS_OUTPUT_INGEST_URL": ingest_url,
             **environment_vars,
         }
 
@@ -152,6 +193,8 @@ class DockerService:
                     "agent_name": agent_name,
                     "output_postgres": str(output_config.get("postgres", False)).lower(),
                     "output_files": str(output_config.get("files", False)).lower(),
+                    "output_format": output_format,
+                    "output_path": output_dir,
                     "laias": "agent",
                 },
             )
@@ -249,9 +292,15 @@ class DockerService:
             # Clean up code directory
             if deployment_id:
                 deploy_dir = os.path.join(self.code_path, deployment_id)
-                output_dir = os.path.join(settings.AGENT_OUTPUT_PATH, deployment_id)
+                output_dir = container.labels.get("output_path") or os.path.join(
+                    settings.AGENT_OUTPUT_PATH, deployment_id
+                )
                 await self._cleanup_deployment_dir(deploy_dir)
-                await self._cleanup_deployment_dir(output_dir)
+                safe_output_root = os.path.realpath(settings.AGENT_OUTPUT_PATH)
+                safe_output_dir = os.path.realpath(output_dir)
+                if safe_output_dir.startswith(safe_output_root):
+                    await self._cleanup_deployment_dir(safe_output_dir)
+                self._remove_deployment_config(deployment_id)
 
             logger.info("Container removed", container_id=container_id)
 

@@ -36,3 +36,6 @@ sqlalchemy>=2.0.0
 alembic>=1.13.0
 asyncpg>=0.29.0  # For PostgreSQL
 redis>=5.0.0  # For caching and pub/sub
+
+# Format conversion
+mistune>=3.0.0

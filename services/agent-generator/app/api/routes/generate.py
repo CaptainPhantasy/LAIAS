@@ -25,6 +25,12 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/api", tags=["generation"])
 
 
+class GenerateAndDeployRequest(GenerateAgentRequest):
+    output_config: dict[str, bool] | None = None
+    output_path: str | None = None
+    output_format: str = "markdown"
+
+
 @limiter.limit(RATE_LIMITS["generation"])
 @router.post(
     "/generate-agent", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK
@@ -124,8 +130,8 @@ async def generate_agent(
 @limiter.limit(RATE_LIMITS["generation"])
 @router.post("/generate-and-deploy", status_code=status.HTTP_201_CREATED)
 async def generate_and_deploy(
-    http_request: Request,
-    body: GenerateAgentRequest,
+    request: Request,
+    body: GenerateAndDeployRequest,
     db: AsyncSession = Depends(get_db),
     current_user: DevUser = Depends(get_current_user),
 ):
@@ -181,6 +187,9 @@ async def generate_and_deploy(
             flow_code=response.flow_code,
             agents_yaml=response.agents_yaml,
             requirements=response.requirements,
+            output_config=body.output_config,
+            output_path=body.output_path,
+            output_format=body.output_format,
             auto_start=True,
         )
 
@@ -234,11 +243,13 @@ class DeployProxyRequest(BaseModel):
     memory_limit: str = "512m"
     cpu_limit: float = 1.0
     output_config: dict[str, bool] = {"postgres": True, "files": True}
+    output_path: str | None = None
+    output_format: str = "markdown"
 
 
 @limiter.limit(RATE_LIMITS["deployment"])
 @router.post("/deploy", status_code=status.HTTP_201_CREATED)
-async def deploy_agent_proxy(http_request: Request, body: DeployProxyRequest):
+async def deploy_agent_proxy(request: Request, body: DeployProxyRequest):
     """
     Proxy deploy endpoint — forwards to Docker Orchestrator.
 
@@ -254,6 +265,8 @@ async def deploy_agent_proxy(http_request: Request, body: DeployProxyRequest):
             flow_code=body.flow_code,
             agents_yaml=body.agents_yaml,
             output_config=body.output_config,
+            output_path=body.output_path,
+            output_format=body.output_format,
             auto_start=body.auto_start,
             memory_limit=body.memory_limit,
             cpu_limit=body.cpu_limit,
@@ -274,7 +287,7 @@ async def deploy_agent_proxy(http_request: Request, body: DeployProxyRequest):
 @limiter.limit(RATE_LIMITS["generation"])
 @router.post("/regenerate", response_model=GenerateAgentResponse, status_code=status.HTTP_200_OK)
 async def regenerate_agent(
-    http_request: Request, agent_id: str, feedback: str, previous_code: str
+    request: Request, agent_id: str, feedback: str, previous_code: str
 ) -> GenerateAgentResponse:
     """
     Regenerate an agent based on feedback.

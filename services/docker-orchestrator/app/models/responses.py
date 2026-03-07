@@ -28,6 +28,14 @@ class DeploymentResponse(BaseModel):
         default_factory=dict,
         description="Output routing destinations enabled for this deployment",
     )
+    output_path: Optional[str] = Field(
+        default=None,
+        description="Configured output path",
+    )
+    output_format: str = Field(
+        default="markdown",
+        description="Configured output format",
+    )
 
     class Config:
         """Pydantic config."""
@@ -175,6 +183,19 @@ class OutputRunDetailResponse(BaseModel):
     events: List[Dict[str, object]] = Field(
         default_factory=list, description="Structured event stream"
     )
+
+
+class FileBrowserEntry(BaseModel):
+    name: str = Field(..., description="Directory name")
+    path: str = Field(..., description="Directory absolute path")
+    type: Literal["directory"] = Field(default="directory", description="Entry type")
+    children_count: int = Field(default=0, description="Number of subdirectories")
+
+
+class FileBrowserResponse(BaseModel):
+    current_path: str = Field(..., description="Current absolute path")
+    parent_path: Optional[str] = Field(default=None, description="Parent absolute path")
+    entries: List[FileBrowserEntry] = Field(..., description="Directories in current path")
 
 
 # ============================================================================

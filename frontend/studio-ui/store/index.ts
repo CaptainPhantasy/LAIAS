@@ -7,6 +7,7 @@ export {
   selectActiveTab,
   selectCodeFiles,
   selectActiveSection,
+  selectOutputConfig,
   useFormActions,
   useGenerationActions,
   useCodeEditorActions,

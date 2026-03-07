@@ -184,3 +184,61 @@ export const MODELS_BY_PROVIDER: Record<string, string[]> = {
   anthropic: ['claude-opus-4-6', 'claude-sonnet-4-5', 'claude-3-5-sonnet', 'claude-3-haiku'],
   openrouter: ['auto', 'anthropic/claude-opus-4', 'openai/gpt-4o'],
 };
+
+// ============================================================================
+// Output Configuration Types
+// ============================================================================
+
+/**
+ * Output format for agent results
+ */
+export type OutputFormat = 'markdown' | 'html';
+
+/**
+ * Output destination configuration
+ */
+export interface OutputDestinations {
+  postgres: boolean;
+  files: boolean;
+}
+
+/**
+ * Output configuration for agent execution
+ */
+export interface OutputConfig {
+  output_path: string;
+  output_format: OutputFormat;
+  output_destinations: OutputDestinations;
+}
+
+/**
+ * Default output configuration
+ */
+export const DEFAULT_OUTPUT_CONFIG: OutputConfig = {
+  output_path: '',
+  output_format: 'markdown',
+  output_destinations: { postgres: true, files: true },
+};
+
+// ============================================================================
+// File Browser Types
+// ============================================================================
+
+/**
+ * File browser directory entry
+ */
+export interface FileBrowserEntry {
+  name: string;
+  path: string;
+  type: 'directory';
+  children_count: number;
+}
+
+/**
+ * File browser response from filesystem API
+ */
+export interface FileBrowserResponse {
+  current_path: string;
+  parent_path: string | null;
+  entries: FileBrowserEntry[];
+}

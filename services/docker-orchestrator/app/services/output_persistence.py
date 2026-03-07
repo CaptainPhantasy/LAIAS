@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.requests import OutputEventIngestRequest
+from app.services.format_converter import get_format_converter
 
 
 logger = structlog.get_logger()
@@ -47,6 +48,44 @@ def _to_float(value: object, default: float = 0.0) -> float:
 
 
 class OutputPersistenceService:
+    def _deployment_config_file(self, deployment_id: str) -> Path:
+        config_dir = Path(settings.AGENT_OUTPUT_PATH) / ".deployment-config"
+        return config_dir / f"{deployment_id}.json"
+
+    def _load_deployment_config(self, deployment_id: str) -> dict[str, object]:
+        default_path = str(Path(settings.AGENT_OUTPUT_PATH) / deployment_id)
+        config: dict[str, object] = {
+            "output_path": default_path,
+            "output_format": "markdown",
+            "output_config": {"postgres": True, "files": True},
+        }
+
+        config_file = self._deployment_config_file(deployment_id)
+        if not config_file.exists():
+            return config
+
+        try:
+            parsed = json.loads(config_file.read_text(encoding="utf-8"))
+            if isinstance(parsed, dict):
+                output_path = parsed.get("output_path")
+                output_format = parsed.get("output_format")
+                output_config = parsed.get("output_config")
+
+                if isinstance(output_path, str) and output_path:
+                    config["output_path"] = output_path
+                if isinstance(output_format, str) and output_format:
+                    config["output_format"] = output_format
+                if isinstance(output_config, dict):
+                    config["output_config"] = output_config
+        except Exception as exc:
+            logger.warning(
+                "Failed to read deployment output config",
+                deployment_id=deployment_id,
+                error=str(exc),
+            )
+
+        return config
+
     async def persist_event(
         self,
         db: AsyncSession,
@@ -167,9 +206,11 @@ class OutputPersistenceService:
 
     async def _write_files(self, deployment_id: str, event: OutputEventIngestRequest) -> bool:
         event_timestamp = event.timestamp or datetime.utcnow()
+        deployment_config = self._load_deployment_config(deployment_id)
+        output_path = str(deployment_config.get("output_path", settings.AGENT_OUTPUT_PATH))
+        output_format = str(deployment_config.get("output_format", "markdown")).lower()
         run_root = os.path.join(
-            settings.AGENT_OUTPUT_PATH,
-            deployment_id,
+            output_path,
             event.run_id,
         )
 
@@ -209,6 +250,13 @@ class OutputPersistenceService:
             async with aiofiles.open(summary_md, "a") as f:
                 await f.write(summary_line)
 
+            if event.event_type == "run_completed" and output_format == "html":
+                summary_html = os.path.join(run_root, "summary.html")
+                summary_markdown = Path(summary_md).read_text(encoding="utf-8")
+                converted = get_format_converter().convert(summary_markdown, "html")
+                async with aiofiles.open(summary_html, "w") as f:
+                    await f.write(converted)
+
             return True
         except Exception as exc:
             logger.warning(
@@ -221,7 +269,10 @@ class OutputPersistenceService:
             return False
 
     def list_runs(self, deployment_id: str) -> list[dict[str, object]]:
-        deployment_root = Path(settings.AGENT_OUTPUT_PATH) / deployment_id
+        deployment_config = self._load_deployment_config(deployment_id)
+        deployment_root = Path(
+            str(deployment_config.get("output_path", settings.AGENT_OUTPUT_PATH))
+        )
         if not deployment_root.exists() or not deployment_root.is_dir():
             return []
 
@@ -255,7 +306,10 @@ class OutputPersistenceService:
         run_id: str,
         max_events: int = 500,
     ) -> dict[str, object]:
-        run_root = Path(settings.AGENT_OUTPUT_PATH) / deployment_id / run_id
+        deployment_config = self._load_deployment_config(deployment_id)
+        run_root = (
+            Path(str(deployment_config.get("output_path", settings.AGENT_OUTPUT_PATH))) / run_id
+        )
         summary_markdown = ""
         metrics: dict[str, object] = {}
         events: list[dict[str, object]] = []

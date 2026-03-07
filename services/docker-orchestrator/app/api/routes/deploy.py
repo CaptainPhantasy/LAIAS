@@ -89,6 +89,8 @@ async def deploy_agent(
             agents_yaml=body.agents_yaml,
             environment_vars=body.environment_vars,
             output_config=body.output_config,
+            output_path=body.output_path,
+            output_format=body.output_format,
             cpu_limit=body.cpu_limit,
             memory_limit=body.memory_limit,
         )
@@ -192,6 +194,8 @@ async def deploy_agent(
             logs_endpoint=f"{base_url}/api/containers/{container.id}/logs/stream",
             metrics_endpoint=f"/api/containers/{container.id}/metrics",
             output_config=body.output_config,
+            output_path=body.output_path,
+            output_format=body.output_format,
         )
 
     except Exception as e:

@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 import structlog
 
 from app.config import settings
-from app.api.routes import deploy, containers, logs, health, analytics, outputs
+from app.api.routes import analytics, containers, convert, deploy, filesystem, health, logs, outputs
 from app.services.docker_service import get_docker_service
 from app.services.resource_monitor import get_resource_monitor
 from app.utils.exceptions import (
@@ -172,6 +172,14 @@ app.include_router(
 
 app.include_router(
     outputs.router,
+)
+
+app.include_router(
+    filesystem.router,
+)
+
+app.include_router(
+    convert.router,
 )
 
 

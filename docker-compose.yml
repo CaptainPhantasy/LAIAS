@@ -119,6 +119,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AGENT_IMAGE_BASE=laias/agent-runner:latest
       - AGENT_CODE_PATH=/var/laias/agents
+      - FILESYSTEM_BROWSE_ROOT=/var/laias/outputs
       - SERVICE_PORT=4522
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       # CORS Configuration
@@ -128,6 +129,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Store generated agent code (mounted into spawned containers)
       - agent_code:/var/laias/agents
+      # Store agent execution outputs (persistent across container recreates)
+      - agent_outputs:/var/laias/outputs
     depends_on:
       postgres:
         condition: service_healthy
@@ -213,3 +216,5 @@ volumes:
     name: laias-redis-data
   agent_code:
     name: laias-agent-code
+  agent_outputs:
+    name: laias-agent-outputs

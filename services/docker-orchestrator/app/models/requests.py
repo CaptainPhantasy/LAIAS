@@ -4,6 +4,7 @@ Request models for Docker Orchestrator API.
 Pydantic models for validating incoming API requests.
 """
 
+import os
 from typing import Dict, List, Optional, Literal
 from pydantic import BaseModel, Field, validator
 from datetime import datetime
@@ -60,6 +61,14 @@ class DeployAgentRequest(BaseModel):
         default_factory=lambda: {"postgres": True, "files": True},
         description="Per-deployment output routing destinations",
     )
+    output_path: Optional[str] = Field(
+        default=None,
+        description="User-chosen output directory path",
+    )
+    output_format: str = Field(
+        default="markdown",
+        description="Output format: markdown or html",
+    )
 
     @validator("memory_limit")
     def validate_memory_limit(cls, v: str) -> str:
@@ -94,6 +103,23 @@ class DeployAgentRequest(BaseModel):
         if not any(normalized.values()):
             raise ValueError("At least one output destination must be enabled")
         return normalized
+
+    @validator("output_format")
+    def validate_output_format(cls, v: str) -> str:
+        """Validate output format is markdown or html."""
+        if v not in {"markdown", "html"}:
+            raise ValueError(f"output_format must be 'markdown' or 'html', got '{v}'")
+        return v
+
+    @validator("output_path")
+    def validate_output_path(cls, v: Optional[str]) -> Optional[str]:
+        """Validate output path is absolute and safe."""
+        if v is not None:
+            if not os.path.isabs(v):
+                raise ValueError("output_path must be an absolute path")
+            if ".." in v.split(os.sep):
+                raise ValueError("output_path must not contain '..' components")
+        return v
 
 
 class ContainerActionRequest(BaseModel):

@@ -7,6 +7,8 @@ import { Input, Select } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 
+const API_BASE = process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:4521';
+
 // Types
 interface TeamMember {
   user_id: string;
@@ -39,6 +41,7 @@ export default function TeamSettingsPage() {
   const [loading, setLoading] = React.useState(true);
   const [showNewTeam, setShowNewTeam] = React.useState(false);
   const [showInvite, setShowInvite] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const [newTeamName, setNewTeamName] = React.useState('');
   const [newTeamSlug, setNewTeamSlug] = React.useState('');
@@ -52,7 +55,7 @@ export default function TeamSettingsPage() {
 
   const fetchTeams = async () => {
     try {
-      const res = await fetch('http://localhost:4521/api/teams', {
+      const res = await fetch(`${API_BASE}/api/teams`, {
         headers: {
           'X-User-Id': '00000000-0000-0000-0000-000000000000',
           'X-User-Email': 'dev@laias.local',
@@ -76,7 +79,7 @@ export default function TeamSettingsPage() {
 
   const fetchTeamDetails = async (teamId: string) => {
     try {
-      const res = await fetch(`http://localhost:4521/api/teams/${teamId}`, {
+      const res = await fetch(`${API_BASE}/api/teams/${teamId}`, {
         headers: {
           'X-User-Id': '00000000-0000-0000-0000-000000000000',
         },
@@ -96,7 +99,7 @@ export default function TeamSettingsPage() {
     if (!newTeamName.trim()) return;
 
     try {
-      const res = await fetch('http://localhost:4521/api/teams', {
+      const res = await fetch(`${API_BASE}/api/teams`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,12 +115,17 @@ export default function TeamSettingsPage() {
         const newTeam = await res.json();
         setTeams(prev => [...prev, newTeam]);
         setSelectedTeam(newTeam);
+        setError(null);
         setNewTeamName('');
         setNewTeamSlug('');
         setShowNewTeam(false);
         fetchTeamDetails(newTeam.id);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.detail || 'Failed to create team');
       }
     } catch (e) {
+      setError('Failed to create team. Please try again.');
       console.error('Failed to create team', e);
     }
   };
@@ -138,7 +146,7 @@ export default function TeamSettingsPage() {
     const mockUserId = `00000000-0000-4000-8000-${hex.padEnd(12, '0')}`;
 
     try {
-      const res = await fetch(`http://localhost:4521/api/teams/${selectedTeam.id}/members`, {
+       const res = await fetch(`${API_BASE}/api/teams/${selectedTeam.id}/members`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -150,25 +158,27 @@ export default function TeamSettingsPage() {
         }),
       });
 
-      if (res.ok) {
-        setInviteEmail('');
-        setInviteRole('member');
-        setShowInvite(false);
-        fetchTeamDetails(selectedTeam.id);
-      } else {
-        const error = await res.json();
-        alert(error.detail || 'Failed to add member');
-      }
-    } catch (e) {
-      console.error('Failed to add member', e);
-    }
+       if (res.ok) {
+         setInviteEmail('');
+         setInviteRole('member');
+         setShowInvite(false);
+         setError(null);
+         fetchTeamDetails(selectedTeam.id);
+       } else {
+         const errorData = await res.json();
+         setError(errorData.detail || 'Failed to add member');
+       }
+     } catch (e) {
+       setError('Failed to add member. Please try again.');
+       console.error('Failed to add member', e);
+     }
   };
 
   const updateMemberRole = async (userId: string, newRole: string) => {
     if (!selectedTeam) return;
 
     try {
-      await fetch(`http://localhost:4521/api/teams/${selectedTeam.id}/members/${userId}`, {
+      await fetch(`${API_BASE}/api/teams/${selectedTeam.id}/members/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -186,7 +196,7 @@ export default function TeamSettingsPage() {
     if (!selectedTeam) return;
 
     try {
-      await fetch(`http://localhost:4521/api/teams/${selectedTeam.id}/members/${userId}`, {
+      await fetch(`${API_BASE}/api/teams/${selectedTeam.id}/members/${userId}`, {
         method: 'DELETE',
         headers: {
           'X-User-Id': '00000000-0000-0000-0000-000000000000',
@@ -270,6 +280,9 @@ export default function TeamSettingsPage() {
                 >
                   Create Team
                 </Button>
+                {error && (
+                  <p className="text-sm text-error text-center">{error}</p>
+                )}
               </div>
             )}
           </div>
@@ -304,6 +317,10 @@ export default function TeamSettingsPage() {
                   Invite
                 </Button>
               </div>
+
+              {error && (
+                <p className="text-sm text-error">{error}</p>
+              )}
 
               {/* Members List */}
               <div className="space-y-2">

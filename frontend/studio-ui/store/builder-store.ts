@@ -5,8 +5,9 @@ import type {
   GenerationState,
   ValidationStatus,
   CodeTab,
+  OutputConfig,
 } from '@/types';
-import { DEFAULT_AGENT_FORM } from '@/types';
+import { DEFAULT_AGENT_FORM, DEFAULT_OUTPUT_CONFIG } from '@/types';
 
 // ============================================================================
 // Types
@@ -36,6 +37,9 @@ interface BuilderState {
   // Validation
   validationStatus: ValidationStatus | null;
 
+  // Output configuration
+  outputConfig: OutputConfig;
+
   // UI state
   activeSection: string;
   isAdvancedOpen: boolean;
@@ -58,6 +62,9 @@ interface BuilderState {
 
   // Actions - Validation
   setValidationStatus: (status: ValidationStatus | null) => void;
+
+  // Actions - Output Configuration
+  setOutputConfig: (config: Partial<OutputConfig>) => void;
 
   // Actions - UI
   setActiveSection: (section: string) => void;
@@ -82,16 +89,17 @@ const initialCodeFiles: Record<CodeTab, { content: string; isDirty: boolean }> =
 export const useBuilderStore = create<BuilderState>()(
   persist(
     (set, get) => ({
-      // Initial state
-      formData: DEFAULT_AGENT_FORM,
-      generationState: 'idle',
-      generatedCode: null,
-      generationError: null,
-      activeTab: 'flow.py',
-      codeFiles: initialCodeFiles,
-      validationStatus: null,
-      activeSection: 'description',
-      isAdvancedOpen: false,
+       // Initial state
+       formData: DEFAULT_AGENT_FORM,
+       generationState: 'idle',
+       generatedCode: null,
+       generationError: null,
+       activeTab: 'flow.py',
+       codeFiles: initialCodeFiles,
+       validationStatus: null,
+       outputConfig: DEFAULT_OUTPUT_CONFIG,
+       activeSection: 'description',
+       isAdvancedOpen: false,
 
       // Form actions
       setFormData: (data) =>
@@ -184,19 +192,26 @@ export const useBuilderStore = create<BuilderState>()(
         });
       },
 
-      // Validation actions
-      setValidationStatus: (status) => set({ validationStatus: status }),
+       // Validation actions
+       setValidationStatus: (status) => set({ validationStatus: status }),
 
-      // UI actions
-      setActiveSection: (section) => set({ activeSection: section }),
+       // Output configuration actions
+       setOutputConfig: (config) =>
+         set((state) => ({
+           outputConfig: { ...state.outputConfig, ...config },
+         })),
 
-      toggleAdvanced: () =>
-        set((state) => ({ isAdvancedOpen: !state.isAdvancedOpen })),
+       // UI actions
+       setActiveSection: (section) => set({ activeSection: section }),
+
+       toggleAdvanced: () =>
+         set((state) => ({ isAdvancedOpen: !state.isAdvancedOpen })),
     }),
     {
       name: 'laias-studio-builder',
       partialize: (state) => ({
         formData: state.formData,
+        outputConfig: state.outputConfig,
         isAdvancedOpen: state.isAdvancedOpen,
       }),
     }
@@ -214,6 +229,7 @@ export const selectValidationStatus = (state: BuilderState) => state.validationS
 export const selectActiveTab = (state: BuilderState) => state.activeTab;
 export const selectCodeFiles = (state: BuilderState) => state.codeFiles;
 export const selectActiveSection = (state: BuilderState) => state.activeSection;
+export const selectOutputConfig = (state: BuilderState) => state.outputConfig;
 
 // ============================================================================
 // Hooks

@@ -303,3 +303,9 @@ CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_agents_owner ON agents(owner_id);
 CREATE INDEX IF NOT EXISTS idx_agents_team ON agents(team_id);
 CREATE INDEX IF NOT EXISTS idx_deployments_team ON deployments(team_id);
+
+-- =============================================================================
+-- SEED DATA FOR DEVELOPMENT
+-- =============================================================================
+-- Seed dev user for development (required for teams FK constraint)
+INSERT INTO users (id, email, name) VALUES ('00000000-0000-0000-0000-000000000000', 'dev@laias.local', 'Dev User') ON CONFLICT (id) DO NOTHING;
