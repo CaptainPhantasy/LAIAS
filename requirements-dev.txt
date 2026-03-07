@@ -1,0 +1,14 @@
+# Dev dependencies for local template development and LSP resolution.
+# Mirrors packages pre-installed in laias/agent-runner:latest.
+#
+# Usage:
+#   python -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements-dev.txt
+#
+# This gives IDE autocompletion, type checking, and linting for
+# templates/godzilla_reference.py and any future template files.
+
+crewai[tools]>=0.80.0
+structlog>=24.0.0
+httpx>=0.27.0
+pydantic>=2.0

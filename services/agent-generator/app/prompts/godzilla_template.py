@@ -132,16 +132,127 @@ def _create_specialist_agent(self) -> Agent:
     )
 ```
 
+### 4. Output Router (REQUIRED)
+```python
+import json
+import asyncio
+import httpx
+from pathlib import Path
+from datetime import datetime
+
+class OutputRouter:
+    \"\"\"Routes agent output events to files and/or the orchestrator ingest endpoint.\"\"\"
+
+    def __init__(self, deployment_id: str, destinations: Dict[str, bool]):
+        self.deployment_id = deployment_id
+        self.destinations = destinations
+        self.output_root = Path(os.getenv("LAIAS_OUTPUT_ROOT", "/app/outputs"))
+        self.ingest_url = os.getenv("LAIAS_OUTPUT_INGEST_URL", "")
+        self.run_id = ""
+
+    def set_run_id(self, run_id: str) -> None:
+        self.run_id = run_id
+
+    async def emit(self, event_type: str, level: str, message: str, payload: Dict[str, Any]) -> None:
+        record = {
+            "run_id": self.run_id,
+            "event_type": event_type,
+            "level": level,
+            "message": message,
+            "source": "agent",
+            "payload": payload,
+            "destinations": self.destinations,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        if self.destinations.get("files", False):
+            await self._write_file_event(record)
+        if self.destinations.get("postgres", False) and self.ingest_url:
+            await self._post_event(record)
+
+    def emit_sync(self, event_type: str, level: str, message: str, payload: Dict[str, Any]) -> None:
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.emit(event_type, level, message, payload))
+        except RuntimeError:
+            asyncio.run(self.emit(event_type, level, message, payload))
+
+    async def _write_file_event(self, record: Dict[str, Any]) -> None:
+        if not self.run_id:
+            return
+        run_root = self.output_root / self.run_id
+        run_root.mkdir(parents=True, exist_ok=True)
+        events_path = run_root / "events.jsonl"
+        with events_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(record, default=str) + "\\n")
+
+    async def _post_event(self, record: Dict[str, Any]) -> None:
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                await client.post(self.ingest_url, json=record)
+        except Exception as exc:
+            logger.warning("Output ingest post failed", error=str(exc))
+```
+
+**Wiring in the Flow __init__:**
+```python
+def __init__(self, **kwargs):
+    super().__init__(**kwargs)
+    self.output_config = self._load_output_config()
+    self.output_router = OutputRouter(
+        deployment_id=os.getenv("LAIAS_DEPLOYMENT_ID", ""),
+        destinations=self.output_config,
+    )
+
+def _load_output_config(self) -> Dict[str, bool]:
+    raw = os.getenv("LAIAS_OUTPUT_CONFIG", "")
+    default_config = {"postgres": True, "files": True}
+    if not raw:
+        return default_config
+    try:
+        parsed = json.loads(raw)
+        if isinstance(parsed, dict):
+            config = default_config.copy()
+            for key in ("postgres", "files"):
+                if key in parsed:
+                    config[key] = bool(parsed[key])
+            return config
+    except Exception:
+        logger.warning("Invalid LAIAS_OUTPUT_CONFIG, using defaults")
+    return default_config
+```
+
+**Emitting events in flow methods:**
+```python
+@start()
+async def initialize(self) -> AgentState:
+    self.output_router.set_run_id(self.state.task_id)
+    await self.output_router.emit(
+        "run_started", "INFO", "Run started",
+        {"task_id": self.state.task_id, "inputs": self.state.inputs},
+    )
+    # ... rest of initialization ...
+
+@listen("finalize")
+async def complete(self, state: AgentState) -> AgentState:
+    await self.output_router.emit(
+        "run_completed", "INFO", "Run completed",
+        {"task_id": self.state.task_id, "status": self.state.status},
+    )
+    # ... rest of finalization ...
+```
+
 ## Required Patterns
 
 | Pattern | Required | Description |
 |---------|-----------|-------------|
+| Flow[State] | Yes | Must use Flow[AgentState] base class |
 | @start() | Yes | Entry point decorator |
 | @listen() | Yes | Event listener decorator |
 | @router() | Yes | Conditional routing |
 | @persist() | Yes | State persistence (must include parentheses) |
 | try/except | Yes | Error handling |
 | logger.info() | Yes | Structured logging |
+| Agent factory | Yes | Must have _create_*_agent() factory methods |
 | OutputRouter | Yes | Structured output routing for files and database ingest |
 | Typed State | Yes | Pydantic BaseModel |
 
@@ -209,6 +320,7 @@ GODZILLA_VALIDATION_RULES = {
         (r"def _create_\\w+_agent\\(self\\)", "Must have agent factory methods"),
         (r"try:", "Must include error handling (try/except)"),
         (r"logger\\.", "Must use structlog logging"),
+        (r"OutputRouter", "Must include OutputRouter for output persistence"),
     ],
     "recommended_patterns": [
         (r"@router\\(", "Consider adding @router() for conditional branching"),
