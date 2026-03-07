@@ -92,7 +92,14 @@ class OrchestratorClient:
         try:
             error_body = response.json()
             error_detail = error_body.get("message") or error_body.get("detail") or str(error_body)
-        except Exception:
+        except Exception as e:
+            logger.error(
+                "Orchestrator handoff: failed to parse error response",
+                agent_id=agent_id,
+                status_code=response.status_code,
+                error=str(e),
+                context="deploy_agent_error_parse",
+            )
             error_detail = response.text[:500]
 
         logger.error(

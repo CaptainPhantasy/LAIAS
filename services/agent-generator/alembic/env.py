@@ -25,7 +25,6 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from app.models.database import Base
-from app.models.team import User, Team, TeamMember
 
 target_metadata = Base.metadata
 
@@ -77,7 +76,7 @@ async def run_async_migrations() -> None:
     """
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = get_url()
-    
+
     connectable = async_engine_from_config(
         configuration,
         prefix="sqlalchemy.",

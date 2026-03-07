@@ -263,8 +263,13 @@ async def generate_and_deploy(
 
                 agent_record.last_deployed = datetime.now(UTC)
                 await db.commit()
-        except Exception:
-            pass  # Non-fatal
+        except Exception as e:
+            logger.debug(
+                "Failed to update deployed_count (non-fatal)",
+                agent_id=response.agent_id,
+                error=str(e),
+                context="generate_and_deploy",
+            )
 
         logger.info(
             "Generate-and-deploy complete",

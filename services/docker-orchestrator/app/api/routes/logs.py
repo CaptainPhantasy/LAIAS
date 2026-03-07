@@ -7,6 +7,7 @@ Provides REST and WebSocket access to container logs.
 import asyncio
 from datetime import datetime
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 
 from app.api.auth import is_api_key_valid, verify_api_key
@@ -19,6 +20,7 @@ from app.utils.exceptions import (
 )
 
 router = APIRouter(prefix="/api", tags=["logs"])
+logger = structlog.get_logger()
 
 
 @router.get(
@@ -197,10 +199,6 @@ async def _log_stream_handler(
         container_id: Container ID
         tail: Number of previous lines to include
     """
-    import structlog
-
-    logger = structlog.get_logger()
-
     try:
         # Send previous logs first if requested
         if tail > 0:
@@ -240,5 +238,10 @@ async def _log_stream_handler(
                     "error": str(e),
                 }
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                "Failed to send websocket error payload",
+                container_id=container_id,
+                error=str(e),
+                context="log_stream_error_forward",
+            )

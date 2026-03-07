@@ -126,8 +126,6 @@ function CreateAgentPageContent() {
         activeTemplateId = params.get('template');
       }
 
-      console.log('[CreatePage] loadTemplate triggered, activeTemplateId:', activeTemplateId);
-
       if (!activeTemplateId) {
         setTemplateError(null);
         setTemplateName(null);
@@ -140,7 +138,6 @@ function CreateAgentPageContent() {
 
       // Prevent double-loading of the SAME template
       if (loadedTemplateId === activeTemplateId) {
-        console.log('[CreatePage] Template already loaded, skipping');
         return;
       }
 
@@ -152,7 +149,6 @@ function CreateAgentPageContent() {
 
       try {
         const url = `${API_BASE}/api/templates/${activeTemplateId}`;
-        console.log('[CreatePage] Fetching template from:', url);
 
         const response = await fetch(url, {
           signal: controller.signal,
@@ -168,44 +164,33 @@ function CreateAgentPageContent() {
         }
 
         const template = await response.json();
-        console.log('[CreatePage] Template loaded:', template);
         setTemplateName(template.name || activeTemplateId);
         setLoadedTemplateId(activeTemplateId);
 
         // Pre-fill form with template data
         if (template.sample_prompts?.[0]) {
-          console.log('[CreatePage] Setting description:', template.sample_prompts[0]);
           setValue('description', template.sample_prompts[0], { shouldValidate: true });
         }
         if (template.default_complexity) {
-          console.log('[CreatePage] Setting complexity:', template.default_complexity);
           setValue('complexity', template.default_complexity);
         }
         if (template.category) {
-          console.log('[CreatePage] Setting task_type:', template.category);
-          // Map category to valid task_type
           const validTaskTypes = ['research', 'development', 'automation', 'analysis', 'general'];
           const taskType = validTaskTypes.includes(template.category) ? template.category : 'general';
           setValue('task_type', taskType as any);
         }
         if (template.default_tools?.length) {
-          console.log('[CreatePage] Setting tools:', template.default_tools);
           setValue('tools_requested', template.default_tools);
         }
         if (template.suggested_config?.llm_provider) {
-          // Map llm_provider to valid provider
           const validProviders = ['zai', 'openai', 'anthropic', 'openrouter'];
           const provider = template.suggested_config.llm_provider.toLowerCase();
           const mappedProvider = validProviders.includes(provider) ? provider : 'zai';
-          console.log('[CreatePage] Setting provider:', mappedProvider);
           setValue('provider', mappedProvider as any);
         }
         if (template.suggested_config?.max_agents) {
-          console.log('[CreatePage] Setting max_agents:', template.suggested_config.max_agents);
           setValue('max_agents', template.suggested_config.max_agents);
         }
-
-        console.log('[CreatePage] Template applied successfully');
         
         // Trigger visual feedback
         setTemplateApplied(true);
@@ -301,7 +286,6 @@ function CreateAgentPageContent() {
 
     // Generate agent_name from description if not provided
     const agentName = data.agent_name || generateAgentName(data.description);
-    console.log('[CreatePage] Generated agent_name:', agentName);
 
     try {
       setGenerationState('generating');
@@ -319,8 +303,6 @@ function CreateAgentPageContent() {
         llm_provider: data.provider, // Map provider -> llm_provider
         model: data.model || undefined, // Include selected model (optional)
       };
-      
-      console.log('[CreatePage] Sending request:', requestPayload);
       
       const response = await studioApi.generateAgent(requestPayload as any);
 

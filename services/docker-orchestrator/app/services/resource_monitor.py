@@ -30,7 +30,7 @@ class ResourceMonitor:
 
     def __init__(self):
         self.docker_service = DockerService()
-        self._cache: dict[str, tuple] = {}  # (stats, timestamp)
+        self._cache: dict[str, tuple[MetricsResponse, datetime]] = {}  # (metrics, timestamp)
         self._cache_ttl = 5  # seconds
 
     async def get_metrics(self, container_id: str) -> MetricsResponse:
@@ -108,7 +108,13 @@ class ResourceMonitor:
         """Get metrics safely, returning None on error."""
         try:
             return await self.get_metrics(container_id)
-        except Exception:
+        except Exception as e:
+            logger.error(
+                "Failed to get metrics safely",
+                container_id=container_id,
+                error=str(e),
+                context="get_metrics_safe",
+            )
             return None
 
     async def get_metrics_history(
@@ -145,7 +151,7 @@ class ResourceMonitor:
 
         return snapshots
 
-    async def get_resource_summary(self, container_ids: list[str] = None) -> dict[str, Any]:
+    async def get_resource_summary(self, container_ids: list[str] | None = None) -> dict[str, Any]:
         """
         Get aggregate resource summary for all or specified containers.
 

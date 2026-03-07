@@ -4,9 +4,10 @@ Health check endpoints.
 Provides service health status and connection checks.
 """
 
-import logging
 import time
+from typing import Any
 
+import structlog
 from fastapi import APIRouter, status
 
 from app.config import settings
@@ -17,8 +18,7 @@ router = APIRouter(tags=["health"])
 # Service start time for uptime calculation
 _start_time = time.time()
 
-# Logger for health check failures
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger()
 
 
 async def _check_postgresql() -> bool:
@@ -30,11 +30,8 @@ async def _check_postgresql() -> bool:
     """
     try:
         from sqlalchemy import text
-        from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-        from sqlalchemy.orm import sessionmaker
+        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-        # Create async engine from DATABASE_URL
-        # DATABASE_URL already uses postgresql+asyncpg:// scheme
         engine = create_async_engine(
             settings.DATABASE_URL,
             pool_size=1,
@@ -42,11 +39,9 @@ async def _check_postgresql() -> bool:
             pool_pre_ping=True,
         )
 
-        # Create session and execute ping
-        async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+        session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
-        async with async_session() as session:
-            # Simple SELECT 1 to verify connection
+        async with session_factory() as session:
             result = await session.execute(text("SELECT 1"))
             result.scalar_one()
 
@@ -54,7 +49,9 @@ async def _check_postgresql() -> bool:
         return True
 
     except Exception as e:
-        logger.warning(f"PostgreSQL health check failed: {e}")
+        logger.warning(
+            "PostgreSQL health check failed", error=str(e), context="postgres_health_check"
+        )
         return False
 
 
@@ -66,23 +63,21 @@ async def _check_redis() -> bool:
     Returns True if connection succeeds, False otherwise.
     """
     try:
-        import redis.asyncio as redis
+        import redis.asyncio as aioredis
 
-        # Create async Redis client from REDIS_URL
-        client = redis.from_url(
+        client: Any = aioredis.from_url(
             settings.REDIS_URL,
-            socket_timeout=1,  # 1 second timeout for health check
+            socket_timeout=1,
             socket_connect_timeout=1,
             decode_responses=False,
         )
 
-        # Ping Redis
-        await client.ping()
+        result = await client.ping()
         await client.aclose()
-        return True
+        return bool(result)
 
     except Exception as e:
-        logger.warning(f"Redis health check failed: {e}")
+        logger.warning("Redis health check failed", error=str(e), context="redis_health_check")
         return False
 
 
@@ -127,8 +122,12 @@ async def get_health() -> HealthResponse:
         try:
             containers = await get_docker_service().list_containers(all=True)
             container_count = len(containers)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(
+                "Failed to fetch container count for health check",
+                error=str(e),
+                context="health_container_count",
+            )
 
     return HealthResponse(
         status=overall_status,
@@ -147,7 +146,7 @@ async def get_health() -> HealthResponse:
     summary="Liveness probe",
     description="Kubernetes liveness probe - returns 200 if service is running",
 )
-async def liveness() -> dict:
+async def liveness() -> dict[str, str]:
     """Liveness probe for Kubernetes."""
     return {"status": "alive"}
 
@@ -158,7 +157,7 @@ async def liveness() -> dict:
     summary="Readiness probe",
     description="Kubernetes readiness probe - returns 200 if service is ready",
 )
-async def readiness() -> dict:
+async def readiness() -> dict[str, str]:
     """Readiness probe for Kubernetes."""
     from app.services.docker_service import get_docker_service
 

@@ -8,6 +8,7 @@ import asyncio
 import os
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -18,8 +19,8 @@ load_dotenv(env_path)
 sys.path.insert(0, str(Path(__file__).parent))
 
 from app.services.llm_provider import (
-    LLMProvider,
     LLMConfig,
+    LLMProvider,
     ProviderType,
 )
 
@@ -74,7 +75,7 @@ async def main():
     anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
     portkey_key = os.getenv("PORTKEY_API_KEY", "")
 
-    print(f"\nAPI Keys Status:")
+    print("\nAPI Keys Status:")
     print(f"  ZAI:       {'[SET]' if zai_key else '[NOT SET]'}")
     print(f"  PORTKEY:   {'[SET]' if portkey_key else '[NOT SET]'}")
     print(f"  OPENAI:    {'[SET]' if openai_key else '[NOT SET]'}")

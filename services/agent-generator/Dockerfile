@@ -32,6 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # === Application Code ===
 COPY app/ ./app/
 
+RUN adduser --disabled-password --gecos '' --uid 1001 appuser \
+    && chown -R appuser:appuser /app
+
 # === Health Check ===
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8001/health || exit 1
@@ -43,6 +46,8 @@ EXPOSE 8001
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV LOG_LEVEL=INFO
+
+USER appuser
 
 # === Run Command ===
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

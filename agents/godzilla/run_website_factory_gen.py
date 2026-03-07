@@ -15,8 +15,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-# Set Z.AI API key - correct key for coding endpoint
-os.environ["ZAI_API_KEY"] = "***REMOVED***"
+# Load Z.AI API key from environment
+api_key = os.getenv("ZAI_API_KEY")
+if not api_key:
+    raise ValueError(
+        "ZAI_API_KEY environment variable required. Set it in .env or export it."
+    )
 
 # Add paths
 sys.path.insert(0, str(Path(__file__).parent))
@@ -245,28 +249,28 @@ Complexity: complex
 
 async def main():
     """Run Godzilla to generate the Website Factory agent."""
-    
+
     print("=" * 70)
     print("                GODZILLA - WEBSITE FACTORY GENERATOR")
     print("=" * 70)
     print(f"\nStarted at: {datetime.now().isoformat()}")
     print("-" * 70)
-    
+
     # Create Godzilla instance
     godzilla = GodzillaFlow()
-    
+
     # Pre-populate state with request data
     godzilla.state.customer_request = WEBSITE_FACTORY_REQUEST
     godzilla.state.complexity = "complex"
-    
+
     print(f"\nLLM configured: {godzilla.llm}")
     print(f"\nRequest length: {len(WEBSITE_FACTORY_REQUEST)} characters")
     print("\nStarting agent generation...")
     print("-" * 70)
-    
+
     # Run Godzilla - inputs are already set in state
     result = await godzilla.kickoff_async()
-    
+
     print("\n" + "=" * 70)
     print("                GENERATION COMPLETE")
     print("=" * 70)
@@ -274,32 +278,34 @@ async def main():
     print(f"Progress: {godzilla.state.progress}%")
     print(f"Confidence: {godzilla.state.confidence:.2%}")
     print(f"Deployment Ready: {godzilla.state.deployment_ready}")
-    
+
     # Save output - use container-accessible path
     output_dir = Path("/app/agents/website_factory_generated")
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     if godzilla.state.deployment_ready:
         print("\n" + "-" * 70)
         print("SAVING GENERATED CODE:")
         print("-" * 70)
-        
+
         for filename, content in godzilla.state.final_package.items():
             output_path = output_dir / filename
             with open(output_path, "w") as f:
                 f.write(content)
             print(f"  ✓ Saved: {output_path}")
-        
+
         # Also save the full generated code
         code_path = output_dir / "generated_factory_flow.py"
         with open(code_path, "w") as f:
             f.write(godzilla.state.generated_code)
         print(f"  ✓ Saved: {code_path}")
-        
+
         print(f"\n✓ All files saved to: {output_dir}")
         print(f"\nTo copy to host, run:")
-        print(f"  docker cp laias-agent-generator:{output_dir}/* /Volumes/Storage/LAIAS/agents/website_factory/")
-    
+        print(
+            f"  docker cp laias-agent-generator:{output_dir}/* /Volumes/Storage/LAIAS/agents/website_factory/"
+        )
+
     # Print preview of generated code
     if godzilla.state.generated_code:
         print("\n" + "-" * 70)
@@ -307,8 +313,10 @@ async def main():
         print("-" * 70)
         print(godzilla.state.generated_code[:3000])
         if len(godzilla.state.generated_code) > 3000:
-            print(f"\n... ({len(godzilla.state.generated_code) - 3000} more characters)")
-    
+            print(
+                f"\n... ({len(godzilla.state.generated_code) - 3000} more characters)"
+            )
+
     return godzilla.state
 
 

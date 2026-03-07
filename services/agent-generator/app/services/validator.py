@@ -30,10 +30,7 @@ class CodeValidator:
         self.parser = CodeParser()
 
     def validate_code(
-        self,
-        code: str,
-        check_pattern_compliance: bool = True,
-        check_syntax: bool = True
+        self, code: str, check_pattern_compliance: bool = True, check_syntax: bool = True
     ) -> dict[str, Any]:
         """
         Validate code against Godzilla pattern.
@@ -62,14 +59,15 @@ class CodeValidator:
                     "pattern_compliance_score": 0.0,
                     "warnings": [],
                     "suggestions": [],
-                    "missing_patterns": []
+                    "missing_patterns": [],
                 }
 
         # Step 2: Pattern compliance
         compliance_score = 1.0
         if check_pattern_compliance:
-            is_valid, compliance_score, pattern_errors, pattern_warnings = \
+            is_valid, compliance_score, pattern_errors, pattern_warnings = (
                 self.parser.validate_godzilla_pattern(code)
+            )
             errors.extend(pattern_errors)
             warnings.extend(pattern_warnings)
 
@@ -88,7 +86,7 @@ class CodeValidator:
             is_valid=is_valid,
             compliance_score=compliance_score,
             error_count=len(errors),
-            warning_count=len(warnings)
+            warning_count=len(warnings),
         )
 
         return {
@@ -97,15 +95,10 @@ class CodeValidator:
             "pattern_compliance_score": compliance_score,
             "warnings": warnings,
             "suggestions": suggestions,
-            "missing_patterns": missing_patterns
+            "missing_patterns": missing_patterns,
         }
 
-    def _generate_suggestions(
-        self,
-        code: str,
-        errors: list[str],
-        warnings: list[str]
-    ) -> list[str]:
+    def _generate_suggestions(self, code: str, errors: list[str], warnings: list[str]) -> list[str]:
         """Generate improvement suggestions based on validation results."""
         suggestions = []
 
@@ -138,7 +131,7 @@ class CodeValidator:
         try:
             ast.parse(code)
             return True
-        except:
+        except SyntaxError:
             return False
 
     def extract_flow_info(self, code: str) -> dict[str, Any]:
@@ -158,7 +151,7 @@ class CodeValidator:
             "total_classes": len(classes),
             "total_functions": len(functions),
             "decorators": decorators,
-            "async_functions": sum(1 for f in functions if f.get("is_async"))
+            "async_functions": sum(1 for f in functions if f.get("is_async")),
         }
 
 

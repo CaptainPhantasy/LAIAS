@@ -55,7 +55,7 @@ async def seed_analytics(days: int = 30):
                     "endpoint": choices(API_ENDPOINTS, weights=[40, 20, 20, 10, 10])[0],
                     "response_time_ms": randint(50, 500),
                 },
-                call_time,
+                created_at=call_time,
             )
 
         # Generate 5-20 LLM calls per day
@@ -76,7 +76,7 @@ async def seed_analytics(days: int = 30):
                     "input_tokens": randint(100, 5000),
                     "output_tokens": randint(50, 2000),
                 },
-                llm_time,
+                created_at=llm_time,
             )
 
         # Generate 1-5 deployments per day
@@ -97,42 +97,14 @@ async def seed_analytics(days: int = 30):
                     "agent_name": f"Demo Agent {randint(1, 100)}",
                     "status": status,
                 },
-                deploy_time,
+                created_at=deploy_time,
             )
 
-    store_stats = analytics_store.get_stats()
     print("Seeding complete!")
-    print(f"  Total events: {store_stats['total_events']}")
-    print(f"  Max events: {store_stats['max_events']}")
-    print(f"  Utilization: {store_stats['utilization']}%")
-
-
-# Monkey patch add_event to accept timestamp
-async def add_event_with_time(self, event_type: str, event_data: dict, timestamp: datetime = None):
-    """Add event with optional timestamp."""
-    async with self._lock:
-        event = {
-            "event_type": event_type,
-            "event_data": event_data,
-            "created_at": timestamp or datetime.now(UTC),
-        }
-        self._events.append(event)
-        return event
-
-
-# Patch the store temporarily
-import app.services.analytics_store as analytics_module
-
-original_add = analytics_module.AnalyticsStore.add_event
-analytics_module.AnalyticsStore.add_event = add_event_with_time
 
 
 async def run_seeder():
-    """Run the seeder."""
     await seed_analytics(days=30)
-
-    # Restore original
-    analytics_module.AnalyticsStore.add_event = original_add
 
 
 if __name__ == "__main__":

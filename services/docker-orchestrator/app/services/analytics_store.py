@@ -31,11 +31,16 @@ class AnalyticsStore:
             "created_at": created_at,
         }
 
-    async def add_event(self, event_type: str, event_data: dict[str, Any]) -> dict[str, Any]:
+    async def add_event(
+        self,
+        event_type: str,
+        event_data: dict[str, Any],
+        created_at: datetime | None = None,
+    ) -> dict[str, Any]:
         record = AnalyticsEvent(
             event_type=event_type,
             event_data=event_data,
-            created_at=datetime.now(UTC),
+            created_at=created_at or datetime.now(UTC),
         )
 
         async with async_session_factory() as session:
@@ -100,7 +105,7 @@ class AnalyticsStore:
             result = await session.execute(statement)
             await session.commit()
 
-        return int(result.rowcount or 0)
+        return int(getattr(result, "rowcount", 0) or 0)
 
     async def _count_events(self) -> int:
         statement = select(func.count()).select_from(AnalyticsEvent)

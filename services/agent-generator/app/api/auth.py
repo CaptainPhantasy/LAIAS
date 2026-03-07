@@ -24,14 +24,30 @@ from app.models.team import Team, TeamMember, User
 # Configuration
 # =============================================================================
 
-# JWT Settings - in production, these should be environment variables
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-key-change-in-production")
+
+def _resolve_jwt_secret() -> str:
+    configured = os.getenv("JWT_SECRET_KEY", "")
+    if configured:
+        return configured
+    import secrets as _secrets
+
+    import structlog
+
+    structlog.get_logger().warning(
+        "jwt_secret_auto_generated",
+        msg="No JWT_SECRET_KEY set — generated ephemeral key. Tokens will NOT survive restarts. "
+        "Set JWT_SECRET_KEY in .env for persistent sessions.",
+    )
+    return _secrets.token_urlsafe(64)
+
+
+SECRET_KEY = _resolve_jwt_secret()
+
 ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("JWT_REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
-# Dev mode toggle - set AUTH_DEV_MODE=false in production
-AUTH_DEV_MODE = os.getenv("AUTH_DEV_MODE", "true").lower() == "true"
+AUTH_DEV_MODE = os.getenv("AUTH_DEV_MODE", "false").lower() == "true"
 
 # Password hashing — using bcrypt directly (passlib incompatible with bcrypt>=4.1)
 
@@ -195,7 +211,7 @@ async def get_current_user(
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
-        return CurrentUser(id=str(user.id), email=user.email, name=user.name)
+        return CurrentUser(id=str(user.id), email=user.email, name=user.name or "")
 
     # Dev mode: try header-based auth
     if AUTH_DEV_MODE:

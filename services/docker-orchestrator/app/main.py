@@ -5,15 +5,18 @@ FastAPI application for Docker Orchestrator Service.
 import asyncio
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import cast
 
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
+from starlette.types import ExceptionHandler
 
 from app.api.routes import analytics, containers, convert, deploy, filesystem, health, logs, outputs
 from app.config import settings
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.docker_service import get_docker_service
 from app.utils.exceptions import (
     OrchestratorException,
@@ -137,7 +140,10 @@ app = FastAPI(
 from app.middleware.rate_limit import limiter, rate_limit_exceeded_handler
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.add_exception_handler(
+    RateLimitExceeded,
+    cast(ExceptionHandler, rate_limit_exceeded_handler),
+)
 
 # CORS middleware
 app.add_middleware(
@@ -146,6 +152,13 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    SecurityHeadersMiddleware,
+    hsts_enabled=getattr(settings, "SECURITY_HSTS_ENABLED", True),
+    hsts_value=getattr(settings, "SECURITY_HSTS_VALUE", "max-age=31536000; includeSubDomains"),
+    trust_proxy_headers=getattr(settings, "SECURITY_TRUST_PROXY_HEADERS", True),
 )
 
 

@@ -216,8 +216,12 @@ def _load_output_config(self) -> Dict[str, bool]:
                 if key in parsed:
                     config[key] = bool(parsed[key])
             return config
-    except Exception:
-        logger.warning("Invalid LAIAS_OUTPUT_CONFIG, using defaults")
+    except Exception as e:
+        logger.warning(
+            "Invalid LAIAS_OUTPUT_CONFIG, using defaults",
+            error=str(e),
+            context="load_output_config",
+        )
     return default_config
 ```
 

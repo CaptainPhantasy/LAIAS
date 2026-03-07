@@ -10,6 +10,9 @@ import pytest
 # Add app directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+# Enable dev mode auth for tests (so routes don't require JWT)
+os.environ.setdefault("AUTH_DEV_MODE", "true")
+
 
 @pytest.fixture(scope="session")
 def test_config():
@@ -18,7 +21,7 @@ def test_config():
         "openai_api_key": "test-key",
         "anthropic_api_key": "test-key",
         "database_url": "sqlite:///:memory:",
-        "redis_url": "redis://localhost:6379/1"
+        "redis_url": "redis://localhost:6379/1",
     }
 
 

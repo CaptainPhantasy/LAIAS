@@ -48,7 +48,24 @@ export default function TeamSettingsPage() {
   const [inviteEmail, setInviteEmail] = React.useState('');
   const [inviteRole, setInviteRole] = React.useState('member');
 
-  const fetchTeams = async () => {
+  const fetchTeamDetails = React.useCallback(async (teamId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/teams/${teamId}`, {
+        headers: {
+          'X-User-Id': '00000000-0000-0000-0000-000000000000',
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSelectedTeam(data);
+        setTeams(prev => prev.map(t => t.id === data.id ? data : t));
+      }
+    } catch (e) {
+      console.error('Failed to fetch team details', e);
+    }
+  }, []);
+
+  const fetchTeams = React.useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/api/teams`, {
         headers: {
@@ -70,30 +87,11 @@ export default function TeamSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchTeamDetails]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   React.useEffect(() => {
     fetchTeams();
-  }, []);
-
-  const fetchTeamDetails = async (teamId: string) => {
-    try {
-      const res = await fetch(`${API_BASE}/api/teams/${teamId}`, {
-        headers: {
-          'X-User-Id': '00000000-0000-0000-0000-000000000000',
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSelectedTeam(data);
-        // Update in list too
-        setTeams(prev => prev.map(t => t.id === data.id ? data : t));
-      }
-    } catch (e) {
-      console.error('Failed to fetch team details', e);
-    }
-  };
+  }, [fetchTeams]);
 
   const createTeam = async () => {
     if (!newTeamName.trim()) return;

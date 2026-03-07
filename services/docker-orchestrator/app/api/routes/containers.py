@@ -6,6 +6,7 @@ Provides CRUD operations for agent containers.
 
 from datetime import UTC, datetime
 
+import structlog
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.models.responses import ContainerInfo, ContainerListResponse
@@ -17,6 +18,7 @@ from app.utils.exceptions import (
 )
 
 router = APIRouter(prefix="/api", tags=["containers"])
+logger = structlog.get_logger()
 
 
 @router.get(
@@ -82,8 +84,13 @@ async def list_containers(
                     cpu_usage = metrics.cpu_percent
                     memory_usage = f"{int(metrics.memory_usage_mb)}m"
                     uptime = metrics.uptime_seconds
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(
+                        "Failed to collect container metrics",
+                        container_id=container["container_id"],
+                        error=str(e),
+                        context="list_containers_metrics",
+                    )
 
             enriched_containers.append(
                 ContainerInfo(

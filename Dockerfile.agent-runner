@@ -105,7 +105,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Directory Structure
 # -----------------------------------------------------------------------------
 # /app/agent/ is where generated code gets mounted
-RUN mkdir -p /app/agent /app/outputs /app/logs
+RUN mkdir -p /app/agent /app/outputs /app/logs \
+    && adduser --disabled-password --gecos '' --uid 1001 appuser \
+    && chown -R appuser:appuser /app
 
 # -----------------------------------------------------------------------------
 # Runtime Configuration
@@ -118,6 +120,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV LOG_LEVEL=INFO
 ENV VERBOSE=true
 ENV MEMORY_ENABLED=true
+
+USER appuser
 
 # -----------------------------------------------------------------------------
 # Health Check

@@ -21,16 +21,19 @@ import structlog
 
 logger = structlog.get_logger()
 
-# Track Composio availability
-COMPOSIO_AVAILABLE = False
+_composio_loaded = False
+_Composio: type | None = None
 try:
-    from composio import Composio
+    from composio import Composio as _ComposioImport
     from composio_crewai import ComposioTool  # noqa: F401
 
-    COMPOSIO_AVAILABLE = True
+    _composio_loaded = True
+    _Composio = _ComposioImport
     logger.info("composio_loaded", version="0.11.1")
 except ImportError as e:
     logger.warning("composio_not_available", error=str(e))
+
+COMPOSIO_AVAILABLE: bool = _composio_loaded
 
 
 @dataclass
@@ -139,7 +142,9 @@ class ComposioToolsManager:
 
         if self._client is None:
             try:
-                self._client = Composio(api_key=self.config.api_key)
+                if _Composio is None:
+                    return None
+                self._client = _Composio(api_key=self.config.api_key)
                 logger.info("composio_client_initialized")
             except Exception as e:
                 logger.error("composio_client_init_failed", error=str(e))
@@ -252,7 +257,14 @@ class ComposioToolsManager:
             # Try to get entities/connections
             entities = client.connectedAccounts.get(user_id=user_id)
             return any(acc.toolkit == toolkit.upper() for acc in entities)
-        except Exception:
+        except Exception as e:
+            logger.warning(
+                "composio_connection_check_failed",
+                toolkit=toolkit,
+                user_id=user_id,
+                error=str(e),
+                context="check_connection",
+            )
             return False
 
 

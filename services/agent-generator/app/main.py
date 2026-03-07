@@ -26,15 +26,18 @@ load_dotenv(_ENV_FILE)  # Export .env to os.environ
 # Remaining imports
 # =============================================================================
 from contextlib import asynccontextmanager
+from typing import cast
 
 import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
+from starlette.types import ExceptionHandler
 
 from app import __version__
 from app.config import settings
+from app.middleware.security_headers import SecurityHeadersMiddleware
 
 # =============================================================================
 # Logging Configuration
@@ -50,7 +53,7 @@ structlog.configure(
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     context_class=dict,
     logger_factory=structlog.stdlib.LoggerFactory(),
@@ -63,16 +66,16 @@ logger = structlog.get_logger()
 # Lifespan Context Manager
 # =============================================================================
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan with graceful shutdown."""
     logger.info(
-        "Starting Agent Generator Service",
-        version=__version__,
-        environment=settings.environment
+        "Starting Agent Generator Service", version=__version__, environment=settings.environment
     )
     # Initialize database
     from app.database import init_db
+
     try:
         await init_db()
         logger.info("Database initialized")
@@ -86,6 +89,7 @@ async def lifespan(app: FastAPI):
 
     # Close database connections
     from app.database import close_db
+
     try:
         await close_db()
         logger.info("Database connections closed")
@@ -99,6 +103,7 @@ async def lifespan(app: FastAPI):
 # Application Factory
 # =============================================================================
 
+
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application."""
     # Initialize rate limiter
@@ -110,14 +115,17 @@ def create_app() -> FastAPI:
         description="LLM-powered CrewAI agent code generator",
         lifespan=lifespan,
         docs_url="/docs" if settings.debug else None,
-        redoc_url="/redoc" if settings.debug else None
+        redoc_url="/redoc" if settings.debug else None,
     )
 
     # =============================================================================
     # Rate Limiting
     # =============================================================================
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+    app.add_exception_handler(
+        RateLimitExceeded,
+        cast(ExceptionHandler, rate_limit_exceeded_handler),
+    )
 
     # =============================================================================
     # CORS Middleware
@@ -130,6 +138,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    app.add_middleware(
+        SecurityHeadersMiddleware,
+        hsts_enabled=getattr(settings, "security_hsts_enabled", True),
+        hsts_value=getattr(settings, "security_hsts_value", "max-age=31536000; includeSubDomains"),
+        trust_proxy_headers=getattr(settings, "security_trust_proxy_headers", True),
+    )
+
     # =============================================================================
     # Exception Handlers
     # =============================================================================
@@ -137,8 +152,7 @@ def create_app() -> FastAPI:
     async def global_exception_handler(request, exc):
         logger.error("Unhandled exception", error=str(exc), path=request.url.path)
         return JSONResponse(
-            status_code=500,
-            content={"error": "Internal Server Error", "message": str(exc)}
+            status_code=500, content={"error": "Internal Server Error", "message": str(exc)}
         )
 
     # =============================================================================
@@ -178,7 +192,7 @@ def create_app() -> FastAPI:
             "service": settings.app_name,
             "version": __version__,
             "status": "running",
-            "docs": "/docs" if settings.debug else "disabled"
+            "docs": "/docs" if settings.debug else "disabled",
         }
 
     return app
@@ -199,5 +213,5 @@ if __name__ == "__main__":
         host=settings.host,
         port=settings.port,
         reload=settings.reload,
-        log_level=settings.log_level.lower()
+        log_level=settings.log_level.lower(),
     )
