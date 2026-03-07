@@ -8,7 +8,11 @@ Run this to populate analytics with demo data.
 from datetime import UTC, datetime, timedelta
 from random import choices, randint, uniform
 
+import structlog
+
 from app.services.analytics_store import analytics_store
+
+logger = structlog.get_logger()
 
 # Sample data
 LLM_PROVIDERS = ["anthropic", "openai", "openrouter"]
@@ -33,7 +37,7 @@ async def seed_analytics(days: int = 30):
     Args:
         days: Number of days of historical data to generate
     """
-    print(f"Seeding analytics with {days} days of sample data...")
+    logger.info("seeding_analytics", days=days)
 
     now = datetime.now(UTC)
 
@@ -100,7 +104,7 @@ async def seed_analytics(days: int = 30):
                 created_at=deploy_time,
             )
 
-    print("Seeding complete!")
+    logger.info("seeding_complete")
 
 
 async def run_seeder():

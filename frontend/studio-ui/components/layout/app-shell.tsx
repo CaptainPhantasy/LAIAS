@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { CONTROL_ROOM_URL } from '@/lib/constants';
 
 // ============================================================================
 // Types
@@ -100,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed = false, onToggle }) => {
       {/* Control Room Link */}
       <div className="p-3 border-t border-border">
         <a
-          href="http://localhost:4528"
+          href={CONTROL_ROOM_URL}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(

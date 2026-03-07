@@ -21,8 +21,8 @@ interface Settings {
 }
 
 const DEFAULTS: Settings = {
-  agentGeneratorUrl: 'http://localhost:4521',
-  dockerOrchestratorUrl: 'http://localhost:4522',
+  agentGeneratorUrl: process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:4521',
+  dockerOrchestratorUrl: process.env.NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL || 'http://localhost:4522',
   defaultLlmProvider: 'zai',
   defaultComplexity: 'moderate',
   autoValidate: true,

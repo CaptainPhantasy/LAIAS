@@ -3,6 +3,7 @@ import Image from 'next/image';
 import { Sparkles, ArrowRight, Bot, Code, Rocket, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { CONTROL_ROOM_URL } from '@/lib/constants';
 
 export default function HomePage() {
   return (
@@ -129,7 +130,7 @@ export default function HomePage() {
               Agents
             </Link>
             <Link
-              href="http://localhost:4528"
+              href={CONTROL_ROOM_URL}
               className="hover:text-text-secondary transition-colors"
             >
               Control Room

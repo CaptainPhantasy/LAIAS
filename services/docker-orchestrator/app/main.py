@@ -150,8 +150,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
 )
 
 app.add_middleware(
@@ -160,6 +160,10 @@ app.add_middleware(
     hsts_value=getattr(settings, "SECURITY_HSTS_VALUE", "max-age=31536000; includeSubDomains"),
     trust_proxy_headers=getattr(settings, "SECURITY_TRUST_PROXY_HEADERS", True),
 )
+
+from app.middleware.request_logging import RequestLoggingMiddleware
+
+app.add_middleware(RequestLoggingMiddleware)
 
 
 # Exception handlers

@@ -135,7 +135,7 @@ def create_app() -> FastAPI:
         allow_origins=settings.allowed_origins,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE"],
-        allow_headers=["*"],
+        allow_headers=["Content-Type", "Authorization", "X-Request-ID"],
     )
 
     app.add_middleware(
@@ -144,6 +144,10 @@ def create_app() -> FastAPI:
         hsts_value=getattr(settings, "security_hsts_value", "max-age=31536000; includeSubDomains"),
         trust_proxy_headers=getattr(settings, "security_trust_proxy_headers", True),
     )
+
+    from app.middleware.request_logging import RequestLoggingMiddleware
+
+    app.add_middleware(RequestLoggingMiddleware)
 
     # =============================================================================
     # Exception Handlers

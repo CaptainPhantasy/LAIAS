@@ -4,7 +4,7 @@ services:
   # ===========================================================================
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15.8-alpine
     container_name: laias-postgres
     restart: unless-stopped
     environment:
@@ -22,24 +22,44 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
     networks:
       - laias-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: laias-redis
     restart: unless-stopped
-    command: redis-server /etc/redis/redis.conf
+    command: redis-server /etc/redis/redis.conf --requirepass ${REDIS_PASSWORD:-laias_redis_dev}
     volumes:
       - redis_data:/data
       - ./infrastructure/redis.conf:/etc/redis/redis.conf:ro
     ports:
       - "${REDIS_PORT:-127.0.0.1:6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-laias_redis_dev}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 384M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "25m"
+        max-file: "3"
     networks:
       - laias-network
 
@@ -74,7 +94,7 @@ services:
       - "4521:8001"
     environment:
       - DATABASE_URL=postgresql+asyncpg://laias:${POSTGRES_PASSWORD:-laias_dev_password}@postgres:5432/laias
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-laias_redis_dev}@redis:6379/0
       # CORS Configuration
       - ALLOWED_ORIGINS=["http://localhost:4527", "http://localhost:4528", "https://laias-studio.ngrok-free.app", "https://laias-api.ngrok-free.app"]
       # LLM Provider API Keys
@@ -107,6 +127,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
     networks:
       - laias-network
 
@@ -121,7 +151,7 @@ services:
       - "4522:8002"
     environment:
       - DATABASE_URL=postgresql+asyncpg://laias:${POSTGRES_PASSWORD:-laias_dev_password}@postgres:5432/laias
-      - REDIS_URL=redis://redis:6379/1
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-laias_redis_dev}@redis:6379/1
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AGENT_IMAGE_BASE=laias/agent-runner:latest
       - AGENT_CODE_PATH=/var/laias/agents
@@ -147,6 +177,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
     networks:
       - laias-network
 
@@ -182,6 +222,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "25m"
+        max-file: "3"
     networks:
       - laias-network
 
@@ -209,6 +259,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "25m"
+        max-file: "3"
     networks:
       - laias-network
 

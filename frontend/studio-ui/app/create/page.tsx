@@ -28,6 +28,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { SectionPanel, ToolTile, PromptSuggestions, OutputConfigPanel } from '@/components/agent-builder';
 import { CodePanel } from '@/components/code-editor';
 import { cn, debounce } from '@/lib/utils';
+import { CONTROL_ROOM_URL } from '@/lib/constants';
 
 const API_BASE = typeof window !== 'undefined'
   ? (window.location.hostname.includes('ngrok') ? 'https://laias-api.ngrok-free.app' : (process.env.NEXT_PUBLIC_AGENT_GENERATOR_URL || 'http://localhost:4521'))
@@ -385,7 +386,7 @@ function CreateAgentPageContent() {
       setGenerationState('complete');
 
       // Navigate to control room to see deployed agent
-      window.open(`http://localhost:4528?agent=${deployment.container_id}`, '_blank');
+      window.open(`${CONTROL_ROOM_URL}?agent=${deployment.container_id}`, '_blank');
 
       // TODO: Add proper client-side logging
       console.info('Agent deployed successfully', {

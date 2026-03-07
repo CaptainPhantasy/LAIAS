@@ -7,7 +7,9 @@ Validates Python code against Godzilla architectural pattern.
 
 import structlog
 from fastapi import APIRouter, HTTPException, status
+from fastapi import Request as FastAPIRequest
 
+from app.middleware.rate_limit import RATE_LIMITS, limiter
 from app.models.requests import ValidateCodeRequest
 from app.models.responses import ValidateCodeResponse
 from app.services.validator import get_validator
@@ -17,8 +19,9 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/api", tags=["validation"])
 
 
+@limiter.limit(RATE_LIMITS["standard"])
 @router.post("/validate-code", response_model=ValidateCodeResponse, status_code=status.HTTP_200_OK)
-async def validate_code(request: ValidateCodeRequest) -> ValidateCodeResponse:
+async def validate_code(request: FastAPIRequest, body: ValidateCodeRequest) -> ValidateCodeResponse:
     """
     Validate Python code against Godzilla pattern.
 
@@ -35,15 +38,15 @@ async def validate_code(request: ValidateCodeRequest) -> ValidateCodeResponse:
     try:
         logger.info(
             "Code validation request received",
-            check_pattern_compliance=request.check_pattern_compliance,
-            check_syntax=request.check_syntax
+            check_pattern_compliance=body.check_pattern_compliance,
+            check_syntax=body.check_syntax,
         )
 
         validator = get_validator()
         result = validator.validate_code(
-            code=request.code,
-            check_pattern_compliance=request.check_pattern_compliance,
-            check_syntax=request.check_syntax
+            code=body.code,
+            check_pattern_compliance=body.check_pattern_compliance,
+            check_syntax=body.check_syntax,
         )
 
         return ValidateCodeResponse(**result)
@@ -52,7 +55,7 @@ async def validate_code(request: ValidateCodeRequest) -> ValidateCodeResponse:
         logger.error("Code validation failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to validate code: {str(e)}"
+            detail=f"Failed to validate code: {str(e)}",
         )
 
 
@@ -70,11 +73,9 @@ async def get_validation_rules():
 
     return {
         "required_patterns": [
-            {"pattern": p, "description": d}
-            for p, d in rules.get("required_patterns", [])
+            {"pattern": p, "description": d} for p, d in rules.get("required_patterns", [])
         ],
         "recommended_patterns": [
-            {"pattern": p, "description": d}
-            for p, d in rules.get("recommended_patterns", [])
-        ]
+            {"pattern": p, "description": d} for p, d in rules.get("recommended_patterns", [])
+        ],
     }
