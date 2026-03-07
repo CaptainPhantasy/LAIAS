@@ -4,7 +4,7 @@ Team and User models for RBAC.
 Uses SQLAlchemy 2.0 style type annotations for proper mypy support.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID as PyUUID
 from uuid import uuid4
 
@@ -18,13 +18,16 @@ from app.models.database import Base
 
 class User(Base):
     """User model."""
+
     __tablename__ = "users"
 
     id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
     name: Mapped[str | None] = mapped_column(String(255))
     password_hash: Mapped[str | None] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
     last_login: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     # Relationships
@@ -33,13 +36,18 @@ class User(Base):
 
 class Team(Base):
     """Team model."""
+
     __tablename__ = "teams"
 
     id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
-    owner_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    owner_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     members: Mapped[list["TeamMember"]] = relationship(back_populates="team")
@@ -47,12 +55,19 @@ class Team(Base):
 
 class TeamMember(Base):
     """Team membership junction table."""
+
     __tablename__ = "team_members"
 
-    team_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True)
-    user_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    team_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("teams.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
     role: Mapped[str] = mapped_column(String(50), default="member")  # owner, admin, member, viewer
-    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
 
     # Relationships
     team: Mapped["Team"] = relationship(back_populates="members")

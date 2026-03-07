@@ -1,0 +1,1 @@
+- Local environment lacks installed FastAPI/SlowAPI/Pydantic-settings for LSP, so diagnostics report `reportMissingImports` unrelated to route logic.

@@ -7,7 +7,7 @@ Team management with RBAC - create, list, update, delete teams and members.
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -27,19 +27,23 @@ router = APIRouter(prefix="/api/teams", tags=["teams"])
 # Schemas
 # =============================================================================
 
+
 class TeamCreate(BaseModel):
     """Create team request."""
+
     name: str = Field(..., min_length=1, max_length=255)
     slug: str | None = Field(None, min_length=1, max_length=100)
 
 
 class TeamUpdate(BaseModel):
     """Update team request."""
+
     name: str | None = Field(None, min_length=1, max_length=255)
 
 
 class TeamMemberResponse(BaseModel):
     """Team member response."""
+
     user_id: str
     email: str
     name: str | None = None
@@ -49,6 +53,7 @@ class TeamMemberResponse(BaseModel):
 
 class TeamResponse(BaseModel):
     """Team response."""
+
     id: str
     name: str
     slug: str
@@ -56,23 +61,25 @@ class TeamResponse(BaseModel):
     created_at: str
     members_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TeamDetailResponse(TeamResponse):
     """Team detail with members."""
+
     members: list[TeamMemberResponse] = []
 
 
 class AddMemberRequest(BaseModel):
     """Add team member request."""
+
     user_id: str
     role: str = Field(default="member", pattern="^(owner|admin|member|viewer)$")
 
 
 class UpdateMemberRoleRequest(BaseModel):
     """Update member role request."""
+
     role: str = Field(..., pattern="^(owner|admin|member|viewer)$")
 
 
@@ -80,13 +87,17 @@ class UpdateMemberRoleRequest(BaseModel):
 # Helpers
 # =============================================================================
 
+
 def _slugify(name: str) -> str:
     """Convert name to URL-safe slug."""
     slug = name.lower().replace(" ", "-")
     return "".join(c for c in slug if c.isalnum() or c == "-")
 
 
-async def _get_members_with_users(team_id: uuid.UUID, db: AsyncSession) -> list[dict]:
+async def _get_members_with_users(
+    team_id: uuid.UUID,
+    db: AsyncSession,
+) -> list[dict[str, str | None]]:
     """
     Get team members with actual user data from users table.
 
@@ -106,7 +117,7 @@ async def _get_members_with_users(team_id: uuid.UUID, db: AsyncSession) -> list[
             "email": user.email,
             "name": user.name,
             "role": member.role,
-            "joined_at": member.joined_at.isoformat()
+            "joined_at": member.joined_at.isoformat(),
         }
         for member, user in rows
     ]
@@ -116,10 +127,10 @@ async def _get_members_with_users(team_id: uuid.UUID, db: AsyncSession) -> list[
 # Routes
 # =============================================================================
 
+
 @router.get("", response_model=list[TeamResponse])
 async def list_teams(
-    current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: DevUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> list[TeamResponse]:
     """
     List all teams the current user is a member of.
@@ -138,17 +149,17 @@ async def list_teams(
     # Get member counts
     responses = []
     for team in teams:
-        count_result = await db.execute(
-            select(TeamMember).where(TeamMember.team_id == team.id)
+        count_result = await db.execute(select(TeamMember).where(TeamMember.team_id == team.id))
+        responses.append(
+            TeamResponse(
+                id=str(team.id),
+                name=team.name,
+                slug=team.slug,
+                owner_id=str(team.owner_id) if team.owner_id else None,
+                created_at=team.created_at.isoformat(),
+                members_count=len(count_result.scalars().all()),
+            )
         )
-        responses.append(TeamResponse(
-            id=str(team.id),
-            name=team.name,
-            slug=team.slug,
-            owner_id=str(team.owner_id) if team.owner_id else None,
-            created_at=team.created_at.isoformat(),
-            members_count=len(count_result.scalars().all())
-        ))
 
     return responses
 
@@ -157,7 +168,7 @@ async def list_teams(
 async def create_team(
     team: TeamCreate,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> TeamResponse:
     """
     Create a new team. User becomes owner.
@@ -165,32 +176,21 @@ async def create_team(
     slug = team.slug or _slugify(team.name)
 
     # Check slug uniqueness
-    existing = await db.execute(
-        select(Team).where(Team.slug == slug)
-    )
+    existing = await db.execute(select(Team).where(Team.slug == slug))
     if existing.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Team with slug '{slug}' already exists"
+            status_code=status.HTTP_409_CONFLICT, detail=f"Team with slug '{slug}' already exists"
         )
 
     user_uuid = uuid.UUID(current_user.id)
 
     # Create team
-    new_team = Team(
-        name=team.name,
-        slug=slug,
-        owner_id=user_uuid
-    )
+    new_team = Team(name=team.name, slug=slug, owner_id=user_uuid)
     db.add(new_team)
     await db.flush()
 
     # Add owner as member
-    member = TeamMember(
-        team_id=new_team.id,
-        user_id=user_uuid,
-        role="owner"
-    )
+    member = TeamMember(team_id=new_team.id, user_id=user_uuid, role="owner")
     db.add(member)
     await db.commit()
 
@@ -200,7 +200,7 @@ async def create_team(
         slug=new_team.slug,
         owner_id=str(new_team.owner_id),
         created_at=new_team.created_at.isoformat(),
-        members_count=1
+        members_count=1,
     )
 
 
@@ -208,7 +208,7 @@ async def create_team(
 async def get_team(
     team_id: str,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> TeamDetailResponse:
     """
     Get team details with member list.
@@ -219,41 +219,27 @@ async def get_team(
         team_uuid = uuid.UUID(team_id)
         user_uuid = uuid.UUID(current_user.id)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid team ID"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid team ID")
 
     # Get team
-    result = await db.execute(
-        select(Team).where(Team.id == team_uuid)
-    )
+    result = await db.execute(select(Team).where(Team.id == team_uuid))
     team = result.scalar_one_or_none()
     if not team:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Team not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
     # Verify user is a member
     member_check = await db.execute(
-        select(TeamMember).where(
-            TeamMember.team_id == team_uuid,
-            TeamMember.user_id == user_uuid
-        )
+        select(TeamMember).where(TeamMember.team_id == team_uuid, TeamMember.user_id == user_uuid)
     )
     if not member_check.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a member of this team"
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this team"
         )
 
     # Get members with user data
     members_data = await _get_members_with_users(team.id, db)
 
-    member_responses = [
-        TeamMemberResponse(**m) for m in members_data
-    ]
+    member_responses = [TeamMemberResponse(**m) for m in members_data]
 
     return TeamDetailResponse(
         id=str(team.id),
@@ -262,7 +248,7 @@ async def get_team(
         owner_id=str(team.owner_id) if team.owner_id else None,
         created_at=team.created_at.isoformat(),
         members_count=len(member_responses),
-        members=member_responses
+        members=member_responses,
     )
 
 
@@ -271,15 +257,13 @@ async def update_team(
     team_id: str,
     update: TeamUpdate,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> TeamResponse:
     """
     Update team name. Only owner/admin can update.
     """
     # Verify ownership or admin
-    team, user_role = await verify_team_ownership_or_admin(
-        team_id, current_user, db
-    )
+    team, user_role = await verify_team_ownership_or_admin(team_id, current_user, db)
 
     if update.name:
         team.name = update.name
@@ -295,7 +279,7 @@ async def update_team(
         slug=team.slug,
         owner_id=str(team.owner_id) if team.owner_id else None,
         created_at=team.created_at.isoformat(),
-        members_count=len(count_result.scalars().all())
+        members_count=len(count_result.scalars().all()),
     )
 
 
@@ -303,7 +287,7 @@ async def update_team(
 async def delete_team(
     team_id: str,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Delete a team. Only owner can delete.
@@ -315,58 +299,44 @@ async def delete_team(
     await db.commit()
 
 
-@router.post("/{team_id}/members", response_model=TeamMemberResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{team_id}/members", response_model=TeamMemberResponse, status_code=status.HTTP_201_CREATED
+)
 async def add_team_member(
     team_id: str,
     request: AddMemberRequest,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> TeamMemberResponse:
     """
     Add a member to the team. Owner/admin only.
     """
     # Verify ownership or admin
-    team, user_role = await verify_team_ownership_or_admin(
-        team_id, current_user, db
-    )
+    team, user_role = await verify_team_ownership_or_admin(team_id, current_user, db)
 
     try:
         user_uuid = uuid.UUID(request.user_id)
     except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid user ID format"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid user ID format"
         )
 
     # Verify user exists
-    user_result = await db.execute(
-        select(User).where(User.id == user_uuid)
-    )
+    user_result = await db.execute(select(User).where(User.id == user_uuid))
     if not user_result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Check if already member
     existing = await db.execute(
-        select(TeamMember).where(
-            TeamMember.team_id == team.id,
-            TeamMember.user_id == user_uuid
-        )
+        select(TeamMember).where(TeamMember.team_id == team.id, TeamMember.user_id == user_uuid)
     )
     if existing.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User is already a team member"
+            status_code=status.HTTP_409_CONFLICT, detail="User is already a team member"
         )
 
     # Add member
-    member = TeamMember(
-        team_id=team.id,
-        user_id=user_uuid,
-        role=request.role
-    )
+    member = TeamMember(team_id=team.id, user_id=user_uuid, role=request.role)
     db.add(member)
     await db.commit()
 
@@ -379,7 +349,7 @@ async def add_team_member(
         email=user.email,
         name=user.name,
         role=request.role,
-        joined_at=member.joined_at.isoformat()
+        joined_at=member.joined_at.isoformat(),
     )
 
 
@@ -388,7 +358,7 @@ async def remove_team_member(
     team_id: str,
     user_id: str,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     """
     Remove a member from the team. Owner/admin only.
@@ -399,28 +369,22 @@ async def remove_team_member(
         target_user_uuid = uuid.UUID(user_id)
         requester_uuid = uuid.UUID(current_user.id)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid ID format"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ID format")
 
     # Verify ownership or admin
-    team, requester_role = await verify_team_ownership_or_admin(
-        team_id, current_user, db
-    )
+    team, requester_role = await verify_team_ownership_or_admin(team_id, current_user, db)
 
     # Prevent owner from removing themselves
     if target_user_uuid == requester_uuid and requester_role == "owner":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Team owner cannot remove themselves. Transfer ownership first."
+            detail="Team owner cannot remove themselves. Transfer ownership first.",
         )
 
     # Delete member
     await db.execute(
         delete(TeamMember).where(
-            TeamMember.team_id == team.id,
-            TeamMember.user_id == target_user_uuid
+            TeamMember.team_id == team.id, TeamMember.user_id == target_user_uuid
         )
     )
     await db.commit()
@@ -432,7 +396,7 @@ async def update_member_role(
     user_id: str,
     request: UpdateMemberRoleRequest,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> TeamMemberResponse:
     """
     Update a member's role. Owner only.
@@ -443,10 +407,7 @@ async def update_member_role(
         target_user_uuid = uuid.UUID(user_id)
         requester_uuid = uuid.UUID(current_user.id)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid ID format"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ID format")
 
     # Verify ownership
     team = await verify_team_ownership(team_id, current_user, db)
@@ -454,23 +415,18 @@ async def update_member_role(
     # Prevent owner from changing their own role
     if target_user_uuid == requester_uuid:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Owner cannot change their own role"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Owner cannot change their own role"
         )
 
     # Get member
     result = await db.execute(
         select(TeamMember).where(
-            TeamMember.team_id == team.id,
-            TeamMember.user_id == target_user_uuid
+            TeamMember.team_id == team.id, TeamMember.user_id == target_user_uuid
         )
     )
     member = result.scalar_one_or_none()
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Team member not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team member not found")
 
     member.role = request.role
     await db.commit()
@@ -484,7 +440,7 @@ async def update_member_role(
         email=user.email,
         name=user.name,
         role=request.role,
-        joined_at=member.joined_at.isoformat()
+        joined_at=member.joined_at.isoformat(),
     )
 
 
@@ -493,7 +449,7 @@ async def transfer_ownership(
     team_id: str,
     user_id: str,
     current_user: DevUser = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> TeamResponse:
     """
     Transfer team ownership to another member. Current owner becomes admin.
@@ -505,10 +461,7 @@ async def transfer_ownership(
         target_user_uuid = uuid.UUID(user_id)
         requester_uuid = uuid.UUID(current_user.id)
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid ID format"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ID format")
 
     # Verify current ownership
     team = await verify_team_ownership(team_id, current_user, db)
@@ -516,22 +469,19 @@ async def transfer_ownership(
     # Get target member
     target_member_result = await db.execute(
         select(TeamMember).where(
-            TeamMember.team_id == team.id,
-            TeamMember.user_id == target_user_uuid
+            TeamMember.team_id == team.id, TeamMember.user_id == target_user_uuid
         )
     )
     target_member = target_member_result.scalar_one_or_none()
     if not target_member:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Target user is not a team member"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Target user is not a team member"
         )
 
     # Get current owner's member record
     owner_member_result = await db.execute(
         select(TeamMember).where(
-            TeamMember.team_id == team.id,
-            TeamMember.user_id == requester_uuid
+            TeamMember.team_id == team.id, TeamMember.user_id == requester_uuid
         )
     )
     owner_member = owner_member_result.scalar_one_or_none()
@@ -556,5 +506,5 @@ async def transfer_ownership(
         slug=team.slug,
         owner_id=str(team.owner_id),
         created_at=team.created_at.isoformat(),
-        members_count=len(count_result.scalars().all())
+        members_count=len(count_result.scalars().all()),
     )

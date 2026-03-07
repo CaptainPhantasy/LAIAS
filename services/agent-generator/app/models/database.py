@@ -4,7 +4,7 @@ Database models for Agent Generator Service.
 SQLAlchemy 2.0 style models for persistent storage of agents and generations.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID as PyUUID
 
@@ -15,6 +15,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class Base(DeclarativeBase):
     """Base class for all models."""
+
     pass
 
 
@@ -29,7 +30,11 @@ class Agent(Base):
     __tablename__ = "agents"
 
     # === Primary Key ===
-    id: Mapped[str] = mapped_column(String(50), primary_key=True, default=lambda: f"gen_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
+    id: Mapped[str] = mapped_column(
+        String(50),
+        primary_key=True,
+        default=lambda: f"gen_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}",
+    )
 
     # === Identity ===
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -53,7 +58,7 @@ class Agent(Base):
     complexity_score: Mapped[int | None] = mapped_column(Integer)
 
     # === Validation ===
-    validation_status: Mapped[dict] = mapped_column(JSONB, default=dict)
+    validation_status: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
     flow_diagram: Mapped[str | None] = mapped_column(Text)
 
     # === Status ===
@@ -62,14 +67,22 @@ class Agent(Base):
     last_deployed: Mapped[datetime | None] = mapped_column(DateTime)
 
     # === Team / Ownership ===
-    owner_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    team_id: Mapped[PyUUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True)
+    owner_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    team_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("teams.id", ondelete="SET NULL"), nullable=True
+    )
 
     # === Timestamps ===
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "agent_id": self.id,
@@ -120,7 +133,7 @@ class Generation(Base):
     pattern_compliance: Mapped[float | None] = mapped_column(Float)
 
     # === Timing ===
-    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime)
     duration_ms: Mapped[int | None] = mapped_column(Integer)
 
@@ -132,7 +145,7 @@ class Generation(Base):
     tokens_used: Mapped[int | None] = mapped_column(Integer)
     estimated_cost: Mapped[float | None] = mapped_column(Float)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert model to dictionary."""
         return {
             "generation_id": self.id,

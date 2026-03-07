@@ -36,6 +36,11 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = React.useState<Array<ToastProps & { id: string }>>([]);
   const toastIds = React.useRef(new Set<string>());
 
+  const dismiss = React.useCallback((id: string) => {
+    toastIds.current.delete(id);
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const toast = React.useCallback((props: Omit<ToastProps, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newToast = { ...props, id };
@@ -50,12 +55,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     return id;
-  }, []);
-
-  const dismiss = React.useCallback((id: string) => {
-    toastIds.current.delete(id);
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  }, [dismiss]);
 
   const dismissAll = React.useCallback(() => {
     toastIds.current.clear();
@@ -127,6 +127,7 @@ const Toast = ({
       </div>
       {onClose && (
         <button
+          type="button"
           onClick={onClose}
           className="flex-shrink-0 text-text-secondary hover:text-text-primary transition-colors"
           aria-label="Close toast"

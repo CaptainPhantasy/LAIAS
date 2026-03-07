@@ -1,0 +1,1 @@
+- Could not run required `ruff check app/api/routes/filesystem.py` because `ruff` is not installed in the local environment (`command not found` and `No module named ruff`).

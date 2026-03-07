@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class DeployAgentRequest(BaseModel):
@@ -71,8 +71,9 @@ class DeployAgentRequest(BaseModel):
         description="Output format: markdown or html",
     )
 
-    @validator("memory_limit")
-    def validate_memory_limit(cls, v: str) -> str:  # noqa: N805
+    @field_validator("memory_limit")
+    @classmethod
+    def validate_memory_limit(cls, v: str) -> str:
         """Validate memory limit format."""
         import re
 
@@ -80,8 +81,9 @@ class DeployAgentRequest(BaseModel):
             raise ValueError("Memory limit must be in format: <number><unit> where unit is m or g")
         return v.lower()
 
-    @validator("environment_vars")
-    def validate_environment_vars(cls, v: dict[str, str]) -> dict[str, str]:  # noqa: N805
+    @field_validator("environment_vars")
+    @classmethod
+    def validate_environment_vars(cls, v: dict[str, str]) -> dict[str, str]:
         """Validate environment variable names."""
         import re
 
@@ -91,8 +93,9 @@ class DeployAgentRequest(BaseModel):
                 raise ValueError(f"Invalid environment variable name: {key}")
         return v
 
-    @validator("output_config")
-    def validate_output_config(cls, v: dict[str, bool]) -> dict[str, bool]:  # noqa: N805
+    @field_validator("output_config")
+    @classmethod
+    def validate_output_config(cls, v: dict[str, bool]) -> dict[str, bool]:
         allowed_destinations = {"postgres", "files"}
         unknown_destinations = set(v.keys()) - allowed_destinations
         if unknown_destinations:
@@ -105,15 +108,17 @@ class DeployAgentRequest(BaseModel):
             raise ValueError("At least one output destination must be enabled")
         return normalized
 
-    @validator("output_format")
-    def validate_output_format(cls, v: str) -> str:  # noqa: N805
+    @field_validator("output_format")
+    @classmethod
+    def validate_output_format(cls, v: str) -> str:
         """Validate output format is markdown or html."""
         if v not in {"markdown", "html"}:
             raise ValueError(f"output_format must be 'markdown' or 'html', got '{v}'")
         return v
 
-    @validator("output_path")
-    def validate_output_path(cls, v: str | None) -> str | None:  # noqa: N805
+    @field_validator("output_path")
+    @classmethod
+    def validate_output_path(cls, v: str | None) -> str | None:
         """Validate output path is absolute and safe."""
         if v is not None:
             if not os.path.isabs(v):

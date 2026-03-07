@@ -7,7 +7,8 @@ and common operations.
 
 import re
 import secrets
-from datetime import datetime
+from datetime import UTC, datetime
+from typing import Any
 
 
 def generate_agent_id() -> str:
@@ -17,7 +18,7 @@ def generate_agent_id() -> str:
     Returns:
         Agent ID in format 'gen_' + random hex
     """
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     random_suffix = secrets.token_hex(4)
     return f"gen_{timestamp}_{random_suffix}"
 
@@ -65,7 +66,7 @@ def extract_code_from_markdown(content: str) -> str:
     return content.strip()
 
 
-def validate_requirements(reqs: list) -> list:
+def validate_requirements(reqs: list[str]) -> list[str]:
     """
     Validate and normalize Python package requirements.
 
@@ -86,10 +87,8 @@ def validate_requirements(reqs: list) -> list:
 
 
 def calculate_cost_estimate(
-    complexity: str,
-    agent_count: int,
-    model: str = "gpt-4o"
-) -> dict:
+    complexity: str, agent_count: int, model: str = "gpt-4o"
+) -> dict[str, Any]:
     """
     Calculate estimated cost per agent run.
 
@@ -133,14 +132,14 @@ def calculate_cost_estimate(
         "estimated_cost_usd": round(total_cost, 4),
         "token_estimate": total_tokens,
         "api_call_estimate": agent_count * 2,  # Each agent makes ~2 calls
-        "confidence": 0.7  # 70% confidence in estimate
+        "confidence": 0.7,  # 70% confidence in estimate
     }
 
 
 def format_mermaid_diagram(
     entry_point: str,
-    steps: list,
-    decision_points: dict = None
+    steps: list[str],
+    decision_points: dict[str, list[str]] | None = None,
 ) -> str:
     """
     Format a Mermaid flow diagram.

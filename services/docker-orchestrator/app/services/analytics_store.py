@@ -7,7 +7,9 @@ Can be extended to use PostgreSQL for persistence.
 
 import asyncio
 from collections import deque
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+
+MIN_UTC_DATETIME = datetime.min.replace(tzinfo=UTC)
 
 
 class AnalyticsStore:
@@ -37,7 +39,7 @@ class AnalyticsStore:
             event = {
                 "event_type": event_type,
                 "event_data": event_data,
-                "created_at": datetime.utcnow(),
+                "created_at": datetime.now(UTC),
             }
             self._events.append(event)
             return event
@@ -53,10 +55,7 @@ class AnalyticsStore:
             List of events
         """
         async with self._lock:
-            return [
-                e for e in self._events
-                if e.get("created_at", datetime.min) >= since
-            ]
+            return [e for e in self._events if e.get("created_at", MIN_UTC_DATETIME) >= since]
 
     async def get_events_by_type(
         self, event_type: str, since: datetime | None = None
@@ -71,12 +70,11 @@ class AnalyticsStore:
         Returns:
             List of filtered events
         """
-        events = await self.get_events_since(since or datetime.min) if since else list(self._events)
+        events = (
+            await self.get_events_since(since or MIN_UTC_DATETIME) if since else list(self._events)
+        )
 
-        return [
-            e for e in events
-            if e.get("event_type") == event_type
-        ]
+        return [e for e in events if e.get("event_type") == event_type]
 
     async def get_recent_events(self, limit: int = 100) -> list[dict]:
         """
@@ -102,14 +100,14 @@ class AnalyticsStore:
         Returns:
             Number of events removed
         """
-        cutoff = datetime.utcnow() - timedelta(days=older_than_days)
+        cutoff = datetime.now(UTC) - timedelta(days=older_than_days)
         removed = 0
 
         async with self._lock:
             original_size = len(self._events)
             self._events = deque(
-                (e for e in self._events if e.get("created_at", datetime.min) >= cutoff),
-                maxlen=self._events.maxlen
+                (e for e in self._events if e.get("created_at", MIN_UTC_DATETIME) >= cutoff),
+                maxlen=self._events.maxlen,
             )
             removed = original_size - len(self._events)
 

@@ -5,9 +5,9 @@ Pydantic models for API response serialization.
 """
 
 from datetime import datetime
-from typing import Literal
+from typing import ClassVar, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
 
 class DeploymentResponse(BaseModel):
@@ -38,12 +38,11 @@ class DeploymentResponse(BaseModel):
         description="Configured output format",
     )
 
-    class Config:
-        """Pydantic config."""
+    model_config: ClassVar[ConfigDict] = ConfigDict()
 
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
+    @field_serializer("created_at", "started_at", when_used="json")
+    def serialize_timestamps(self, value: datetime | None) -> str | None:
+        return value.isoformat() if value is not None else None
 
 
 class ContainerInfo(BaseModel):
@@ -60,12 +59,11 @@ class ContainerInfo(BaseModel):
     created_at: datetime = Field(..., description="Creation timestamp")
     last_activity: datetime | None = Field(None, description="Last activity timestamp")
 
-    model_config = {
-        "populate_by_name": True,
-        "json_encoders": {
-            datetime: lambda v: v.isoformat(),
-        },
-    }
+    model_config: ClassVar[ConfigDict] = ConfigDict(populate_by_name=True)
+
+    @field_serializer("created_at", "last_activity", when_used="json")
+    def serialize_timestamps(self, value: datetime | None) -> str | None:
+        return value.isoformat() if value is not None else None
 
 
 class ContainerListResponse(BaseModel):
@@ -85,12 +83,11 @@ class LogEntry(BaseModel):
     message: str = Field(..., description="Log message")
     source: str = Field(..., description="Log source (container, agent, etc.)")
 
-    class Config:
-        """Pydantic config."""
+    model_config: ClassVar[ConfigDict] = ConfigDict()
 
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
+    @field_serializer("timestamp", when_used="json")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class LogsResponse(BaseModel):
@@ -113,12 +110,11 @@ class MetricsResponse(BaseModel):
     uptime_seconds: int = Field(..., description="Container uptime in seconds")
     timestamp: datetime = Field(..., description="Metrics timestamp")
 
-    class Config:
-        """Pydantic config."""
+    model_config: ClassVar[ConfigDict] = ConfigDict()
 
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
+    @field_serializer("timestamp", when_used="json")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class HealthResponse(BaseModel):
@@ -133,12 +129,11 @@ class HealthResponse(BaseModel):
     container_count: int = Field(..., description="Current number of containers")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Pydantic config."""
+    model_config: ClassVar[ConfigDict] = ConfigDict()
 
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
+    @field_serializer("timestamp", when_used="json")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class ErrorResponse(BaseModel):
@@ -149,12 +144,11 @@ class ErrorResponse(BaseModel):
     detail: str | None = Field(None, description="Additional error details")
     timestamp: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        """Pydantic config."""
+    model_config: ClassVar[ConfigDict] = ConfigDict()
 
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
+    @field_serializer("timestamp", when_used="json")
+    def serialize_timestamp(self, value: datetime) -> str:
+        return value.isoformat()
 
 
 class OutputEventIngestResponse(BaseModel):
@@ -247,10 +241,11 @@ class DeploymentEvent(BaseModel):
     status: str = Field(..., description="Deployment status")
     created_at: datetime | None = None
 
-    class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat(),
-        }
+    model_config: ClassVar[ConfigDict] = ConfigDict()
+
+    @field_serializer("created_at", when_used="json")
+    def serialize_created_at(self, value: datetime | None) -> str | None:
+        return value.isoformat() if value is not None else None
 
 
 class DeploymentStatsResponse(BaseModel):

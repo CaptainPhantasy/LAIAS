@@ -157,6 +157,7 @@ export default function TemplatesPage() {
     };
   }, []);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchTemplates();
   }, [selectedCategory, searchQuery]);

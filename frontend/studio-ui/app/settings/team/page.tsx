@@ -48,11 +48,6 @@ export default function TeamSettingsPage() {
   const [inviteEmail, setInviteEmail] = React.useState('');
   const [inviteRole, setInviteRole] = React.useState('member');
 
-  // Fetch teams on mount
-  React.useEffect(() => {
-    fetchTeams();
-  }, []);
-
   const fetchTeams = async () => {
     try {
       const res = await fetch(`${API_BASE}/api/teams`, {
@@ -76,6 +71,11 @@ export default function TeamSettingsPage() {
       setLoading(false);
     }
   };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  React.useEffect(() => {
+    fetchTeams();
+  }, []);
 
   const fetchTeamDetails = async (teamId: string) => {
     try {
@@ -357,6 +357,7 @@ export default function TeamSettingsPage() {
 
                         {member.role !== 'owner' && (
                           <button
+                            type="button"
                             onClick={() => removeMember(member.user_id)}
                             className="p-1 text-gray-500 hover:text-red-400 transition-colors"
                           >

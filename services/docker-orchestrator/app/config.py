@@ -4,14 +4,16 @@ Configuration management for Docker Orchestrator.
 Uses pydantic-settings for type-safe configuration with environment variables.
 """
 
-from pydantic import Field, field_validator, validator
+from typing import ClassVar
+
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    model_config = SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
@@ -118,8 +120,9 @@ class Settings(BaseSettings):
     )
     API_KEYS: list[str] = Field(default=[], description="Valid API keys (empty = disabled)")
 
-    @validator("AGENT_CODE_PATH")
-    def validate_agent_code_path(cls, v: str) -> str:  # noqa: N805
+    @field_validator("AGENT_CODE_PATH")
+    @classmethod
+    def validate_agent_code_path(cls, v: str) -> str:
         """Ensure agent code path is absolute."""
         import os
 
@@ -127,8 +130,9 @@ class Settings(BaseSettings):
             raise ValueError(f"AGENT_CODE_PATH must be absolute: {v}")
         return v
 
-    @validator("AGENT_OUTPUT_PATH")
-    def validate_agent_output_path(cls, v: str) -> str:  # noqa: N805
+    @field_validator("AGENT_OUTPUT_PATH")
+    @classmethod
+    def validate_agent_output_path(cls, v: str) -> str:
         import os
 
         if not os.path.isabs(v):
@@ -144,8 +148,9 @@ class Settings(BaseSettings):
             raise ValueError("FILESYSTEM_BROWSE_ROOT must be an absolute path")
         return v
 
-    @validator("DEFAULT_MEMORY_LIMIT")
-    def validate_memory_limit(cls, v: str) -> str:  # noqa: N805
+    @field_validator("DEFAULT_MEMORY_LIMIT")
+    @classmethod
+    def validate_memory_limit(cls, v: str) -> str:
         """Validate memory limit format."""
         import re
 

@@ -1,0 +1,2 @@
+- Filesystem browse endpoints should normalize with `os.path.realpath` and enforce root containment with `os.path.commonpath` to block traversal and symlink escapes.
+- Returning only directories is simplest by filtering `os.listdir` entries with `os.path.isdir` before serialization.

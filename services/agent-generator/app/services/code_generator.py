@@ -46,7 +46,7 @@ class CodeGenerator:
         model: str | None = None,
         include_memory: bool = True,
         include_analytics: bool = True,
-        max_agents: int = 4
+        max_agents: int = 4,
     ) -> GenerateAgentResponse:
         """
         Generate a complete CrewAI agent from description.
@@ -66,7 +66,7 @@ class CodeGenerator:
         Returns:
             GenerateAgentResponse with complete code and metadata
         """
-        from datetime import datetime
+        from datetime import UTC, datetime
 
         # Sanitize and validate inputs
         agent_name = sanitize_agent_name(agent_name)
@@ -75,13 +75,14 @@ class CodeGenerator:
             "Starting agent generation",
             agent_name=agent_name,
             complexity=complexity,
-            task_type=task_type
+            task_type=task_type,
         )
 
         # Get few-shot examples if enabled
         few_shot_examples = []
         if settings.enable_few_shot:
             from app.prompts.few_shot_examples import FEW_SHOT_SELECTOR
+
             few_shot_examples = FEW_SHOT_SELECTOR.get_examples(complexity, task_type, count=2)
 
         # Generate code via LLM
@@ -97,7 +98,7 @@ class CodeGenerator:
                 include_memory=include_memory,
                 include_analytics=include_analytics,
                 max_agents=max_agents,
-                few_shot_examples=few_shot_examples
+                few_shot_examples=few_shot_examples,
             )
         except LLMServiceException as e:
             logger.error("LLM generation failed", error=str(e))
@@ -113,28 +114,28 @@ class CodeGenerator:
 
         # Validate the generated code
         validation = self.validator.validate_code(
-            code=flow_code,
-            check_pattern_compliance=True,
-            check_syntax=True
+            code=flow_code, check_pattern_compliance=True, check_syntax=True
         )
 
         # Estimate cost
         cost_estimate = calculate_cost_estimate(
             complexity=complexity,
             agent_count=len(agents_info),
-            model=model or settings.default_model
+            model=model or settings.default_model,
         )
 
         # Build agent info objects
         agent_info_objects = []
         for info in agents_info:
-            agent_info_objects.append(AgentInfo(
-                role=info.get("role", "Specialist"),
-                goal=info.get("goal", ""),
-                tools=info.get("tools", []),
-                llm_config=info.get("llm_config", {}),
-                backstory=info.get("backstory")
-            ))
+            agent_info_objects.append(
+                AgentInfo(
+                    role=info.get("role", "Specialist"),
+                    goal=info.get("goal", ""),
+                    tools=info.get("tools", []),
+                    llm_config=info.get("llm_config", {}),
+                    backstory=info.get("backstory"),
+                )
+            )
 
         # Build response
         response = GenerateAgentResponse(
@@ -143,14 +144,17 @@ class CodeGenerator:
             flow_code=flow_code,
             agents_yaml=agents_yaml,
             state_class=state_class,
-            requirements=requirements or ["crewai[tools]>=0.80.0", "pydantic>=2.5.0", "structlog>=24.1.0"],
+            requirements=requirements
+            or ["crewai[tools]>=0.80.0", "pydantic>=2.5.0", "structlog>=24.1.0"],
             estimated_cost_per_run=cost_estimate["estimated_cost_usd"],
             complexity_score=self._calculate_complexity_score(complexity, max_agents),
             agents_created=agent_info_objects,
-            tools_included=list(set(tool for info in agents_info for tool in info.get("tools", []))),
+            tools_included=list(
+                set(tool for info in agents_info for tool in info.get("tools", []))
+            ),
             flow_diagram=flow_diagram,
             validation_status=ValidationResult(**validation),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC),
         )
 
         self.total_generated += 1
@@ -158,7 +162,7 @@ class CodeGenerator:
             "Agent generation complete",
             agent_id=response.agent_id,
             is_valid=validation["is_valid"],
-            compliance=validation["pattern_compliance_score"]
+            compliance=validation["pattern_compliance_score"],
         )
 
         return response
@@ -172,10 +176,7 @@ class CodeGenerator:
         return max(1, min(10, base + adjustment))
 
     async def regenerate_with_feedback(
-        self,
-        agent_id: str,
-        feedback: str,
-        previous_code: str
+        self, agent_id: str, feedback: str, previous_code: str
     ) -> GenerateAgentResponse:
         """
         Regenerate agent based on feedback.
@@ -188,7 +189,7 @@ class CodeGenerator:
         Returns:
             Updated GenerateAgentResponse
         """
-        from datetime import datetime
+        from datetime import UTC, datetime
 
         logger.info("Regenerating with feedback", agent_id=agent_id)
 
@@ -210,13 +211,12 @@ Generate improved code addressing the feedback while maintaining Godzilla patter
             complexity="moderate",
             task_type="general",
             tools_requested=None,
-            provider=settings.effective_llm_provider
+            provider=settings.effective_llm_provider,
         )
 
         # Build response
         validation = self.validator.validate_code(
-            code=generation_result.get("flow_code", ""),
-            check_pattern_compliance=True
+            code=generation_result.get("flow_code", ""), check_pattern_compliance=True
         )
 
         return GenerateAgentResponse(
@@ -231,7 +231,7 @@ Generate improved code addressing the feedback while maintaining Godzilla patter
             agents_created=[],
             tools_included=[],
             validation_status=ValidationResult(**validation),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(UTC),
         )
 
 

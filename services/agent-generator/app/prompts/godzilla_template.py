@@ -138,7 +138,7 @@ import json
 import asyncio
 import httpx
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 
 class OutputRouter:
     \"\"\"Routes agent output events to files and/or the orchestrator ingest endpoint.\"\"\"
@@ -162,7 +162,7 @@ class OutputRouter:
             "source": "agent",
             "payload": payload,
             "destinations": self.destinations,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         if self.destinations.get("files", False):
             await self._write_file_event(record)

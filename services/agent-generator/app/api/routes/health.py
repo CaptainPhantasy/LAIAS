@@ -6,7 +6,7 @@ Service health check and status reporting.
 """
 
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 
 import structlog
 from fastapi import APIRouter
@@ -60,17 +60,12 @@ async def health_check() -> HealthResponse:
 
     # Calculate cache hit rate
     total_cache_requests = _cache_hits + _cache_misses
-    cache_hit_rate = (
-        _cache_hits / total_cache_requests
-        if total_cache_requests > 0
-        else 0.0
-    )
+    cache_hit_rate = _cache_hits / total_cache_requests if total_cache_requests > 0 else 0.0
 
     # Determine overall status
     components_healthy = (
-        (llm_status.get("openai") == "ok" or llm_status.get("anthropic") == "ok")
-        and database_status == "ok"
-    )
+        llm_status.get("openai") == "ok" or llm_status.get("anthropic") == "ok"
+    ) and database_status == "ok"
     components_degraded = (
         redis_status != "ok"
         or (llm_status.get("openai") != "not_configured" and llm_status.get("openai") != "ok")
@@ -93,7 +88,7 @@ async def health_check() -> HealthResponse:
         redis_status=redis_status,
         total_generated=total_generated,
         cache_hit_rate=round(cache_hit_rate, 4),
-        checked_at=datetime.utcnow()
+        checked_at=datetime.now(UTC),
     )
 
 
@@ -124,12 +119,13 @@ async def liveness_check():
 
     Returns 200 if service is alive.
     """
-    return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "alive", "timestamp": datetime.now(UTC).isoformat()}
 
 
 # =============================================================================
 # Health Check Helper Functions
 # =============================================================================
+
 
 async def _check_database() -> str:
     """
@@ -160,10 +156,10 @@ async def _check_redis() -> str:
             encoding="utf-8",
             decode_responses=False,
             socket_connect_timeout=2,
-            socket_timeout=2
+            socket_timeout=2,
         )
         await redis.ping()
-        await redis.close()
+        await redis.aclose()
         return "ok"
     except Exception as e:
         logger.warning("Redis health check failed", error=str(e))
@@ -183,9 +179,7 @@ async def _get_total_agents() -> int:
         from app.models.database import Agent
 
         async with AsyncSessionLocal() as session:
-            result = await session.execute(
-                select(func.count()).select_from(Agent)
-            )
+            result = await session.execute(select(func.count()).select_from(Agent))
             return result.scalar() or 0
     except Exception as e:
         logger.warning("Failed to get agent count", error=str(e))

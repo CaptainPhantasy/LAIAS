@@ -4,7 +4,7 @@ Response schemas for Agent Generator API.
 Pydantic v2 models for API responses.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 # =============================================================================
 # Common Components
 # =============================================================================
+
 
 class AgentInfo(BaseModel):
     """Information about a generated agent."""
@@ -33,16 +34,19 @@ class ValidationResult(BaseModel):
         ge=0.0,
         le=1.0,
         validation_alias="pattern_compliance_score",
-        description="Pattern compliance score (0.0 to 1.0)"
+        description="Pattern compliance score (0.0 to 1.0)",
     )
     warnings: list[str] = Field(default_factory=list, description="Non-critical warnings")
     suggestions: list[str] = Field(default_factory=list, description="Improvement suggestions")
-    missing_patterns: list[str] = Field(default_factory=list, description="Required patterns not found")
+    missing_patterns: list[str] = Field(
+        default_factory=list, description="Required patterns not found"
+    )
 
 
 # =============================================================================
 # Main Responses
 # =============================================================================
+
 
 class GenerateAgentResponse(BaseModel):
     """
@@ -64,46 +68,36 @@ class GenerateAgentResponse(BaseModel):
     # === Dependencies ===
     requirements: list[str] = Field(
         default_factory=lambda: ["crewai[tools]>=0.80.0", "pydantic>=2.5.0", "structlog>=24.1.0"],
-        description="Python packages needed"
+        description="Python packages needed",
     )
 
     # === Metadata ===
     estimated_cost_per_run: float = Field(
-        ...,
-        ge=0.0,
-        description="Estimated LLM cost in USD per run"
+        ..., ge=0.0, description="Estimated LLM cost in USD per run"
     )
-    complexity_score: int = Field(
-        ...,
-        ge=1,
-        le=10,
-        description="Complexity score (1-10)"
-    )
+    complexity_score: int = Field(..., ge=1, le=10, description="Complexity score (1-10)")
 
     # === Agent Details ===
     agents_created: list[AgentInfo] = Field(
-        default_factory=list,
-        description="Details of created agents"
+        default_factory=list, description="Details of created agents"
     )
     tools_included: list[str] = Field(
-        default_factory=list,
-        description="Tools included in the flow"
+        default_factory=list, description="Tools included in the flow"
     )
 
     # === Visualization ===
-    flow_diagram: str | None = Field(
-        default=None,
-        description="Mermaid diagram showing the flow"
-    )
+    flow_diagram: str | None = Field(default=None, description="Mermaid diagram showing the flow")
 
     # === Validation ===
     validation_status: ValidationResult = Field(
-        default_factory=ValidationResult,
-        description="Code validation results"
+        default_factory=lambda: ValidationResult(is_valid=False),
+        description="Code validation results",
     )
 
     # === Timestamps ===
-    created_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(UTC), description="Generation timestamp"
+    )
     expires_at: datetime | None = Field(default=None, description="Cache expiration")
 
     model_config = {
@@ -114,7 +108,7 @@ class GenerateAgentResponse(BaseModel):
                     "agent_name": "MarketResearchFlow",
                     "flow_code": "# Complete Python code here...",
                     "estimated_cost_per_run": 0.15,
-                    "complexity_score": 5
+                    "complexity_score": 5,
                 }
             ]
         }
@@ -127,34 +121,28 @@ class ValidateCodeResponse(BaseModel):
     is_valid: bool = Field(..., description="Whether code passes validation")
     syntax_errors: list[str] = Field(default_factory=list, description="Syntax errors found")
     pattern_compliance_score: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Pattern compliance score"
+        ..., ge=0.0, le=1.0, description="Pattern compliance score"
     )
     missing_patterns: list[str] = Field(
-        default_factory=list,
-        description="Required patterns not found"
+        default_factory=list, description="Required patterns not found"
     )
     suggestions: list[str] = Field(default_factory=list, description="Improvement suggestions")
     warnings: list[str] = Field(default_factory=list, description="Non-critical warnings")
-    validated_at: datetime = Field(default_factory=datetime.utcnow)
+    validated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class HealthResponse(BaseModel):
     """Health check response."""
 
     status: Literal["healthy", "degraded", "unhealthy"] = Field(
-        ...,
-        description="Overall service health status"
+        ..., description="Overall service health status"
     )
     version: str = Field(..., description="Service version")
     uptime_seconds: float = Field(..., description="Service uptime in seconds")
 
     # === Component Status ===
     llm_status: dict[str, str] = Field(
-        default_factory=dict,
-        description="LLM provider status (openai, anthropic)"
+        default_factory=dict, description="LLM provider status (openai, anthropic)"
     )
     database_status: str = Field(..., description="Database connection status")
     redis_status: str = Field(..., description="Redis connection status")
@@ -164,7 +152,7 @@ class HealthResponse(BaseModel):
     cache_hit_rate: float = Field(default=0.0, description="Cache hit rate")
 
     # === Timestamp ===
-    checked_at: datetime = Field(default_factory=datetime.utcnow)
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class AgentListResponse(BaseModel):
@@ -184,12 +172,12 @@ class AgentListResponse(BaseModel):
                             "agent_id": "gen_20260214_042255_abc123",
                             "agent_name": "MarketResearchFlow",
                             "description": "Research competitor pricing",
-                            "created_at": "2026-02-14T04:22:55Z"
+                            "created_at": "2026-02-14T04:22:55Z",
                         }
                     ],
                     "total": 1,
                     "limit": 50,
-                    "offset": 0
+                    "offset": 0,
                 }
             ]
         }
@@ -230,12 +218,13 @@ class ErrorResponse(BaseModel):
     message: str = Field(..., description="Error message")
     detail: str | None = Field(default=None, description="Detailed error information")
     request_id: str | None = Field(default=None, description="Request ID for tracing")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 # =============================================================================
 # Utility Models
 # =============================================================================
+
 
 class CostEstimate(BaseModel):
     """Cost estimation for agent execution."""

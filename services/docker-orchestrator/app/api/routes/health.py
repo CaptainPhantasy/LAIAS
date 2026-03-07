@@ -43,9 +43,7 @@ async def _check_postgresql() -> bool:
         )
 
         # Create session and execute ping
-        async_session = sessionmaker(
-            engine, class_=AsyncSession, expire_on_commit=False
-        )
+        async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
         async with async_session() as session:
             # Simple SELECT 1 to verify connection
@@ -80,7 +78,7 @@ async def _check_redis() -> bool:
 
         # Ping Redis
         await client.ping()
-        await client.close()
+        await client.aclose()
         return True
 
     except Exception as e:
@@ -170,7 +168,7 @@ async def readiness() -> dict:
         return {"status": "ready"}
     else:
         from fastapi import HTTPException
+
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Docker daemon not connected"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Docker daemon not connected"
         )

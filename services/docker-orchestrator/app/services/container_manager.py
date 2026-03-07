@@ -6,7 +6,7 @@ including creation, start, stop, restart, and removal.
 """
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Optional
 
 import structlog
@@ -71,7 +71,7 @@ class ContainerManager:
             "container_id": container.id,
             "container_name": container.name,
             "status": container.status,
-            "created_at": datetime.utcnow().isoformat() + "Z",
+            "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         }
 
     async def restart_container(self, container_id: str, timeout: int = 10) -> None:
@@ -101,7 +101,7 @@ class ContainerManager:
 
         # Calculate uptime
         created = datetime.fromisoformat(container.attrs["Created"].replace("Z", "+00:00"))
-        uptime_seconds = (datetime.utcnow() - created).total_seconds()
+        uptime_seconds = (datetime.now(UTC) - created).total_seconds()
 
         return {
             "container_id": container.id,
@@ -167,8 +167,8 @@ class ContainerManager:
         """Get logs from the last N seconds."""
         from datetime import timedelta
 
-        since = datetime.utcnow() - timedelta(seconds=since_seconds)
-        since_str = since.isoformat() + "Z"
+        since = datetime.now(UTC) - timedelta(seconds=since_seconds)
+        since_str = since.isoformat().replace("+00:00", "Z")
 
         return await self.docker_service.get_container_logs(
             container_id=container_id,

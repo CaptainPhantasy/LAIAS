@@ -1,0 +1,2 @@
+- Added `FILESYSTEM_BROWSE_ROOT` config with absolute-path validation and default `/var/laias/outputs` so browse scope is configurable but safe by default.
+- Implemented `GET /api/filesystem/browse` and `POST /api/filesystem/mkdir` under a dedicated `filesystem` router and registered it in `app/main.py`.
