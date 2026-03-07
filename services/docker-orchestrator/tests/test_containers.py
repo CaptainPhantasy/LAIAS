@@ -4,10 +4,11 @@ Tests for container lifecycle management.
 Tests deployment, status, logs, and termination of agent containers.
 """
 
+import importlib
 from unittest.mock import MagicMock, patch
 
-import pytest
-from fastapi.testclient import TestClient
+pytest = importlib.import_module("pytest")
+TestClient = importlib.import_module("fastapi.testclient").TestClient
 
 from app.main import app
 from app.models.requests import DeployAgentRequest
@@ -52,8 +53,7 @@ class TestContainerDeployment:
                 "requirements": [],
             },
         )
-        # Should not be 404 (might be 400/500 if Docker unavailable)
-        assert response.status_code != 404
+        assert response.status_code in [201, 500]
 
     def test_deploy_missing_required_fields_returns_422(self):
         """Deploy with missing fields returns validation error."""
@@ -79,9 +79,7 @@ class TestContainerDeployment:
                 "memory_limit": "invalid",  # Should be like "256m" or "1g"
             },
         )
-        # May or may not validate, depends on model
-        # Just verify endpoint handles it gracefully
-        assert response.status_code in [400, 422, 500]
+        assert response.status_code == 422
 
 
 class TestContainerStatus:
@@ -212,5 +210,4 @@ class TestContainerNaming:
                     "requirements": [],
                 },
             )
-            # Should handle gracefully (not crash)
-            assert response.status_code != 500 or "error" in response.text.lower()
+            assert response.status_code in [201, 500]

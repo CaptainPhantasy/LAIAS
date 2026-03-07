@@ -127,13 +127,14 @@ class TestTokenDecoding:
         """Decode expired token raises HTTPException."""
         # Create token that's already expired
         import jose.jwt as jwt
+
         expired_time = datetime.now(UTC) - timedelta(hours=1)
         payload = {
             "sub": "user-123",
             "email": "test@example.com",
             "exp": expired_time,
             "iat": datetime.now(UTC) - timedelta(hours=2),
-            "type": "access"
+            "type": "access",
         }
         expired_token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -167,67 +168,84 @@ class TestDevModeAuth:
         """Dev mode respects X-User-Id header."""
         user_id = str(uuid.uuid4())
         response = client.get(
-            "/api/agents",
-            headers={"X-User-Id": user_id, "X-User-Email": "custom@test.com"}
+            "/api/agents", headers={"X-User-Id": user_id, "X-User-Email": "custom@test.com"}
         )
         # Request should proceed with custom user
         assert response.status_code != 401 or "Authentication required" not in response.text
 
     def test_dev_mode_rejects_invalid_uuid(self, client):
         """Dev mode rejects invalid UUID in X-User-Id."""
-        response = client.get(
-            "/api/agents",
-            headers={"X-User-Id": "not-a-uuid"}
-        )
+        response = client.get("/api/agents", headers={"X-User-Id": "not-a-uuid"})
         assert response.status_code == 401
 
 
 class TestAuthRoutes:
-    """Tests for authentication API routes."""
+    """Tests for authentication API routes.
+
+    These tests verify endpoint existence and request validation.
+    The database dependency is overridden with a mock async session
+    so tests run without a live PostgreSQL instance.
+    """
 
     @pytest.fixture
     def app(self):
-        """Create test app."""
-        return create_app()
+        """Create test app with mocked database session."""
+        from unittest.mock import AsyncMock
+
+        from app.database import get_db
+
+        application = create_app()
+
+        async def mock_get_db():
+            mock_session = AsyncMock(spec=["execute", "commit", "refresh", "close", "add"])
+            mock_session.execute = AsyncMock(
+                side_effect=Exception("Database not available in test")
+            )
+            yield mock_session
+
+        application.dependency_overrides[get_db] = mock_get_db
+        return application
 
     @pytest.fixture
     def client(self, app):
-        """Create test client."""
-        return TestClient(app)
+        """Create test client that returns error responses instead of raising."""
+        return TestClient(app, raise_server_exceptions=False)
 
     def test_register_endpoint_exists(self, client):
-        """Register endpoint is accessible."""
-        response = client.post("/auth/register", json={
-            "email": "newuser@test.com",
-            "password": "SecurePass123!",
-            "name": "Test User"
-        })
-        # Should not return 404
+        """Register endpoint is accessible (returns 500 without DB, not 404)."""
+        response = client.post(
+            "/auth/register",
+            json={"email": "newuser@test.com", "password": "SecurePass123!", "name": "Test User"},
+        )
         assert response.status_code != 404
 
     def test_register_missing_fields_returns_422(self, client):
         """Register with missing fields returns validation error."""
-        response = client.post("/auth/register", json={
-            "email": "incomplete@test.com"
-            # Missing password and name
-        })
+        response = client.post(
+            "/auth/register",
+            json={
+                "email": "incomplete@test.com"
+                # Missing password and name
+            },
+        )
         assert response.status_code == 422
 
     def test_login_endpoint_exists(self, client):
-        """Login endpoint is accessible."""
-        response = client.post("/auth/login", json={
-            "email": "user@test.com",
-            "password": "password123"
-        })
-        # Should not return 404
+        """Login endpoint is accessible (returns 500 without DB, not 404)."""
+        response = client.post(
+            "/auth/login", json={"email": "user@test.com", "password": "password123"}
+        )
         assert response.status_code != 404
 
     def test_login_missing_fields_returns_422(self, client):
         """Login with missing fields returns validation error."""
-        response = client.post("/auth/login", json={
-            "email": "user@test.com"
-            # Missing password
-        })
+        response = client.post(
+            "/auth/login",
+            json={
+                "email": "user@test.com"
+                # Missing password
+            },
+        )
         assert response.status_code == 422
 
     def test_refresh_endpoint_exists(self, client):
@@ -249,22 +267,14 @@ class TestCurrentUserModel:
 
     def test_current_user_creation(self):
         """CurrentUser can be created with required fields."""
-        user = CurrentUser(
-            id=str(uuid.uuid4()),
-            email="test@example.com",
-            name="Test User"
-        )
+        user = CurrentUser(id=str(uuid.uuid4()), email="test@example.com", name="Test User")
         assert user.email == "test@example.com"
         assert user.name == "Test User"
 
     def test_current_user_serialization(self):
         """CurrentUser serializes to dict correctly."""
         user_id = str(uuid.uuid4())
-        user = CurrentUser(
-            id=user_id,
-            email="test@example.com",
-            name="Test User"
-        )
+        user = CurrentUser(id=user_id, email="test@example.com", name="Test User")
         data = user.model_dump()
         assert data["id"] == user_id
         assert data["email"] == "test@example.com"

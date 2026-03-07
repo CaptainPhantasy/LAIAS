@@ -2,10 +2,11 @@
 Tests for Docker Orchestrator health endpoints.
 """
 
-from fastapi.testclient import TestClient
+import importlib
 
 from app.main import app
 
+TestClient = importlib.import_module("fastapi.testclient").TestClient
 client = TestClient(app)
 
 
@@ -23,10 +24,11 @@ def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
-    # Health endpoint should return status info
     assert "status" in data
     assert data["status"] in ["healthy", "degraded", "unhealthy"]
     assert "version" in data
+    assert "docker_connected" in data
+    assert data["docker_connected"] is True
 
 
 def test_containers_list():
