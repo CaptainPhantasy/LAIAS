@@ -202,6 +202,8 @@ services:
       args:
         - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:4521
         - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
+        - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
+        - STACK_SECRET_SERVER_KEY=${STACK_SECRET_SERVER_KEY}
     image: laias/studio-ui:latest
     container_name: laias-studio-ui
     ports:
@@ -211,6 +213,9 @@ services:
       # Browser needs localhost URLs, not Docker internal network names
       - NEXT_PUBLIC_AGENT_GENERATOR_URL=http://localhost:4521
       - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
+      # Stack Auth (server key needed at runtime for SSR)
+      - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
+      - STACK_SECRET_SERVER_KEY=${STACK_SECRET_SERVER_KEY}
     depends_on:
       agent-generator:
         condition: service_healthy
@@ -242,6 +247,8 @@ services:
       dockerfile: control-room/Dockerfile
       args:
         - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
+        - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
+        - STACK_SECRET_SERVER_KEY=${STACK_SECRET_SERVER_KEY}
     image: laias/control-room:latest
     container_name: laias-control-room
     ports:
@@ -250,6 +257,9 @@ services:
       # NOTE: NEXT_PUBLIC_ vars are baked into client-side JS at build time
       # Browser needs localhost URLs, not Docker internal network names
       - NEXT_PUBLIC_DOCKER_ORCHESTRATOR_URL=http://localhost:4522
+      # Stack Auth (server key needed at runtime for SSR)
+      - NEXT_PUBLIC_STACK_PROJECT_ID=${NEXT_PUBLIC_STACK_PROJECT_ID}
+      - STACK_SECRET_SERVER_KEY=${STACK_SECRET_SERVER_KEY}
     depends_on:
       docker-orchestrator:
         condition: service_healthy
