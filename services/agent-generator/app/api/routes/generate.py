@@ -60,23 +60,23 @@ async def generate_agent(
     try:
         logger.info(
             "Agent generation request received",
-            agent_name=request.agent_name,
-            complexity=request.complexity,
-            task_type=request.task_type,
+            agent_name=body.agent_name,
+            complexity=body.complexity,
+            task_type=body.task_type,
         )
 
         generator = get_code_generator()
         response = await generator.generate_agent(
-            description=request.description,
-            agent_name=request.agent_name,
-            complexity=request.complexity,
-            task_type=request.task_type,
-            tools_requested=request.tools_requested,
-            llm_provider=request.llm_provider,
-            model=request.model,
-            include_memory=request.include_memory,
-            include_analytics=request.include_analytics,
-            max_agents=request.max_agents,
+            description=body.description,
+            agent_name=body.agent_name,
+            complexity=body.complexity,
+            task_type=body.task_type,
+            tools_requested=body.tools_requested,
+            llm_provider=body.llm_provider,
+            model=body.model,
+            include_memory=body.include_memory,
+            include_analytics=body.include_analytics,
+            max_agents=body.max_agents,
         )
 
         # Persist generated agent to database
@@ -86,18 +86,18 @@ async def generate_agent(
             agent_record = Agent(
                 id=response.agent_id,
                 name=response.agent_name,
-                description=request.description,
+                description=body.description,
                 flow_code=response.flow_code,
                 agents_yaml=response.agents_yaml,
                 state_class=response.state_class,
-                complexity=request.complexity,
-                task_type=request.task_type,
+                complexity=body.complexity,
+                task_type=body.task_type,
                 tools=[t.model_dump() for t in response.agents_created]
                 if response.agents_created
                 else [],
                 requirements=response.requirements,
-                llm_provider=request.llm_provider,
-                model=request.model or "gpt-4o",
+                llm_provider=body.llm_provider,
+                model=body.model or "gpt-4o",
                 estimated_cost_per_run=response.estimated_cost_per_run,
                 complexity_score=response.complexity_score,
                 validation_status=response.validation_status.model_dump()
@@ -145,7 +145,7 @@ async def generate_and_deploy(
     """
     # Step 1: Generate using the code generator directly
     generator = get_code_generator()
-    response = await generator.generate(
+    response = await generator.generate_agent(
         description=body.description,
         agent_name=body.agent_name,
         complexity=body.complexity,
