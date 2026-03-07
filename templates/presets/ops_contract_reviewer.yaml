@@ -1,0 +1,48 @@
+id: ops_contract_reviewer
+name: Contract Review Analyst
+description: Reviews contracts and agreements to identify key terms, obligations, risks, and unusual clauses.
+  Summarizes critical provisions and flags items requiring legal attention or negotiation.
+category: operations_productivity
+tags:
+- contracts
+- review
+- risk
+- legal
+- compliance
+default_complexity: complex
+default_tools:
+- FileReadTool
+- PDFSearchTool
+sample_prompts:
+- Review this vendor agreement and flag any concerning clauses
+- Compare the terms in these two contracts and highlight differences
+- Summarize the key obligations and deadlines in our partnership agreement
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: clause_analyzer
+    role: Contract Clause Analyst
+    backstory: Experienced paralegal who reads contracts line by line, identifying key terms, obligations,
+      indemnification clauses, termination conditions, and liability caps.
+  - name: risk_assessor
+    role: Risk Assessment Specialist
+    backstory: Risk management expert who evaluates contractual exposure, flags one-sided terms, identifies
+      missing protections, and rates overall contract risk level.
+  - name: summary_writer
+    role: Executive Summary Writer
+    backstory: Business communications specialist who distills complex legal language into clear executive
+      summaries with actionable recommendations for decision-makers.
+expected_outputs:
+- Clause-by-clause analysis with risk ratings
+- Key terms summary (payment, termination, liability)
+- Red flags and negotiation recommendations
+- Executive summary for stakeholders
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: contract_review_{date}.md

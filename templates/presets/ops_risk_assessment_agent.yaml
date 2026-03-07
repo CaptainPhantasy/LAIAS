@@ -1,0 +1,48 @@
+id: ops_risk_assessment_agent
+name: Risk Assessment Agent
+description: Evaluates business risks across operational, financial, and strategic dimensions. Scores
+  risks by likelihood and impact, suggests mitigation strategies, and produces a prioritized risk register.
+category: operations_productivity
+tags:
+- risk
+- assessment
+- mitigation
+- operations
+- strategy
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- FileReadTool
+sample_prompts:
+- Assess the top risks for our Q4 product launch
+- Create a risk register for expanding into the European market
+- Evaluate operational risks in our current supply chain setup
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: risk_identifier
+    role: Risk Identification Specialist
+    backstory: Seasoned risk analyst who systematically identifies potential threats across operational,
+      financial, regulatory, and strategic dimensions using industry frameworks.
+  - name: impact_scorer
+    role: Impact & Probability Analyst
+    backstory: Quantitative analyst who scores each identified risk on likelihood and impact scales, calculates
+      risk exposure, and creates heat maps for visualization.
+  - name: mitigation_planner
+    role: Mitigation Strategy Planner
+    backstory: Risk management consultant who designs practical mitigation plans, assigns risk owners,
+      and recommends monitoring triggers for each high-priority risk.
+expected_outputs:
+- Prioritized risk register with scores
+- Risk heat map (likelihood vs impact)
+- Mitigation strategies per risk
+- Monitoring plan with trigger thresholds
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: risk_assessment_{date}.md

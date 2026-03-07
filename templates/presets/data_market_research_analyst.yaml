@@ -1,0 +1,50 @@
+id: data_market_research_analyst
+name: Market Research Analyst
+description: Conducts comprehensive market research by analyzing industry trends, competitor landscapes,
+  market sizing, and customer segments. Synthesizes findings into actionable intelligence reports for
+  strategic decision-making.
+category: data_intelligence
+tags:
+- market-research
+- analysis
+- competitors
+- trends
+- strategy
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Research the AI agent market size and growth projections for 2025
+- Analyze our top 5 competitors' positioning and pricing strategies
+- Identify emerging trends in the developer tools space
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: industry_researcher
+    role: Industry Research Analyst
+    backstory: Market intelligence expert who tracks industry reports, analyst publications, and market
+      data to build comprehensive views of market size, growth rates, and key dynamics.
+  - name: competitor_analyst
+    role: Competitive Intelligence Analyst
+    backstory: Competitive strategy specialist who profiles competitors, analyzes their positioning, pricing,
+      product features, and go-to-market strategies to identify gaps and opportunities.
+  - name: insight_synthesizer
+    role: Strategic Insight Synthesizer
+    backstory: Strategy consultant who connects disparate data points into coherent narratives, identifies
+      non-obvious patterns, and translates research into actionable strategic recommendations.
+expected_outputs:
+- Market size and growth analysis
+- Competitive landscape map
+- Trend analysis with implications
+- Strategic recommendations report
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: market_research_{date}.md

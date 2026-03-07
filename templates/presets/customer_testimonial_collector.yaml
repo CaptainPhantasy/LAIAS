@@ -1,0 +1,46 @@
+id: customer_testimonial_collector
+name: Testimonial & Review Collector
+description: 'Identifies happy customers most likely to provide testimonials, drafts personalized ask
+  emails, and creates templates for different testimonial formats: written quotes, case study interviews,
+  and video testimonial scripts.'
+category: customer_success
+tags:
+- testimonials
+- reviews
+- social-proof
+- advocacy
+- marketing
+default_complexity: simple
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- EmailTool
+sample_prompts:
+- Find our top 20 happiest customers and draft testimonial request emails
+- Create a testimonial request sequence for customers who gave us NPS 9-10
+- Write interview questions for a customer case study video
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: advocate_finder
+    role: Customer Advocate Identifier
+    backstory: Identifies customers most likely to provide great testimonials based on NPS scores, usage
+      depth, support satisfaction, and tenure. Prioritizes by brand alignment.
+  - name: ask_writer
+    role: Testimonial Request Writer
+    backstory: Crafts personalized testimonial requests that make it easy for customers to say yes. Provides
+      specific prompts and format options (written, video, case study).
+expected_outputs:
+- Advocate prospect list
+- Personalized ask emails
+- Testimonial question templates
+- Case study interview guide
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: testimonial_outreach_{date}.md

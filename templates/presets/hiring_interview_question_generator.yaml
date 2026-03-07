@@ -1,0 +1,45 @@
+id: hiring_interview_question_generator
+name: Interview Question Generator
+description: Generates tailored interview questions based on the role, level, and competencies being assessed.
+  Creates structured interview guides with behavioral, technical, and culture-fit questions plus scoring
+  rubrics.
+category: hiring_team
+tags:
+- interviews
+- questions
+- hiring
+- assessment
+- structured-interviews
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Generate interview questions for a Product Manager role
+- Create a technical interview guide for backend engineering candidates
+- Build a structured interview scorecard for our sales team hires
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: competency_mapper
+    role: Competency Mapping Specialist
+    backstory: Organizational psychologist who identifies key competencies for the role, maps them to
+      observable behaviors, and designs question categories that assess each competency effectively.
+  - name: question_writer
+    role: Interview Question Designer
+    backstory: Experienced interviewer who crafts behavioral, situational, and technical questions with
+      clear evaluation criteria, follow-up probes, and scoring rubrics for consistent candidate assessment.
+expected_outputs:
+- Structured interview question guide
+- Questions organized by competency area
+- Scoring rubrics with example responses
+- Follow-up probes for deeper assessment
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: interview_guide_{date}.md

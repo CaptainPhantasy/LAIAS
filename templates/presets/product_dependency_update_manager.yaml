@@ -1,0 +1,46 @@
+id: product_dependency_update_manager
+name: Dependency Update Manager
+description: Tracks outdated dependencies, assesses update urgency based on security advisories and breaking
+  changes, and creates a safe update plan with testing recommendations for each upgrade.
+category: product_engineering
+tags:
+- dependencies
+- updates
+- packages
+- npm
+- pip
+- security
+default_complexity: simple
+default_tools:
+- FileReadTool
+- GithubSearchTool
+- SerperDevTool
+sample_prompts:
+- List all outdated dependencies and which ones need urgent updates
+- Create an update plan for our npm packages with breaking change notes
+- Which of our Python dependencies have security advisories?
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: dep_scanner
+    role: Dependency Audit Specialist
+    backstory: Scans package manifests (package.json, requirements.txt, etc.) to identify outdated packages,
+      version gaps, and known vulnerability advisories.
+  - name: update_planner
+    role: Update Strategy Planner
+    backstory: Assesses each update's risk level by reviewing changelogs for breaking changes. Creates
+      a sequenced update plan that minimizes regression risk.
+expected_outputs:
+- Outdated dependency list
+- Security advisory matches
+- Update plan with sequence
+- Breaking change notes per package
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: dependency_update_{date}.md

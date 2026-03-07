@@ -1,0 +1,50 @@
+id: product_feature_spec_writer
+name: Feature Specification Writer
+description: Transforms product ideas and user stories into detailed feature specifications. Includes
+  user flows, acceptance criteria, edge cases, technical considerations, and wireframe descriptions ready
+  for engineering handoff.
+category: product_engineering
+tags:
+- specs
+- features
+- product
+- requirements
+- documentation
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- FileReadTool
+- EXASearchTool
+sample_prompts:
+- Write a feature spec for adding team collaboration to our product
+- Create acceptance criteria for the new billing dashboard feature
+- Turn this user story into a detailed engineering spec
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: requirements_analyst
+    role: Requirements Analyst
+    backstory: Extracts detailed requirements from vague product ideas. Asks the right questions, identifies
+      edge cases, and ensures nothing is ambiguous for the engineering team.
+  - name: spec_writer
+    role: Technical Spec Writer
+    backstory: Writes clear, comprehensive feature specifications with user stories, acceptance criteria,
+      data models, and API contracts. Follows a consistent template.
+  - name: ux_flow_designer
+    role: UX Flow Designer
+    backstory: Describes user flows, interaction patterns, and wireframe layouts in enough detail for
+      designers and engineers to implement without guesswork.
+expected_outputs:
+- Feature specification document
+- User flow descriptions
+- Acceptance criteria checklist
+- Technical considerations and risks
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: feature_spec_{date}.md

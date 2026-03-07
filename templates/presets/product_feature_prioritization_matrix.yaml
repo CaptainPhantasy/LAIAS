@@ -1,0 +1,50 @@
+id: product_feature_prioritization_matrix
+name: Feature Prioritization Matrix
+description: Scores and ranks feature requests using frameworks like RICE (Reach, Impact, Confidence,
+  Effort) or ICE. Analyzes each feature's business value, technical complexity, and strategic alignment
+  to create an objective priority ranking.
+category: product_engineering
+tags:
+- prioritization
+- features
+- roadmap
+- rice
+- planning
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Score our backlog of 30 feature requests using the RICE framework
+- Which features should we build next quarter based on customer demand and effort?
+- Create a prioritization matrix for our product roadmap
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: demand_analyst
+    role: Customer Demand Analyst
+    backstory: Quantifies demand for each feature by analyzing request frequency, customer segment overlap,
+      and revenue correlation. Estimates reach and impact scores.
+  - name: effort_estimator
+    role: Technical Effort Estimator
+    backstory: 'Assesses implementation complexity for each feature: engineering hours, dependencies,
+      infrastructure changes, and testing requirements.'
+  - name: prioritizer
+    role: Strategic Prioritization Expert
+    backstory: Applies RICE/ICE scoring frameworks consistently across all features and creates a defensible
+      priority ranking with clear justification for each position.
+expected_outputs:
+- RICE-scored feature list
+- Priority ranking with justifications
+- Effort estimates per feature
+- Quarterly roadmap recommendation
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: feature_priorities_{date}.csv

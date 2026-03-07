@@ -1,0 +1,50 @@
+id: customer_health_score_calculator
+name: Customer Health Score Calculator
+description: Calculates composite health scores for each customer account based on product usage, support
+  interactions, billing status, and engagement metrics. Identifies healthy, at-risk, and red-flag accounts
+  for proactive outreach.
+category: customer_success
+tags:
+- health-score
+- customers
+- retention
+- monitoring
+- metrics
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Calculate health scores for all our customers this month
+- Which accounts dropped from green to yellow health this week?
+- Build a customer health scoring model using our usage and billing data
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: data_aggregator
+    role: Customer Data Aggregator
+    backstory: 'Consolidates customer data from multiple sources: product analytics, billing records,
+      support tickets, and engagement events into a unified view per account.'
+  - name: score_modeler
+    role: Health Score Modeler
+    backstory: Designs and applies weighted scoring models that combine usage frequency, feature adoption
+      depth, support sentiment, and billing health into a single health score.
+  - name: action_recommender
+    role: Proactive Outreach Planner
+    backstory: 'Maps health score ranges to specific customer success actions: celebration for healthy
+      accounts, check-ins for at-risk, and rescue plans for red-flag accounts.'
+expected_outputs:
+- Customer health scorecard
+- Health trend analysis
+- At-risk account alerts
+- Recommended actions per tier
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: health_scores_{date}.csv

@@ -1,0 +1,45 @@
+id: hiring_contractor_onboarding_builder
+name: Contractor Onboarding Builder
+description: Creates onboarding packages for new contractors and freelancers including welcome guides,
+  access checklists, project briefs, and communication protocols. Ensures contractors ramp up quickly
+  and consistently.
+category: hiring_team
+tags:
+- onboarding
+- contractors
+- freelancers
+- processes
+- documentation
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+sample_prompts:
+- Create an onboarding package for our new design contractor
+- Build a contractor welcome guide with access setup and project context
+- Generate an onboarding checklist for engineering freelancers
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: onboarding_planner
+    role: Onboarding Process Planner
+    backstory: Operations specialist who designs structured onboarding flows covering tool access, documentation,
+      key contacts, communication norms, and milestone expectations for new contractors.
+  - name: content_creator
+    role: Onboarding Content Creator
+    backstory: Technical writer who produces clear welcome documents, step-by-step setup guides, project
+      briefs with context, and FAQ documents that help contractors become productive quickly.
+expected_outputs:
+- Welcome guide with company context
+- Access and setup checklist
+- Project brief with deliverable expectations
+- Communication protocols and escalation paths
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: onboarding_package_{date}.md

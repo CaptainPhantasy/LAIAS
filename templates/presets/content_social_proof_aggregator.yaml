@@ -1,0 +1,45 @@
+id: content_social_proof_aggregator
+name: Social Proof Aggregator
+description: Collects and organizes social proof from reviews, testimonials, social media mentions, and
+  case study data. Curates the strongest proof points and formats them for use across marketing channels.
+category: content_communications
+tags:
+- social-proof
+- testimonials
+- reviews
+- marketing
+- trust
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Collect and organize all customer testimonials from our review sites
+- Find and curate social media mentions praising our product
+- Build a social proof library organized by use case and industry
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: proof_collector
+    role: Social Proof Collector
+    backstory: Digital researcher who scours review platforms, social media, forums, and direct feedback
+      channels to find authentic customer praise, usage stories, and quantifiable success metrics.
+  - name: proof_curator
+    role: Social Proof Curator
+    backstory: Marketing strategist who categorizes, ranks, and formats social proof for maximum impact
+      across different channels — website, sales decks, ads, and email campaigns.
+expected_outputs:
+- Curated social proof library by category
+- Top testimonials with attribution
+- Quantifiable success metrics collection
+- Channel-specific proof point recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: social_proof_{date}.md

@@ -1,0 +1,46 @@
+id: ops_tool_stack_auditor
+name: Tool Stack Auditor
+description: Audits the company's SaaS and tool subscriptions to find redundancies, underutilized licenses,
+  and consolidation opportunities. Calculates potential savings and recommends an optimized tool stack.
+category: operations_productivity
+tags:
+- tools
+- saas
+- audit
+- cost-optimization
+- subscriptions
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- CSVSearchTool
+- FileReadTool
+sample_prompts:
+- Audit our SaaS subscriptions and find redundant tools
+- Which tools have low adoption and could be cut?
+- Calculate how much we could save by consolidating overlapping tools
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: stack_analyzer
+    role: Tool Stack Analyst
+    backstory: IT procurement specialist who catalogs all active subscriptions, maps feature overlaps
+      between tools, and identifies underutilized licenses based on usage data.
+  - name: savings_calculator
+    role: Cost Optimization Advisor
+    backstory: Financial analyst who calculates potential savings from tool consolidation, negotiates
+      better pricing tiers, and recommends an optimized stack that maintains capability while reducing
+      spend.
+expected_outputs:
+- Complete tool inventory with costs and usage
+- Redundancy and overlap analysis
+- Consolidation recommendations with savings estimates
+- Optimized tool stack proposal
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: tool_audit_{date}.md

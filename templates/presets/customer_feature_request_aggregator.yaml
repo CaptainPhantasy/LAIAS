@@ -1,0 +1,49 @@
+id: customer_feature_request_aggregator
+name: Feature Request Aggregator
+description: Collects feature requests from support tickets, emails, surveys, and social media. Deduplicates,
+  categorizes, and ranks requests by customer count, revenue weight, and strategic alignment.
+category: customer_success
+tags:
+- features
+- requests
+- feedback
+- product
+- prioritization
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Consolidate all feature requests from the past quarter
+- Which feature requests come from our highest-paying customers?
+- Group similar feature requests and rank by demand
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: request_collector
+    role: Feature Request Collector
+    backstory: 'Extracts feature requests from multiple channels: support tickets, survey responses, social
+      mentions, and direct emails. Normalizes request descriptions.'
+  - name: dedup_categorizer
+    role: Request Deduplication Specialist
+    backstory: Identifies duplicate and overlapping requests, merges them into canonical feature descriptions,
+      and categorizes by product area.
+  - name: demand_ranker
+    role: Feature Demand Analyst
+    backstory: 'Ranks features by composite demand score: number of unique requestors, combined ARR of
+      requesting accounts, and strategic alignment with product vision.'
+expected_outputs:
+- Consolidated feature request list
+- Demand ranking with scores
+- Revenue-weighted priority view
+- Category distribution analysis
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: feature_requests_{date}.csv

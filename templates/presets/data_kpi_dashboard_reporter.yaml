@@ -1,0 +1,44 @@
+id: data_kpi_dashboard_reporter
+name: KPI Dashboard Reporter
+description: Generates periodic KPI reports by pulling metrics from various data sources. Calculates week-over-week
+  and month-over-month changes, highlights anomalies, and produces executive-ready dashboards.
+category: data_intelligence
+tags:
+- kpi
+- dashboard
+- metrics
+- reporting
+- executive
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+sample_prompts:
+- Generate this week's KPI report with WoW comparisons
+- Create a monthly executive dashboard with all key business metrics
+- Which KPIs showed the biggest changes this quarter?
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: metrics_collector
+    role: Metrics Collection Analyst
+    backstory: Data engineer who pulls KPIs from multiple sources, validates data quality, calculates
+      period-over-period changes, and flags statistical anomalies or data gaps.
+  - name: dashboard_writer
+    role: Dashboard Report Writer
+    backstory: Business intelligence specialist who formats metrics into scannable dashboards with traffic-light
+      indicators, trend arrows, and concise commentary on notable movements.
+expected_outputs:
+- KPI dashboard with current values and trends
+- Period-over-period change analysis
+- Anomaly alerts and explanations
+- Executive summary with key takeaways
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: kpi_dashboard_{date}.md

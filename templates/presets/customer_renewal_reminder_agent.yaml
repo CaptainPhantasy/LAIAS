@@ -1,0 +1,45 @@
+id: customer_renewal_reminder_agent
+name: Renewal Outreach Automator
+description: Automates the renewal process by tracking upcoming renewals, generating personalized renewal
+  communications, and preparing value summaries that demonstrate ROI since the customer's last renewal.
+category: customer_success
+tags:
+- renewal
+- retention
+- outreach
+- contracts
+- billing
+default_complexity: simple
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- EmailTool
+sample_prompts:
+- Generate renewal emails for all customers expiring in the next 60 days
+- Create value summaries showing each customer what they accomplished with our product
+- Prepare talking points for my upcoming renewal conversations
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: renewal_tracker
+    role: Renewal Calendar Manager
+    backstory: Tracks all upcoming renewals, organizes by urgency (30/60/90 day windows), and flags accounts
+      needing early intervention based on health scores.
+  - name: value_summarizer
+    role: Customer Value Report Writer
+    backstory: Creates personalized value summaries showing each customer's usage metrics, outcomes achieved,
+      and ROI since onboarding. Makes the renewal decision a no-brainer.
+expected_outputs:
+- Upcoming renewal calendar
+- Personalized value summaries
+- Renewal email drafts
+- Risk-flagged accounts list
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: renewals_{date}.md

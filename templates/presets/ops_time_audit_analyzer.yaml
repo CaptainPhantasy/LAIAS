@@ -1,0 +1,44 @@
+id: ops_time_audit_analyzer
+name: Time Audit Analyzer
+description: Analyzes time tracking data to reveal how teams spend their hours. Identifies time sinks,
+  calculates productive vs administrative ratios, and recommends schedule optimizations for better output.
+category: operations_productivity
+tags:
+- time-tracking
+- productivity
+- audit
+- optimization
+- efficiency
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+sample_prompts:
+- Analyze our team's time logs and identify the biggest time sinks
+- Calculate the ratio of deep work vs meetings for each team member
+- Show me where we're spending the most time relative to revenue impact
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: time_analyst
+    role: Time Data Analyst
+    backstory: Productivity researcher who categorizes time entries, calculates utilization rates, identifies
+      patterns in how time is allocated across projects, meetings, and administrative tasks.
+  - name: optimization_advisor
+    role: Schedule Optimization Advisor
+    backstory: Efficiency consultant who translates time audit findings into actionable recommendations
+      for reducing waste, protecting focus time, and improving team throughput.
+expected_outputs:
+- Time allocation breakdown by category
+- Productive vs administrative time ratios
+- Top time sinks with impact analysis
+- Schedule optimization recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: time_audit_{date}.md

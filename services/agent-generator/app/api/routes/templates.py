@@ -2,29 +2,31 @@
 Templates endpoint for Agent Generator API.
 
 Agent template management and listing.
+Uses TemplateService as the single source of truth for YAML-based templates.
 """
 
-import os
-from pathlib import Path
 from typing import Optional
-import yaml
 
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 import structlog
 
 from app.models.requests import GenerateAgentRequest
+from app.services.template_service import get_template_service
 
 logger = structlog.get_logger()
 
 router = APIRouter(prefix="/api/templates", tags=["templates"])
 
-# Templates directory path - use environment variable or default
-TEMPLATES_DIR = Path(os.environ.get("TEMPLATES_DIR", "/app/templates/presets"))
+
+# =============================================================================
+# Response Models
+# =============================================================================
 
 
 class Template(BaseModel):
     """Agent template model."""
+
     id: str
     name: str
     description: str
@@ -40,6 +42,7 @@ class Template(BaseModel):
 
 class TemplateListResponse(BaseModel):
     """Response model for template list."""
+
     templates: list[Template]
     total: int
     categories: list[str]
@@ -47,133 +50,21 @@ class TemplateListResponse(BaseModel):
 
 class TemplateApplyRequest(BaseModel):
     """Request to apply a template."""
+
     template_id: str
     agent_name: str
     customizations: Optional[dict] = None
 
 
-def load_template(template_id: str) -> dict:
-    """Load a template YAML file."""
-    template_path = TEMPLATES_DIR / f"{template_id}.yaml"
-
-    if not template_path.exists():
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Template {template_id} not found"
-        )
-
-    try:
-        with open(template_path, "r") as f:
-            template_data = yaml.safe_load(f)
-
-            # Validate and sanitize to prevent validation errors
-            if not isinstance(template_data, dict):
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Invalid template format in {template_id}"
-                )
-
-            # Fix None or invalid values
-            if not template_data.get("description") or template_data["description"] == "None":
-                template_data["description"] = f"Agent template: {template_data.get('name', template_id)}"
-
-            if not template_data.get("name") or template_data["name"] == "None":
-                template_data["name"] = template_id
-
-            if not template_data.get("sample_prompts"):
-                template_data["sample_prompts"] = [f"Use the {template_data['name']} template"]
-
-            if not template_data.get("tags"):
-                template_data["tags"] = ["agent"]
-
-            if not template_data.get("agent_structure"):
-                template_data["agent_structure"] = {
-                    "agents": [{
-                        "name": "primary_agent",
-                        "role": "AI Agent",
-                        "backstory": "Specialized AI agent"
-                    }]
-                }
-
-            if not template_data.get("expected_outputs"):
-                template_data["expected_outputs"] = ["Task completion"]
-
-            return template_data
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Failed to load template", template_id=template_id, error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to load template: {str(e)}"
-        )
-
-
-def load_all_templates() -> list[dict]:
-    """Load all template YAML files."""
-    templates = []
-
-    if not TEMPLATES_DIR.exists():
-        logger.warning("Templates directory not found", path=str(TEMPLATES_DIR))
-        return templates
-
-    for template_file in TEMPLATES_DIR.glob("*.yaml"):
-        try:
-            with open(template_file, "r") as f:
-                template_data = yaml.safe_load(f)
-
-                # Validate and sanitize template data to prevent 500 errors
-                if not isinstance(template_data, dict):
-                    logger.warning("Invalid template format (not a dict)", file=str(template_file))
-                    continue
-
-                # Ensure required fields exist with valid values
-                if not template_data.get("id"):
-                    logger.warning("Template missing id", file=str(template_file))
-                    continue
-
-                # Fix None or invalid description
-                if not template_data.get("description") or template_data["description"] == "None":
-                    template_data["description"] = f"Agent template: {template_data.get('name', template_data['id'])}"
-
-                # Fix None or invalid name
-                if not template_data.get("name") or template_data["name"] == "None":
-                    template_data["name"] = template_data["id"]
-
-                # Fix None sample_prompts
-                if not template_data.get("sample_prompts"):
-                    template_data["sample_prompts"] = [f"Use the {template_data['name']} template"]
-
-                # Fix None tags
-                if not template_data.get("tags"):
-                    template_data["tags"] = ["agent"]
-
-                # Fix None agent_structure
-                if not template_data.get("agent_structure"):
-                    template_data["agent_structure"] = {
-                        "agents": [{
-                            "name": "primary_agent",
-                            "role": "AI Agent",
-                            "backstory": "Specialized AI agent"
-                        }]
-                    }
-
-                # Fix None expected_outputs
-                if not template_data.get("expected_outputs"):
-                    template_data["expected_outputs"] = ["Task completion"]
-
-                templates.append(template_data)
-        except Exception as e:
-            logger.error("Failed to load template file", file=str(template_file), error=str(e))
-
-    return templates
+# =============================================================================
+# Endpoints
+# =============================================================================
 
 
 @router.get("", response_model=TemplateListResponse, status_code=status.HTTP_200_OK)
 async def list_templates(
     category: Optional[str] = Query(None, description="Filter by category"),
-    search: Optional[str] = Query(None, description="Search in name and description")
+    search: Optional[str] = Query(None, description="Search in name and description"),
 ) -> TemplateListResponse:
     """
     List all available agent templates.
@@ -182,40 +73,28 @@ async def list_templates(
     - **category**: Filter by category
     - **search**: Search in name and description
     """
-    templates = load_all_templates()
+    service = get_template_service()
+    raw_templates = service.list_templates(category=category, search=search)
+    categories = service.list_categories()
 
-    # Apply filters
-    if category:
-        templates = [t for t in templates if t.get("category") == category]
-
-    if search:
-        search_lower = search.lower()
-        templates = [
-            t for t in templates
-            if search_lower in t.get("name", "").lower() or
-               search_lower in t.get("description", "").lower()
-        ]
-
-    # Extract unique categories
-    all_templates = load_all_templates()
-    categories = sorted(set(t.get("category", "general") for t in all_templates))
+    templates = [Template(**t) for t in raw_templates]
 
     return TemplateListResponse(
         templates=templates,
         total=len(templates),
-        categories=categories
+        categories=categories,
     )
 
 
 @router.get("/categories", status_code=status.HTTP_200_OK)
 async def list_categories() -> dict:
     """List all available template categories."""
-    templates = load_all_templates()
-    categories = sorted(set(t.get("category", "general") for t in templates))
+    service = get_template_service()
+    categories = service.list_categories()
 
     return {
         "categories": categories,
-        "total": len(categories)
+        "total": len(categories),
     }
 
 
@@ -225,16 +104,24 @@ async def get_template(template_id: str) -> Template:
     Get a specific template by ID.
 
     Path parameters:
-    - **template_id**: Template identifier (e.g., 'research_agent')
+    - **template_id**: Template identifier (e.g., 'revenue_lead_scoring_qualifier')
     """
-    template_data = load_template(template_id)
+    service = get_template_service()
+    template_data = service.get_template(template_id)
+
+    if template_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template {template_id} not found",
+        )
+
     return Template(**template_data)
 
 
 @router.post("/{template_id}/apply", status_code=status.HTTP_200_OK)
 async def apply_template(
     template_id: str,
-    request: TemplateApplyRequest
+    request: TemplateApplyRequest,
 ) -> GenerateAgentRequest:
     """
     Apply a template to create a new agent generation request.
@@ -249,7 +136,14 @@ async def apply_template(
     - **agent_name**: Name for the new agent
     - **customizations**: Optional overrides for template defaults
     """
-    template = load_template(template_id)
+    service = get_template_service()
+    template = service.get_template(template_id)
+
+    if template is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Template {template_id} not found",
+        )
 
     suggested_config = template.get("suggested_config", {})
 
@@ -264,7 +158,7 @@ async def apply_template(
         model=suggested_config.get("model"),
         include_memory=suggested_config.get("include_memory", True),
         include_analytics=suggested_config.get("include_analytics", True),
-        max_agents=suggested_config.get("max_agents", 4)
+        max_agents=suggested_config.get("max_agents", 4),
     )
 
     # Apply customizations if provided
@@ -276,7 +170,7 @@ async def apply_template(
     logger.info(
         "Template applied",
         template_id=template_id,
-        agent_name=request.agent_name
+        agent_name=request.agent_name,
     )
 
     return generate_request

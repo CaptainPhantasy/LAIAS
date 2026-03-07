@@ -1,0 +1,50 @@
+id: legal_soc2_readiness_assessor
+name: SOC 2 Readiness Assessor
+description: Evaluates your organization's readiness for SOC 2 Type I or Type II certification. Assesses
+  controls across the five trust service criteria and identifies gaps requiring remediation before the
+  audit.
+category: legal_compliance
+tags:
+- soc2
+- compliance
+- security
+- audit-readiness
+- controls
+default_complexity: complex
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- SerperDevTool
+sample_prompts:
+- Assess our readiness for SOC 2 Type II certification
+- Review our security controls against SOC 2 trust service criteria
+- Identify gaps in our SOC 2 compliance posture
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: controls_assessor
+    role: Controls Assessment Specialist
+    backstory: Information security auditor who evaluates existing controls against SOC 2 trust service
+      criteria (security, availability, processing integrity, confidentiality, privacy).
+  - name: gap_identifier
+    role: Gap Identification Analyst
+    backstory: Compliance analyst who identifies missing or insufficient controls, maps them to specific
+      trust service criteria, and assesses the effort required to achieve compliance.
+  - name: roadmap_builder
+    role: Compliance Roadmap Builder
+    backstory: Security compliance consultant who creates a prioritized remediation plan with specific
+      policies, procedures, and technical controls needed to pass the SOC 2 audit.
+expected_outputs:
+- SOC 2 readiness assessment report
+- Trust service criteria compliance matrix
+- Gap analysis with remediation requirements
+- Audit preparation timeline and roadmap
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: soc2_assessment_{date}.md

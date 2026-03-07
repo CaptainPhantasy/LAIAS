@@ -1,0 +1,43 @@
+id: ops_weekly_standup_reporter
+name: Weekly Standup Reporter
+description: Aggregates individual standup updates, project status, and blockers into a consolidated weekly
+  team report. Highlights cross-team dependencies, recurring blockers, and overall sprint health.
+category: operations_productivity
+tags:
+- standup
+- reporting
+- agile
+- team
+- weekly
+default_complexity: simple
+default_tools:
+- FileReadTool
+sample_prompts:
+- Compile this week's standup updates into a team summary
+- Generate a weekly progress report from individual status updates
+- Identify recurring blockers from the past month of standups
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: update_aggregator
+    role: Status Update Aggregator
+    backstory: Project coordinator who collects and organizes individual standup updates, groups them
+      by project or team, and identifies common themes and cross-dependencies.
+  - name: health_reporter
+    role: Sprint Health Reporter
+    backstory: Agile coach who assesses overall team velocity, flags recurring blockers, highlights wins,
+      and produces a concise weekly digest for leadership review.
+expected_outputs:
+- Consolidated weekly team status report
+- Blocker summary with resolution status
+- Cross-team dependency highlights
+- Sprint health indicators and trends
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: weekly_standup_{date}.md

@@ -1,0 +1,50 @@
+id: content_competitive_battlecard_creator
+name: Competitive Battlecard Creator
+description: Creates sales battlecards for competitive situations by researching competitor products,
+  pricing, strengths, and weaknesses. Produces ready-to-use comparison sheets with objection handling
+  scripts.
+category: content_communications
+tags:
+- battlecards
+- competitive
+- sales-enablement
+- objection-handling
+- positioning
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Create a battlecard for selling against Competitor X
+- Build competitive comparison sheets for our top 3 competitors
+- Write objection handling scripts for common competitive objections
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: competitor_researcher
+    role: Competitive Intelligence Researcher
+    backstory: Competitive analyst who deeply researches competitor products, pricing pages, feature lists,
+      customer reviews, and recent announcements to build comprehensive competitive profiles.
+  - name: positioning_analyst
+    role: Positioning & Differentiation Analyst
+    backstory: Product marketing strategist who identifies key differentiators, maps feature comparisons,
+      and crafts positioning statements that highlight unique advantages in each competitive scenario.
+  - name: battlecard_writer
+    role: Battlecard Content Writer
+    backstory: Sales enablement specialist who produces actionable battlecards with quick-reference comparisons,
+      talk tracks, objection handling scripts, and trap-setting questions for sales conversations.
+expected_outputs:
+- Complete competitive battlecard per competitor
+- Feature comparison matrix
+- Objection handling scripts
+- Trap-setting questions and talk tracks
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: battlecard_{date}.md

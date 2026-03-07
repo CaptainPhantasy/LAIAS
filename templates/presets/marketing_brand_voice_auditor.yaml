@@ -1,0 +1,46 @@
+id: marketing_brand_voice_auditor
+name: Brand Voice Consistency Auditor
+description: Audits your website, emails, and social content for brand voice consistency. Identifies tone
+  mismatches, jargon inconsistencies, and messaging drift. Creates a brand voice guide with do's, don'ts,
+  and example rewrites.
+category: marketing_brand
+tags:
+- brand
+- voice
+- consistency
+- tone
+- messaging
+default_complexity: moderate
+default_tools:
+- ScrapeWebsiteTool
+- FileReadTool
+- WebsiteSearchTool
+sample_prompts:
+- Audit our website copy for brand voice consistency
+- Create a brand voice guide based on our best-performing content
+- Flag any pages where our tone doesn't match our brand guidelines
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: voice_analyzer
+    role: Brand Voice Analyst
+    backstory: 'Analyzes content across channels to identify your actual brand voice patterns: vocabulary
+      choices, sentence structure, humor level, formality, and emotional tone.'
+  - name: guide_writer
+    role: Brand Guide Creator
+    backstory: Creates comprehensive brand voice guides with voice attributes, do/don't examples, and
+      template phrases. Ensures anyone writing for the brand can maintain consistency.
+expected_outputs:
+- Brand voice audit report
+- Inconsistency flagging
+- Brand voice guide document
+- Example rewrites for problem areas
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: brand_voice_audit_{date}.md

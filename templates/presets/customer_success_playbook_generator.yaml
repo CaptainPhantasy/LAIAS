@@ -1,0 +1,50 @@
+id: customer_success_playbook_generator
+name: CS Playbook Generator
+description: 'Creates customer success playbooks for common scenarios: onboarding, quarterly reviews,
+  escalations, expansion conversations, and renewal negotiations. Each playbook includes steps, email
+  templates, and talking points.'
+category: customer_success
+tags:
+- playbook
+- processes
+- templates
+- customer-success
+- procedures
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- FileReadTool
+- EXASearchTool
+sample_prompts:
+- Create a playbook for handling customer escalations
+- Build a quarterly business review template for our top accounts
+- Design an onboarding playbook for enterprise customers
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: best_practice_researcher
+    role: CS Best Practice Researcher
+    backstory: Studies customer success best practices from top SaaS companies. Identifies proven playbook
+      templates and adapts them for solo founder operations.
+  - name: playbook_writer
+    role: Playbook Document Writer
+    backstory: Creates detailed, step-by-step playbooks with decision trees, email templates, and talking
+      point scripts. Makes complex CS processes repeatable.
+  - name: template_creator
+    role: Email Template Writer
+    backstory: 'Writes professional email templates for each playbook stage: check-in emails, QBR invitations,
+      escalation acknowledgments, and success celebrations.'
+expected_outputs:
+- Complete playbook document
+- Email templates per stage
+- Decision tree diagrams
+- Success metrics definitions
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: cs_playbook_{date}.md

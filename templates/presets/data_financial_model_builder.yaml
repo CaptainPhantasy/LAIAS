@@ -1,0 +1,50 @@
+id: data_financial_model_builder
+name: Financial Model Builder
+description: Builds financial models and projections from revenue data, cost structures, and growth assumptions.
+  Creates scenario analyses (base, bull, bear) with key metrics like runway, burn rate, and break-even
+  timelines.
+category: data_intelligence
+tags:
+- financial-modeling
+- projections
+- revenue
+- runway
+- forecasting
+default_complexity: complex
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Build a 12-month financial projection based on our current growth rate
+- Model three scenarios for our runway given different hiring plans
+- Calculate our break-even point under current unit economics
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: data_modeler
+    role: Financial Data Modeler
+    backstory: Financial analyst who builds structured models from raw data, defining revenue drivers,
+      cost categories, and growth assumptions with clear documentation of methodology.
+  - name: scenario_analyst
+    role: Scenario Analysis Specialist
+    backstory: Risk-aware financial planner who creates bull, base, and bear case projections, stress-tests
+      assumptions, and calculates sensitivity of key metrics to variable changes.
+  - name: metrics_reporter
+    role: Financial Metrics Reporter
+    backstory: CFO-level communicator who presents financial models with clear KPI dashboards, runway
+      calculations, and executive-ready summaries that drive fundraising and budgeting decisions.
+expected_outputs:
+- Financial projection model (12-24 months)
+- Scenario analysis (base/bull/bear)
+- Key metrics dashboard (runway, burn, LTV/CAC)
+- Sensitivity analysis on critical assumptions
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: financial_model_{date}.csv

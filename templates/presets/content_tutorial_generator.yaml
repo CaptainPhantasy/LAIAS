@@ -1,0 +1,46 @@
+id: content_tutorial_generator
+name: Tutorial Generator
+description: Creates step-by-step technical tutorials from product features, API documentation, or code
+  examples. Produces beginner-friendly guides with code snippets, screenshots placeholders, and troubleshooting
+  sections.
+category: content_communications
+tags:
+- tutorials
+- documentation
+- developer-experience
+- guides
+- education
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CodeDocsSearchTool
+- DirectoryReadTool
+sample_prompts:
+- Write a getting-started tutorial for our API
+- Create a step-by-step guide for setting up webhooks
+- Generate a tutorial showing how to build a basic integration
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: content_planner
+    role: Tutorial Content Planner
+    backstory: Developer educator who designs tutorial structure, identifies prerequisites, breaks complex
+      topics into digestible steps, and ensures logical progression from simple to advanced concepts.
+  - name: tutorial_writer
+    role: Technical Tutorial Writer
+    backstory: Technical writer with developer background who writes clear, tested tutorials with working
+      code examples, expected outputs, common pitfalls, and troubleshooting tips.
+expected_outputs:
+- Complete step-by-step tutorial
+- Working code examples with explanations
+- Prerequisites and setup instructions
+- Troubleshooting and FAQ section
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: tutorial_{date}.md

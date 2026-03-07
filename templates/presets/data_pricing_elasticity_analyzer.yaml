@@ -1,0 +1,45 @@
+id: data_pricing_elasticity_analyzer
+name: Pricing Elasticity Analyzer
+description: Analyzes pricing data and customer behavior to estimate price elasticity of demand. Models
+  revenue impact of price changes across segments and recommends optimal pricing strategies.
+category: data_intelligence
+tags:
+- pricing
+- elasticity
+- revenue
+- optimization
+- economics
+default_complexity: complex
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Estimate the price elasticity for our Pro plan based on historical data
+- Model the revenue impact of a 20% price increase on our starter tier
+- Which customer segments are most price-sensitive?
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: elasticity_modeler
+    role: Price Elasticity Modeler
+    backstory: Econometrician who estimates demand curves from historical pricing and conversion data,
+      calculates elasticity coefficients, and models revenue outcomes under different pricing scenarios.
+  - name: pricing_strategist
+    role: Pricing Strategy Advisor
+    backstory: Revenue optimization specialist who translates elasticity analysis into pricing recommendations,
+      considering competitive positioning, willingness-to-pay segments, and long-term revenue maximization.
+expected_outputs:
+- Price elasticity estimates by product/segment
+- Revenue impact modeling for price changes
+- Price sensitivity analysis by customer segment
+- Optimal pricing recommendations with rationale
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: pricing_analysis_{date}.md

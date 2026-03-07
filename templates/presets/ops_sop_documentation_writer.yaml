@@ -1,0 +1,44 @@
+id: ops_sop_documentation_writer
+name: SOP Documentation Writer
+description: Creates standard operating procedures from process descriptions, interviews, or existing
+  informal documentation. Produces step-by-step guides with decision trees, checklists, and role assignments.
+category: operations_productivity
+tags:
+- sop
+- documentation
+- processes
+- standardization
+- operations
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+sample_prompts:
+- Write an SOP for our customer onboarding process
+- Document the deployment procedure based on these engineering notes
+- Create a step-by-step guide for handling customer refund requests
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: process_analyst
+    role: Process Analyst
+    backstory: Operations consultant who maps workflows, identifies decision points, and structures complex
+      processes into logical sequential steps with clear ownership.
+  - name: documentation_writer
+    role: Technical Documentation Writer
+    backstory: Technical writer who transforms process maps into clear, actionable SOPs with numbered
+      steps, screenshots placeholders, checklists, and troubleshooting sections.
+expected_outputs:
+- Complete SOP document with numbered steps
+- Decision trees for branching scenarios
+- Role and responsibility assignments
+- Checklists for quality verification
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: sop_{date}.md

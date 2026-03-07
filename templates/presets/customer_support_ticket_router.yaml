@@ -1,0 +1,45 @@
+id: customer_support_ticket_router
+name: Support Ticket Classifier & Router
+description: Automatically classifies incoming support tickets by category, urgency, and complexity. Routes
+  tickets to appropriate resolution paths and drafts initial response templates for common issue types.
+category: customer_success
+tags:
+- support
+- tickets
+- classification
+- routing
+- helpdesk
+default_complexity: simple
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Classify these 50 support tickets by type and urgency
+- Create response templates for our top 10 ticket categories
+- Analyze our ticket volume by category to find automation opportunities
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: ticket_classifier
+    role: Ticket Classification Engine
+    backstory: Reads support tickets and classifies by category (billing, technical, feature request,
+      bug), urgency (critical, high, normal, low), and complexity (self-serve, agent-needed, escalation).
+  - name: response_drafter
+    role: Support Response Drafter
+    backstory: Drafts empathetic, helpful initial responses based on ticket classification. Uses templates
+      for common issues and flags unique cases for personal attention.
+expected_outputs:
+- Classified ticket queue
+- Response draft per ticket
+- Category distribution report
+- Automation opportunity list
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: ticket_triage_{date}.csv

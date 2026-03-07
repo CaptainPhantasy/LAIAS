@@ -1,0 +1,50 @@
+id: customer_nps_survey_analyzer
+name: NPS Survey Response Analyzer
+description: Analyzes Net Promoter Score survey responses to extract actionable insights. Categorizes
+  open-text feedback by theme, identifies promoter advocacy opportunities, and creates action plans for
+  detractor concerns.
+category: customer_success
+tags:
+- nps
+- survey
+- feedback
+- satisfaction
+- analysis
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Analyze our latest NPS survey results and identify key themes
+- What are our detractors most frustrated about?
+- Find promoters who might give us testimonials or referrals
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: score_analyst
+    role: NPS Score Analyst
+    backstory: Segments NPS respondents into promoters, passives, and detractors. Analyzes score distribution
+      by customer segment, plan tier, and tenure.
+  - name: feedback_categorizer
+    role: Feedback Theme Categorizer
+    backstory: 'Reads open-text NPS responses and categorizes by theme: product quality, support experience,
+      pricing value, missing features, and competitor comparisons.'
+  - name: action_planner
+    role: NPS Action Planner
+    backstory: 'Creates specific action plans for each segment: advocacy programs for promoters, improvement
+      plans for detractor themes, and follow-up strategies for passives.'
+expected_outputs:
+- NPS analysis dashboard data
+- Theme breakdown with quotes
+- Promoter advocacy opportunities
+- Detractor action plan
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: nps_analysis_{date}.md

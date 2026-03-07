@@ -1,0 +1,45 @@
+id: hiring_resume_screener
+name: Resume Screener
+description: Screens resumes and applications against job requirements to identify top candidates. Scores
+  applicants on relevant experience, skills match, and potential, producing a ranked shortlist with reasoning.
+category: hiring_team
+tags:
+- resume-screening
+- hiring
+- candidates
+- evaluation
+- recruiting
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- PDFSearchTool
+- CSVSearchTool
+sample_prompts:
+- Screen these 30 resumes against our Senior Engineer job requirements
+- Rank the top 10 candidates from this applicant batch
+- Identify candidates with both technical skills and startup experience
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: resume_analyzer
+    role: Resume Analysis Specialist
+    backstory: Experienced recruiter who evaluates resumes against specific role requirements, identifying
+      relevant experience, skill matches, career trajectory, and potential red flags or standout qualifications.
+  - name: candidate_ranker
+    role: Candidate Ranking Specialist
+    backstory: Talent assessment expert who scores and ranks candidates using consistent criteria, provides
+      clear reasoning for each ranking, and identifies candidates worth fast-tracking.
+expected_outputs:
+- Ranked candidate shortlist with scores
+- Per-candidate evaluation summaries
+- Skills gap analysis per candidate
+- Recommended next steps for top candidates
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: candidate_rankings_{date}.csv

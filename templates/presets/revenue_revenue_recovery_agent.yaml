@@ -1,0 +1,46 @@
+id: revenue_revenue_recovery_agent
+name: Failed Payment Recovery Agent
+description: Manages involuntary churn by analyzing failed payment patterns, designing dunning email sequences,
+  and recommending retry strategies. Recovers revenue from expired cards, insufficient funds, and billing
+  errors before they become cancellations.
+category: revenue_growth
+tags:
+- dunning
+- payments
+- recovery
+- billing
+- churn
+default_complexity: simple
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- EmailTool
+sample_prompts:
+- Analyze our failed payments from last month and draft recovery emails
+- Design a 4-email dunning sequence for failed credit card charges
+- How much revenue are we losing to involuntary churn and how do we fix it?
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: payment_analyzer
+    role: Payment Failure Analyst
+    backstory: 'Analyzes failed payment data to identify patterns: common failure reasons, retry success
+      rates by timing, and customer segments most affected by involuntary churn.'
+  - name: recovery_writer
+    role: Dunning Email Specialist
+    backstory: Writes empathetic, effective dunning emails that recover payments without damaging customer
+      relationships. Designs multi-step sequences with escalating urgency.
+expected_outputs:
+- Failed payment analysis report
+- Dunning email sequence
+- Retry timing recommendations
+- Revenue recovery projections
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: payment_recovery_{date}.md

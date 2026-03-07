@@ -1,0 +1,45 @@
+id: legal_terms_of_service_drafter
+name: Terms of Service Drafter
+description: Drafts terms of service documents tailored to your product type, jurisdiction, and business
+  model. Covers key sections including acceptable use, liability limitations, dispute resolution, and
+  data handling.
+category: legal_compliance
+tags:
+- terms-of-service
+- legal
+- compliance
+- policy
+- agreements
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- FileReadTool
+sample_prompts:
+- Draft terms of service for our SaaS platform
+- Update our ToS to cover the new AI-generated content features
+- Create terms of service that comply with EU and US requirements
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: legal_researcher
+    role: Legal Requirements Researcher
+    backstory: Legal analyst who researches jurisdiction-specific requirements, industry standards, and
+      recent regulatory changes to ensure terms of service cover all necessary legal bases.
+  - name: tos_drafter
+    role: Terms of Service Drafter
+    backstory: Legal writer who drafts clear, enforceable terms of service using plain language where
+      possible, covering liability, warranties, acceptable use, termination, and dispute resolution.
+expected_outputs:
+- Complete terms of service document
+- Section-by-section breakdown with rationale
+- Jurisdiction-specific compliance notes
+- Plain language summary for users
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: terms_of_service_{date}.md

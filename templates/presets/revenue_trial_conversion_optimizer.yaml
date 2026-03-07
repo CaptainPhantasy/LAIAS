@@ -1,0 +1,50 @@
+id: revenue_trial_conversion_optimizer
+name: Trial-to-Paid Conversion Optimizer
+description: Analyzes free trial user behavior to identify conversion drivers and blockers. Segments trial
+  users by engagement level and recommends targeted interventions (emails, in-app nudges, demo offers)
+  to maximize conversion to paid plans.
+category: revenue_growth
+tags:
+- trial
+- conversion
+- optimization
+- onboarding
+- activation
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Analyze our trial user data and identify what separates converters from churners
+- Which trial users should I personally reach out to this week?
+- Design an email sequence to re-engage trial users who went inactive after day 3
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: behavior_analyst
+    role: Trial Behavior Analyst
+    backstory: Maps the trial user journey, identifying activation milestones that correlate with conversion.
+      Finds the 'aha moment' patterns in usage data.
+  - name: segment_builder
+    role: User Segmentation Specialist
+    backstory: Groups trial users into actionable segments based on engagement depth, feature adoption,
+      and demographic signals. Each segment gets a tailored conversion strategy.
+  - name: intervention_designer
+    role: Conversion Intervention Designer
+    backstory: Designs targeted nudges, emails, and offers for each trial segment. Optimizes timing and
+      messaging to move users toward the activation milestone.
+expected_outputs:
+- Trial conversion funnel analysis
+- User segment profiles
+- Intervention playbook per segment
+- Projected conversion rate improvement
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: trial_conversion_{date}.md

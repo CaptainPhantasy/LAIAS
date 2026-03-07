@@ -1,0 +1,49 @@
+id: product_database_query_optimizer
+name: Database Query Optimizer
+description: Analyzes slow database queries, missing indexes, and inefficient data access patterns. Suggests
+  query rewrites, index additions, and schema optimizations to improve application performance.
+category: product_engineering
+tags:
+- database
+- queries
+- sql
+- optimization
+- performance
+default_complexity: complex
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+- CodeSearchTool
+sample_prompts:
+- Find and optimize the 10 slowest queries in our application
+- Suggest indexes for our most frequently queried tables
+- Review our ORM usage for N+1 query problems
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: query_analyzer
+    role: SQL Query Analyst
+    backstory: Examines query patterns, execution plans, and table scan frequencies. Identifies the most
+      expensive queries by total time and frequency.
+  - name: index_advisor
+    role: Database Index Advisor
+    backstory: Recommends optimal index strategies based on query patterns, table sizes, and write vs
+      read ratios. Avoids over-indexing.
+  - name: schema_optimizer
+    role: Schema Design Optimizer
+    backstory: Reviews table structures for normalization issues, data type inefficiencies, and opportunities
+      for denormalization that would speed up common access patterns.
+expected_outputs:
+- Slow query analysis report
+- Index recommendations
+- Query rewrite suggestions
+- Schema optimization plan
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: db_optimization_{date}.md

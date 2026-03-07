@@ -1,0 +1,46 @@
+id: content_help_center_article_writer
+name: Help Center Article Writer
+description: Creates help center and knowledge base articles from product documentation, support tickets,
+  and feature specs. Writes clear, searchable articles with step-by-step instructions and troubleshooting
+  guides.
+category: content_communications
+tags:
+- help-center
+- knowledge-base
+- support
+- documentation
+- self-service
+default_complexity: simple
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+sample_prompts:
+- Write a help center article explaining how to set up integrations
+- Create troubleshooting guides for our top 10 support ticket categories
+- Draft a knowledge base article for our new billing features
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: false
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: content_researcher
+    role: Support Content Researcher
+    backstory: Support specialist who analyzes common questions, existing documentation gaps, and feature
+      specifications to identify what information users need most and how they search for it.
+  - name: article_writer
+    role: Help Center Article Writer
+    backstory: Technical writer who creates scannable, step-by-step help articles with clear headings,
+      numbered instructions, screenshots placeholders, and related article links for comprehensive self-service
+      support.
+expected_outputs:
+- Complete help center article
+- Step-by-step instructions with visuals
+- Related articles and cross-references
+- Search keywords and metadata
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: help_article_{date}.md

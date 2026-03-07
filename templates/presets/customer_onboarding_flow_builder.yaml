@@ -1,0 +1,50 @@
+id: customer_onboarding_flow_builder
+name: Customer Onboarding Flow Builder
+description: Designs automated onboarding sequences that guide new customers from signup to first value.
+  Creates email sequences, in-app checklist suggestions, and milestone-based triggers to maximize activation
+  rates.
+category: customer_success
+tags:
+- onboarding
+- activation
+- emails
+- customer
+- engagement
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- SerperDevTool
+- EXASearchTool
+sample_prompts:
+- Design a 14-day onboarding sequence for new trial users
+- Create an onboarding checklist that drives users to their aha moment
+- Build email templates for each onboarding milestone
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: journey_mapper
+    role: Onboarding Journey Designer
+    backstory: Maps the ideal new user journey from signup to activation. Identifies key milestones, potential
+      drop-off points, and intervention triggers.
+  - name: content_writer
+    role: Onboarding Content Writer
+    backstory: Writes onboarding emails, tooltips, and checklist items that educate and motivate. Uses
+      progressive disclosure to avoid overwhelming new users.
+  - name: milestone_tracker
+    role: Activation Milestone Analyst
+    backstory: Defines measurable activation milestones and designs tracking to measure onboarding effectiveness
+      at each stage.
+expected_outputs:
+- Onboarding flow diagram
+- Email sequence with copy
+- Activation milestone definitions
+- In-app checklist suggestions
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: onboarding_flow_{date}.md

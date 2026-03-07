@@ -1,0 +1,49 @@
+id: customer_churn_exit_interviewer
+name: Churn Exit Interview Analyzer
+description: Analyzes cancellation reasons from exit surveys, support conversations, and churn data to
+  identify systematic issues driving customer loss. Creates a churn reason taxonomy with actionable recommendations.
+category: customer_success
+tags:
+- churn
+- exit-interview
+- cancellation
+- retention
+- analysis
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Analyze all cancellation reasons from the past 3 months
+- 'What''s the #1 reason customers are leaving and how do we fix it?'
+- Compare churn reasons between monthly and annual customers
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: reason_categorizer
+    role: Churn Reason Categorizer
+    backstory: 'Reads cancellation feedback and categorizes into systematic reasons: pricing, missing
+      features, poor support, found alternative, business closed, or budget cut.'
+  - name: pattern_analyzer
+    role: Churn Pattern Analyst
+    backstory: 'Identifies patterns in who churns and why: correlations between churn reason, customer
+      segment, tenure, plan tier, and usage level.'
+  - name: prevention_planner
+    role: Churn Prevention Strategist
+    backstory: Creates specific prevention strategies for each churn driver. Recommends product changes,
+      pricing adjustments, or process improvements to address root causes.
+expected_outputs:
+- Churn reason taxonomy
+- Pattern analysis report
+- Prevention strategy per reason
+- Revenue impact by churn driver
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: churn_analysis_{date}.md

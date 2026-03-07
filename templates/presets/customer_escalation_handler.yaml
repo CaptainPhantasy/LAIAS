@@ -1,0 +1,50 @@
+id: customer_escalation_handler
+name: Escalation Response Handler
+description: Manages customer escalations by analyzing the issue history, drafting empathetic response
+  communications, creating resolution action plans, and documenting lessons learned to prevent future
+  escalations.
+category: customer_success
+tags:
+- escalation
+- crisis
+- support
+- resolution
+- communication
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CSVSearchTool
+- EmailTool
+sample_prompts:
+- Draft an escalation response for a customer threatening to cancel
+- Create an action plan to resolve this enterprise customer's issues
+- Analyze our escalation history and find preventable patterns
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: issue_investigator
+    role: Escalation Issue Investigator
+    backstory: Reconstructs the full issue timeline from support tickets, emails, and product data. Identifies
+      the root cause and every touchpoint where the situation could have been prevented.
+  - name: response_writer
+    role: Escalation Communication Writer
+    backstory: Writes empathetic, ownership-taking escalation responses. Acknowledges the issue, outlines
+      the resolution plan, and sets clear expectations for follow-up.
+  - name: prevention_planner
+    role: Escalation Prevention Analyst
+    backstory: Analyzes escalation patterns to identify systemic issues. Creates prevention checklists
+      and early warning indicators for customer-facing teams.
+expected_outputs:
+- Escalation response draft
+- Resolution action plan
+- Root cause analysis
+- Prevention recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: escalation_response_{date}.md

@@ -1,0 +1,46 @@
+id: data_cohort_analysis_agent
+name: Cohort Analysis Agent
+description: Performs cohort analysis on user or customer data to reveal retention patterns, behavioral
+  trends, and lifecycle insights. Groups users by acquisition date, plan type, or behavior to identify
+  what drives long-term engagement.
+category: data_intelligence
+tags:
+- cohort
+- retention
+- analytics
+- users
+- lifecycle
+default_complexity: complex
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Run a monthly cohort retention analysis on our user signups
+- Compare retention rates between users who completed onboarding vs those who didn't
+- Analyze revenue cohorts by acquisition channel for the past 6 months
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: cohort_builder
+    role: Cohort Data Analyst
+    backstory: Data scientist who segments users into meaningful cohorts, calculates retention curves,
+      and identifies statistically significant differences in behavior across groups.
+  - name: insight_narrator
+    role: Analytics Insight Writer
+    backstory: Business analyst who translates cohort data into narrative insights, highlights actionable
+      patterns, and recommends interventions to improve retention and engagement.
+expected_outputs:
+- Cohort retention tables and curves
+- Behavioral pattern analysis by cohort
+- Key drop-off points identification
+- Retention improvement recommendations
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: cohort_analysis_{date}.csv

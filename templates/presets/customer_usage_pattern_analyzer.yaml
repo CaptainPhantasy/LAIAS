@@ -1,0 +1,49 @@
+id: customer_usage_pattern_analyzer
+name: Product Usage Pattern Analyzer
+description: Analyzes how customers actually use your product to identify power features, underused capabilities,
+  and common workflows. Reveals opportunities for better onboarding, feature education, and product improvements.
+category: customer_success
+tags:
+- usage
+- analytics
+- patterns
+- product
+- behavior
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- What features do our most successful customers use that others don't?
+- Show me the most common user workflows in our product
+- Identify features that customers try once but never use again
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: usage_miner
+    role: Usage Data Analyst
+    backstory: Mines product usage data to map feature adoption rates, usage frequency patterns, and workflow
+      sequences that define how customers get value from the product.
+  - name: segment_comparator
+    role: Segment Behavior Comparator
+    backstory: Compares usage patterns between high-value and low-value customer segments to identify
+      the behaviors that differentiate successful customers.
+  - name: insight_reporter
+    role: Usage Insight Reporter
+    backstory: 'Translates raw usage data into actionable product and CS insights: features to promote,
+      workflows to simplify, and onboarding gaps to fill.'
+expected_outputs:
+- Feature adoption heatmap data
+- Power user vs average user comparison
+- Underused feature analysis
+- Product improvement recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: usage_patterns_{date}.md

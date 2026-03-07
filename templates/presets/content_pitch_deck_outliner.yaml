@@ -1,0 +1,44 @@
+id: content_pitch_deck_outliner
+name: Pitch Deck Outliner
+description: Creates structured pitch deck outlines with slide-by-slide content, talking points, and data
+  requirements. Follows proven frameworks (Sequoia, YC) adapted to your specific business narrative.
+category: content_communications
+tags:
+- pitch-deck
+- fundraising
+- presentation
+- startup
+- storytelling
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Create a pitch deck outline for our Series A fundraise
+- Draft slide content for a 10-slide investor presentation
+- Build a pitch deck outline following the Sequoia framework
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: narrative_architect
+    role: Pitch Narrative Architect
+    backstory: Startup storytelling expert who structures the pitch narrative arc from problem to vision,
+      ensuring each slide builds on the previous one and the overall story is compelling and investor-ready.
+  - name: content_drafter
+    role: Slide Content Drafter
+    backstory: Presentation specialist who writes concise slide headlines, bullet points, talking points,
+      and identifies data visualizations needed for each slide, following top-tier VC pitch frameworks.
+expected_outputs:
+- Slide-by-slide outline with headlines
+- Talking points per slide
+- Data and visualization requirements
+- Narrative flow and transition notes
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: pitch_deck_{date}.md

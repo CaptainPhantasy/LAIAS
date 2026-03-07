@@ -1,0 +1,49 @@
+id: product_performance_profiler
+name: Performance Optimization Profiler
+description: Analyzes application code and architecture for performance bottlenecks. Reviews database
+  queries, API response times, memory usage patterns, and caching strategies to recommend specific optimizations.
+category: product_engineering
+tags:
+- performance
+- optimization
+- profiling
+- speed
+- database
+default_complexity: complex
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+- CodeSearchTool
+sample_prompts:
+- Find the slowest database queries in our application
+- Analyze our API endpoints for response time optimization
+- Review our caching strategy and suggest improvements
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: query_optimizer
+    role: Database Query Optimizer
+    backstory: Analyzes SQL and ORM queries for N+1 problems, missing indexes, unnecessary joins, and
+      suboptimal query plans. Suggests specific query rewrites.
+  - name: api_profiler
+    role: API Performance Analyst
+    backstory: Reviews endpoint implementations for slow operations, synchronous blocking, missing pagination,
+      and opportunities for background processing.
+  - name: cache_strategist
+    role: Caching Strategy Advisor
+    backstory: Evaluates current caching patterns and recommends caching layers, invalidation strategies,
+      and cache-aside implementations for hot paths.
+expected_outputs:
+- Performance bottleneck report
+- Query optimization suggestions
+- Caching strategy recommendations
+- Estimated improvement projections
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: performance_report_{date}.md

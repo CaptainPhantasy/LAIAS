@@ -1,0 +1,50 @@
+id: marketing_influencer_outreach
+name: Influencer Outreach Agent
+description: Identifies and evaluates potential influencer partners in your niche. Analyzes their audience
+  demographics, engagement rates, and content alignment. Drafts personalized outreach messages and proposes
+  collaboration formats.
+category: marketing_brand
+tags:
+- influencer
+- outreach
+- partnership
+- creators
+- collaboration
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Find 20 micro-influencers in the AI/automation space with 5K-50K followers
+- Draft partnership pitch emails for tech YouTubers who review SaaS tools
+- Evaluate these 10 influencers by engagement rate and audience fit
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: influencer_finder
+    role: Influencer Discovery Specialist
+    backstory: Searches for influencers across YouTube, Twitter, LinkedIn, and blogs in your product category.
+      Filters by audience size, engagement rates, and content relevance.
+  - name: fit_evaluator
+    role: Influencer Fit Analyst
+    backstory: Evaluates potential partners on audience overlap, brand alignment, past sponsorship performance,
+      and authenticity signals. Ranks by expected ROI.
+  - name: outreach_writer
+    role: Partnership Pitch Writer
+    backstory: Crafts personalized outreach emails that reference the influencer's recent content and
+      propose mutually beneficial collaboration formats.
+expected_outputs:
+- Influencer prospect list with metrics
+- Fit assessment per influencer
+- Personalized outreach drafts
+- Collaboration format proposals
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: influencer_list_{date}.csv

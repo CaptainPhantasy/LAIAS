@@ -1,0 +1,46 @@
+id: marketing_community_engagement_bot
+name: Community Engagement Monitor
+description: Monitors online communities (Reddit, Hacker News, Twitter, forums) for relevant discussions
+  about your product category. Identifies engagement opportunities, drafts helpful responses, and tracks
+  brand mentions and sentiment.
+category: marketing_brand
+tags:
+- community
+- reddit
+- engagement
+- monitoring
+- social
+default_complexity: simple
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Find Reddit threads where people are asking about AI agent builders
+- Monitor Hacker News for mentions of our competitors and draft responses
+- Track Twitter conversations about our product category this week
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: community_scanner
+    role: Community Intelligence Monitor
+    backstory: Scans relevant subreddits, forums, and social platforms for discussions about your product
+      category. Identifies high-engagement threads where participation would be valuable.
+  - name: response_drafter
+    role: Community Response Writer
+    backstory: Drafts helpful, non-salesy community responses that establish expertise and subtly position
+      your product. Follows community norms and adds genuine value.
+expected_outputs:
+- Engagement opportunity list
+- Draft responses per thread
+- Brand mention report
+- Sentiment analysis summary
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: community_report_{date}.md

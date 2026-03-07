@@ -1,0 +1,49 @@
+id: ops_vendor_comparison_agent
+name: Vendor Comparison Agent
+description: Researches and compares vendors or SaaS tools across pricing, features, reviews, and integration
+  capabilities. Produces side-by-side comparison matrices to support procurement decisions.
+category: operations_productivity
+tags:
+- vendors
+- comparison
+- procurement
+- evaluation
+- tools
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- FileReadTool
+sample_prompts:
+- Compare the top 5 project management tools for a 20-person team
+- Evaluate CRM vendors that integrate with our existing tech stack
+- Research and compare cloud hosting providers for our workload requirements
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: vendor_researcher
+    role: Vendor Research Analyst
+    backstory: Procurement specialist who gathers comprehensive vendor information including pricing tiers,
+      feature sets, customer reviews, and company stability indicators.
+  - name: feature_comparator
+    role: Feature Comparison Analyst
+    backstory: Technical evaluator who creates detailed feature matrices, tests integration compatibility,
+      and assesses scalability against stated requirements.
+  - name: recommendation_writer
+    role: Procurement Advisor
+    backstory: Strategic advisor who synthesizes research into clear vendor rankings with pros/cons, total
+      cost of ownership estimates, and a final recommendation with rationale.
+expected_outputs:
+- Side-by-side vendor comparison matrix
+- Pricing analysis with TCO estimates
+- Feature gap analysis per vendor
+- Final recommendation with rationale
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: vendor_comparison_{date}.md

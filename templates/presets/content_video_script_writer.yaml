@@ -1,0 +1,45 @@
+id: content_video_script_writer
+name: Video Script Writer
+description: Writes video scripts for product demos, explainers, tutorials, and marketing videos. Includes
+  scene descriptions, dialogue, on-screen text cues, and timing estimates for production-ready scripts.
+category: content_communications
+tags:
+- video
+- scripts
+- production
+- marketing
+- demos
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Write a 2-minute product demo script for our landing page
+- Create a script for a customer testimonial video
+- Draft an explainer video script for our onboarding flow
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: script_planner
+    role: Video Script Planner
+    backstory: Video producer who structures the script with clear scene breakdowns, pacing, and visual
+      cues. Ensures the narrative arc keeps viewers engaged and delivers the key message within the target
+      duration.
+  - name: script_writer
+    role: Video Script Writer
+    backstory: Screenwriter who crafts natural dialogue, compelling narration, and clear on-screen text
+      cues. Balances information density with entertainment value for maximum viewer retention.
+expected_outputs:
+- Complete video script with scene breakdowns
+- Dialogue and narration text
+- On-screen text and visual cues
+- Timing estimates per scene
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: video_script_{date}.md

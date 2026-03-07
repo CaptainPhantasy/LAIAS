@@ -1,0 +1,44 @@
+id: content_case_study_builder
+name: Case Study Builder
+description: Creates compelling customer case studies from interview notes, usage data, and outcomes.
+  Follows the situation-challenge-solution-results framework to produce marketing-ready success stories.
+category: content_communications
+tags:
+- case-studies
+- customer-stories
+- marketing
+- social-proof
+- content
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Build a case study from our interview notes with Acme Corp
+- Create a customer success story highlighting the 3x ROI achievement
+- Write a case study template we can use for future customer interviews
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: story_extractor
+    role: Customer Story Extractor
+    backstory: Journalist who identifies the compelling narrative arc from raw interview notes and data,
+      extracting the before/after transformation, key challenges overcome, and quantifiable results achieved.
+  - name: case_study_writer
+    role: Case Study Writer
+    backstory: Content marketing specialist who crafts polished case studies following the situation-challenge-solution-results
+      framework, with pull quotes, metrics callouts, and a clear call-to-action.
+expected_outputs:
+- Complete case study document
+- Executive summary with key metrics
+- Pull quotes and testimonials
+- Visual-ready metrics and before/after comparisons
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: case_study_{date}.md

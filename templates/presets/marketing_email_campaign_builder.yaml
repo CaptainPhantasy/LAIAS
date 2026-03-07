@@ -1,0 +1,50 @@
+id: marketing_email_campaign_builder
+name: Email Drip Campaign Builder
+description: Designs segmented email drip campaigns for onboarding, nurturing, and re-engagement. Creates
+  email copy, subject lines, and send schedules optimized for open rates and click-throughs. Includes
+  A/B test variations for key emails.
+category: marketing_brand
+tags:
+- email
+- drip
+- campaign
+- nurture
+- automation
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- SerperDevTool
+- EXASearchTool
+sample_prompts:
+- Build a 7-email onboarding drip for new trial signups
+- Create a re-engagement campaign for users who haven't logged in for 30 days
+- Design a nurture sequence for leads who downloaded our whitepaper
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: journey_mapper
+    role: Email Journey Architect
+    backstory: Maps the subscriber journey from trigger event to conversion. Designs branching logic,
+      timing delays, and segment-specific paths that guide users toward activation.
+  - name: email_copywriter
+    role: Email Copywriter
+    backstory: 'Writes compelling email copy with proven frameworks: PAS, AIDA, and storytelling. Crafts
+      subject lines that get opened and CTAs that get clicked.'
+  - name: test_designer
+    role: Email A/B Test Designer
+    backstory: Creates test variations for subject lines, send times, and email length. Designs experiments
+      that produce statistically meaningful results for ongoing optimization.
+expected_outputs:
+- Complete drip sequence with copy
+- Subject line A/B test variants
+- Send schedule and timing
+- Segmentation criteria
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: email_campaign_{date}.md

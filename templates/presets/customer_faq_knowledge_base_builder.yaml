@@ -1,0 +1,50 @@
+id: customer_faq_knowledge_base_builder
+name: FAQ & Knowledge Base Builder
+description: Analyzes support ticket history to identify the most common questions and builds comprehensive
+  FAQ articles and knowledge base content. Reduces support volume by enabling customer self-service.
+category: customer_success
+tags:
+- faq
+- knowledge-base
+- self-service
+- support
+- documentation
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+- SerperDevTool
+sample_prompts:
+- Build a FAQ from our most common support tickets
+- Create 20 knowledge base articles for our top customer questions
+- Analyze what questions customers ask most and write help articles for each
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: question_miner
+    role: Common Question Analyst
+    backstory: Analyzes support ticket history to identify the most frequently asked questions, grouping
+      variations of the same question and ranking by volume.
+  - name: article_writer
+    role: Help Article Writer
+    backstory: Writes clear, step-by-step help articles with screenshots placeholders, code examples,
+      and troubleshooting sections. Optimizes for searchability.
+  - name: gap_analyzer
+    role: Knowledge Gap Finder
+    backstory: Identifies topics where customers struggle but no help content exists. Prioritizes article
+      creation by support volume reduction potential.
+expected_outputs:
+- FAQ article drafts
+- Knowledge base structure
+- Question frequency analysis
+- Content gap report
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: faq_articles_{date}.md

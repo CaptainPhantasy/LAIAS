@@ -1,0 +1,45 @@
+id: product_bug_triage_prioritizer
+name: Bug Triage & Prioritizer
+description: Analyzes incoming bug reports to classify severity, estimate impact, identify affected components,
+  and suggest assignment. Creates a prioritized bug queue with context for faster resolution.
+category: product_engineering
+tags:
+- bugs
+- triage
+- priority
+- issues
+- tracking
+default_complexity: simple
+default_tools:
+- FileReadTool
+- CSVSearchTool
+- GithubSearchTool
+sample_prompts:
+- Triage these 30 new bug reports from this week
+- Prioritize our bug backlog by customer impact
+- Classify these support tickets into bugs vs feature requests
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: bug_classifier
+    role: Bug Classification Specialist
+    backstory: Expert at reading bug reports, reproducing issues mentally, and classifying by severity
+      (critical/major/minor/cosmetic), type (crash/data-loss/UI/performance), and affected component.
+  - name: impact_assessor
+    role: Customer Impact Analyst
+    backstory: 'Evaluates each bug''s blast radius: number of affected users, revenue impact, workaround
+      availability, and SLA implications to create objective priority scores.'
+expected_outputs:
+- Prioritized bug queue
+- Impact assessment per bug
+- Component assignment suggestions
+- Triage summary report
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: bug_triage_{date}.csv

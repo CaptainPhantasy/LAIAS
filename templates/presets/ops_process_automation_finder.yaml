@@ -1,0 +1,49 @@
+id: ops_process_automation_finder
+name: Process Automation Finder
+description: Audits existing workflows and processes to identify automation opportunities. Estimates time
+  savings, implementation effort, and ROI for each automation candidate. Prioritizes by impact-to-effort
+  ratio.
+category: operations_productivity
+tags:
+- automation
+- processes
+- efficiency
+- roi
+- optimization
+default_complexity: complex
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Audit our current workflows and find the top automation opportunities
+- Which manual processes would give us the highest ROI if automated?
+- Evaluate automation tools for our repetitive reporting tasks
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: process_auditor
+    role: Process Auditor
+    backstory: Operations analyst who maps current workflows, measures time spent on repetitive tasks,
+      and identifies bottlenecks and manual handoffs that are candidates for automation.
+  - name: automation_evaluator
+    role: Automation Feasibility Analyst
+    backstory: Technology consultant who assesses automation feasibility, estimates implementation effort,
+      calculates potential time savings, and researches available tools for each opportunity.
+  - name: roi_calculator
+    role: ROI & Prioritization Analyst
+    backstory: Business analyst who calculates return on investment for each automation opportunity, ranks
+      them by impact-to-effort ratio, and creates an implementation roadmap.
+expected_outputs:
+- Automation opportunity register with ROI scores
+- Current vs automated process comparison
+- Implementation effort estimates per opportunity
+- Prioritized automation roadmap
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: automation_opportunities_{date}.md

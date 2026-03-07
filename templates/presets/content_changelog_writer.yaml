@@ -1,0 +1,44 @@
+id: content_changelog_writer
+name: Changelog Writer
+description: Generates polished changelogs from git commits, PR descriptions, and release notes. Groups
+  changes by type (features, fixes, improvements), writes user-friendly descriptions, and formats for
+  public release.
+category: content_communications
+tags:
+- changelog
+- releases
+- documentation
+- git
+- communication
+default_complexity: simple
+default_tools:
+- FileReadTool
+sample_prompts:
+- Generate a changelog from our last 50 git commits
+- Write a user-facing release notes document for v2.3
+- Summarize all changes since the last release into a changelog
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: false
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: change_categorizer
+    role: Change Categorizer
+    backstory: Release engineer who reads commit messages and PR descriptions, categorizes changes into
+      features, bug fixes, improvements, and breaking changes, and filters out internal-only changes.
+  - name: changelog_writer
+    role: Changelog Writer
+    backstory: Technical writer who transforms categorized changes into clear, user-friendly changelog
+      entries with consistent formatting, proper versioning, and migration notes for breaking changes.
+expected_outputs:
+- Formatted changelog grouped by change type
+- User-friendly feature descriptions
+- Breaking changes with migration guides
+- Version summary with highlights
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: changelog_{date}.md

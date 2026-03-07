@@ -1,0 +1,46 @@
+id: marketing_ad_copy_generator
+name: Ad Copy Generator
+description: Generates high-converting ad copy for Google Ads, Meta Ads, and LinkedIn Ads. Creates multiple
+  headline and description variations, respects character limits per platform, and aligns messaging with
+  landing pages for quality score optimization.
+category: marketing_brand
+tags:
+- ads
+- ppc
+- copy
+- google
+- meta
+- linkedin
+default_complexity: simple
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+sample_prompts:
+- Write 10 Google Ads variations for our main product keyword
+- Create LinkedIn ad copy targeting engineering managers
+- Generate Meta ad copy for our free trial offer
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: ad_researcher
+    role: Ad Copy Researcher
+    backstory: Studies competitor ads, top-performing ad patterns, and platform best practices. Identifies
+      emotional triggers and value propositions that resonate with target audiences.
+  - name: ad_writer
+    role: Performance Ad Copywriter
+    backstory: 'Writes concise, action-oriented ad copy within strict character limits. Tests different
+      angles: pain point, benefit, social proof, and urgency-driven messaging.'
+expected_outputs:
+- Ad copy variations per platform
+- Headline and description options
+- Character count verification
+- Landing page alignment notes
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: ad_copy_{date}.md

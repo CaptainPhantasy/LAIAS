@@ -1,0 +1,50 @@
+id: marketing_pr_pitch_writer
+name: PR Pitch & Press Release Writer
+description: Writes press releases and media pitch emails for product launches, funding announcements,
+  and company milestones. Researches relevant journalists and publications, crafts newsworthy angles,
+  and prepares ready-to-send pitches.
+category: marketing_brand
+tags:
+- pr
+- press
+- media
+- pitch
+- journalism
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Write a press release for our Series A announcement
+- Find 20 tech journalists who cover AI tools and draft personalized pitches
+- Create a media kit for our product launch next month
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: media_researcher
+    role: Media List Builder
+    backstory: Identifies relevant journalists, bloggers, and publications covering your space. Builds
+      targeted media lists with contact details and recent coverage topics.
+  - name: press_writer
+    role: Press Release Writer
+    backstory: Crafts newsworthy press releases following AP style guidelines. Leads with the hook, includes
+      compelling quotes, and structures for easy journalist pick-up.
+  - name: pitch_personalizer
+    role: Media Pitch Specialist
+    backstory: Writes personalized pitch emails that reference each journalist's recent work. Creates
+      unique angles that make your story relevant to each reporter's beat.
+expected_outputs:
+- Press release draft
+- Targeted media list
+- Personalized pitch emails
+- Media kit outline
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: pr_pitch_{date}.md

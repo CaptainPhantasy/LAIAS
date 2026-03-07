@@ -1,0 +1,46 @@
+id: revenue_competitor_pricing_monitor
+name: Competitor Pricing Monitor
+description: Continuously monitors competitor pricing pages, plan structures, and feature offerings. Detects
+  changes and alerts on new tiers, price increases, or feature bundling shifts that could affect your
+  competitive positioning.
+category: revenue_growth
+tags:
+- competitor
+- pricing
+- monitoring
+- intelligence
+- market
+default_complexity: simple
+default_tools:
+- ScrapeWebsiteTool
+- SerperDevTool
+- WebsiteSearchTool
+sample_prompts:
+- Check if any of our top 5 competitors changed their pricing this month
+- Compare our feature-to-price ratio against Competitor X and Y
+- Alert me when competitors add or remove features from their plans
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: price_scraper
+    role: Pricing Page Monitor
+    backstory: Systematically scrapes competitor pricing pages, capturing plan names, prices, feature
+      lists, and any promotional offers. Detects changes from previous snapshots.
+  - name: comparison_analyst
+    role: Competitive Intelligence Analyst
+    backstory: Synthesizes pricing data into actionable competitive intelligence. Identifies positioning
+      threats, pricing gaps, and opportunities to differentiate on value.
+expected_outputs:
+- Competitor pricing snapshot
+- Change detection report
+- Feature comparison matrix
+- Positioning recommendations
+output_config:
+  format: html
+  destination: filesystem
+  filename_pattern: competitor_pricing_{date}.html

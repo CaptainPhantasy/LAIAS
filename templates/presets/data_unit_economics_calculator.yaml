@@ -1,0 +1,46 @@
+id: data_unit_economics_calculator
+name: Unit Economics Calculator
+description: Calculates and tracks unit economics metrics including CAC, LTV, payback period, and contribution
+  margins. Breaks down economics by channel, segment, and cohort to identify the most profitable growth
+  paths.
+category: data_intelligence
+tags:
+- unit-economics
+- cac
+- ltv
+- margins
+- saas-metrics
+default_complexity: complex
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Calculate our current LTV/CAC ratio by acquisition channel
+- What's our payback period for customers acquired through paid ads vs organic?
+- Break down contribution margins by product tier
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: economics_calculator
+    role: Unit Economics Analyst
+    backstory: SaaS metrics specialist who calculates CAC, LTV, payback period, gross margins, and contribution
+      margins with proper methodology, breaking down each metric by relevant dimensions.
+  - name: growth_advisor
+    role: Growth Economics Advisor
+    backstory: Growth strategist who interprets unit economics to identify the most capital-efficient
+      growth channels, recommends budget allocation, and flags unsustainable acquisition patterns.
+expected_outputs:
+- Unit economics dashboard (CAC, LTV, payback)
+- Channel-level economics breakdown
+- Cohort-based LTV analysis
+- Growth efficiency recommendations
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: unit_economics_{date}.csv

@@ -1,0 +1,50 @@
+id: marketing_landing_page_optimizer
+name: Landing Page Optimizer
+description: Analyzes your landing pages for conversion optimization opportunities. Reviews headline clarity,
+  value proposition strength, CTA placement, social proof usage, and page structure against proven SaaS
+  landing page frameworks.
+category: marketing_brand
+tags:
+- landing-page
+- conversion
+- optimization
+- cro
+- ux
+default_complexity: moderate
+default_tools:
+- ScrapeWebsiteTool
+- SerperDevTool
+- WebsiteSearchTool
+sample_prompts:
+- Audit our homepage and give me 10 specific improvements to increase signups
+- Compare our landing page to the top 5 competitors and suggest changes
+- Write 5 headline variations we can A/B test on our pricing page
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: page_auditor
+    role: Landing Page Auditor
+    backstory: 'Evaluates landing pages against conversion optimization best practices: above-fold clarity,
+      benefit-driven copy, trust signals, friction reduction, and CTA prominence.'
+  - name: competitor_benchmarker
+    role: Competitor Page Analyst
+    backstory: Scrapes and analyzes competitor landing pages to identify messaging patterns, design choices,
+      and conversion elements you're missing.
+  - name: copy_improver
+    role: Conversion Copywriter
+    backstory: Rewrites landing page sections with proven conversion copywriting frameworks. Creates A/B
+      test variations for headlines, subheadlines, and CTAs.
+expected_outputs:
+- Page audit with prioritized recommendations
+- Competitor comparison matrix
+- Rewritten copy sections
+- A/B test plan
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: landing_page_audit_{date}.md

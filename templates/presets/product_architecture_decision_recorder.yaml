@@ -1,0 +1,46 @@
+id: product_architecture_decision_recorder
+name: Architecture Decision Recorder
+description: Documents architecture decisions (ADRs) by capturing context, options considered, decision
+  rationale, and consequences. Creates searchable, consistent ADR documents that preserve institutional
+  knowledge for future reference.
+category: product_engineering
+tags:
+- architecture
+- adr
+- decisions
+- documentation
+- design
+default_complexity: simple
+default_tools:
+- FileReadTool
+- SerperDevTool
+- CodeDocsSearchTool
+sample_prompts:
+- Document our decision to switch from REST to GraphQL
+- Write an ADR for choosing PostgreSQL over MongoDB
+- Create an architecture decision record for our new caching strategy
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: context_researcher
+    role: Technical Context Researcher
+    backstory: 'Researches the technical landscape around each decision: available options, industry best
+      practices, and comparable implementations at similar-scale companies.'
+  - name: adr_writer
+    role: ADR Document Writer
+    backstory: 'Writes clear, structured ADR documents following the standard template: Title, Status,
+      Context, Decision, Consequences. Ensures decisions are understandable years later.'
+expected_outputs:
+- ADR document in standard format
+- Options comparison matrix
+- Consequence analysis
+- Related decision references
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: adr_{date}.md

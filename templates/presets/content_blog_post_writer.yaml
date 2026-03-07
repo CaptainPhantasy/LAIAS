@@ -1,0 +1,49 @@
+id: content_blog_post_writer
+name: Blog Post Writer
+description: Writes SEO-optimized blog posts from topic briefs, outlines, or rough notes. Handles research,
+  structuring, writing, and optimization for search engines while maintaining authentic brand voice.
+category: content_communications
+tags:
+- blog
+- content-marketing
+- seo
+- writing
+- thought-leadership
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- EXASearchTool
+- ScrapeWebsiteTool
+sample_prompts:
+- Write a blog post about the future of AI agents in enterprise
+- Create a thought leadership article on why startups should automate early
+- Draft a technical blog post explaining our architecture decisions
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: topic_researcher
+    role: Topic Researcher
+    backstory: Content researcher who gathers supporting data, statistics, expert quotes, and competitive
+      content analysis to build a strong factual foundation for the blog post.
+  - name: blog_writer
+    role: Blog Post Writer
+    backstory: Content writer who crafts engaging, well-structured blog posts with compelling hooks, clear
+      arguments, practical examples, and strong conclusions that drive reader action.
+  - name: seo_optimizer
+    role: SEO Content Optimizer
+    backstory: SEO specialist who optimizes headlines, meta descriptions, keyword placement, internal
+      linking suggestions, and readability scores without sacrificing content quality.
+expected_outputs:
+- Complete blog post (1500-2500 words)
+- SEO metadata (title, description, keywords)
+- Internal linking suggestions
+- Social media snippets for promotion
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: blog_post_{date}.md

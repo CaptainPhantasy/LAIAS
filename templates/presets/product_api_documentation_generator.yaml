@@ -1,0 +1,49 @@
+id: product_api_documentation_generator
+name: API Documentation Generator
+description: Generates comprehensive API documentation from code, endpoint definitions, or OpenAPI specs.
+  Creates clear descriptions, request/response examples, authentication guides, and error code references.
+category: product_engineering
+tags:
+- api
+- documentation
+- openapi
+- endpoints
+- developer
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CodeDocsSearchTool
+- CodeInterpreterTool
+sample_prompts:
+- Generate API docs from our FastAPI endpoint definitions
+- Create a getting started guide for our REST API
+- Document all error codes and their meanings for our API
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: endpoint_scanner
+    role: API Endpoint Analyzer
+    backstory: Reads code to extract endpoint definitions, parameters, request/response schemas, authentication
+      requirements, and rate limits.
+  - name: doc_writer
+    role: API Documentation Writer
+    backstory: Writes developer-friendly API documentation with clear explanations, realistic examples,
+      and copy-paste ready code snippets in multiple languages.
+  - name: example_builder
+    role: API Example Creator
+    backstory: Creates realistic request/response examples, curl commands, and SDK usage snippets that
+      developers can immediately use to integrate.
+expected_outputs:
+- API reference documentation
+- Getting started guide
+- Code examples per endpoint
+- Error code reference
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: api_docs_{date}.md

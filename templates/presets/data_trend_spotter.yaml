@@ -1,0 +1,46 @@
+id: data_trend_spotter
+name: Trend Spotter Agent
+description: Monitors industry news, social media, and research publications to identify emerging trends
+  relevant to your business. Scores trends by relevance and potential impact, delivering early-warning
+  intelligence.
+category: data_intelligence
+tags:
+- trends
+- monitoring
+- intelligence
+- emerging
+- signals
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- EXASearchTool
+- ScrapeWebsiteTool
+sample_prompts:
+- What are the emerging trends in AI-powered developer tools this month?
+- Monitor and report on new regulations affecting SaaS companies
+- Identify trending topics in our industry from the past two weeks
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: signal_scanner
+    role: Trend Signal Scanner
+    backstory: Intelligence analyst who monitors diverse sources including news, social media, research
+      papers, and patent filings to detect weak signals of emerging trends before they become mainstream.
+  - name: impact_assessor
+    role: Trend Impact Assessor
+    backstory: Strategic analyst who evaluates each detected trend for business relevance, estimates timeline
+      to mainstream adoption, and assesses potential impact on competitive positioning.
+expected_outputs:
+- Emerging trends report with relevance scores
+- Trend timeline and adoption stage analysis
+- Business impact assessment per trend
+- Recommended actions and monitoring alerts
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: trend_report_{date}.md

@@ -1,0 +1,50 @@
+id: revenue_expansion_revenue_finder
+name: Expansion Revenue Opportunity Finder
+description: Identifies net revenue expansion opportunities across the customer base including seat additions,
+  usage-based overages, add-on purchases, and plan upgrades. Quantifies the total addressable expansion
+  revenue and prioritizes outreach.
+category: revenue_growth
+tags:
+- expansion
+- nrr
+- growth
+- revenue
+- accounts
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Calculate our net revenue retention rate and find expansion opportunities
+- Which accounts have added team members but haven't upgraded their seat count?
+- Estimate the total expansion revenue opportunity in our current customer base
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: account_auditor
+    role: Account Expansion Auditor
+    backstory: Reviews account-level data to identify mismatches between actual usage and current plan.
+      Finds organic growth signals like team size increases and API call spikes.
+  - name: revenue_modeler
+    role: Expansion Revenue Modeler
+    backstory: Quantifies each expansion opportunity in dollar terms and models the aggregate impact on
+      NRR. Prioritizes by ease of conversion and revenue magnitude.
+  - name: outreach_planner
+    role: Expansion Outreach Planner
+    backstory: Creates account-specific expansion conversation plans with talking points, timing, and
+      value propositions tailored to each customer's growth trajectory.
+expected_outputs:
+- Expansion opportunity pipeline
+- NRR analysis and projections
+- Account-level expansion briefs
+- Outreach priority queue
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: expansion_revenue_{date}.csv

@@ -1,0 +1,45 @@
+id: hiring_performance_review_preparer
+name: Performance Review Preparer
+description: Helps prepare performance reviews by organizing feedback, achievements, and growth areas.
+  Generates structured review documents with evidence-based assessments, goal tracking, and development
+  recommendations.
+category: hiring_team
+tags:
+- performance-reviews
+- feedback
+- management
+- growth
+- hr
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CSVSearchTool
+sample_prompts:
+- Prepare a performance review template with Q3 achievements data
+- Organize 360 feedback into a structured review document
+- Generate development recommendations based on this employee's review history
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: feedback_organizer
+    role: Feedback & Achievement Organizer
+    backstory: HR analyst who collects and organizes performance data, peer feedback, goal completion
+      metrics, and notable achievements into a structured format for review preparation.
+  - name: review_writer
+    role: Performance Review Writer
+    backstory: Management coach who crafts constructive, balanced performance reviews with specific examples,
+      measurable assessments, and forward-looking development plans that motivate growth.
+expected_outputs:
+- Structured performance review document
+- Achievement summary with evidence
+- Strengths and growth areas assessment
+- Development plan with specific goals
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: performance_review_{date}.md

@@ -1,0 +1,50 @@
+id: revenue_proposal_generator
+name: Sales Proposal Generator
+description: Generates customized sales proposals by researching the prospect's business, matching their
+  needs to your features, and calculating ROI projections. Outputs a professional proposal document ready
+  for review and sending.
+category: revenue_growth
+tags:
+- proposal
+- sales
+- document
+- deals
+- closing
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- FileReadTool
+sample_prompts:
+- Generate a sales proposal for Acme Corp based on their requirements
+- Create a custom ROI calculator for a prospect doing 10K API calls/month
+- Build a proposal template I can customize for enterprise prospects
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: prospect_profiler
+    role: Prospect Research Analyst
+    backstory: Builds detailed prospect profiles from public sources to understand their business model,
+      pain points, and decision-making criteria. Ensures proposals speak directly to buyer needs.
+  - name: proposal_writer
+    role: Proposal Document Writer
+    backstory: Crafts professional, persuasive proposals that connect prospect pain points to product
+      capabilities. Includes executive summaries, feature mapping, and implementation timelines.
+  - name: roi_calculator
+    role: ROI and Value Engineer
+    backstory: Builds custom ROI models for each prospect using their industry benchmarks and stated metrics.
+      Makes the financial case for the investment compelling and credible.
+expected_outputs:
+- Customized sales proposal document
+- ROI analysis with projections
+- Feature-to-need mapping
+- Implementation timeline
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: proposal_{date}.md

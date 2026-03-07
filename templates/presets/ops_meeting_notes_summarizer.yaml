@@ -1,0 +1,43 @@
+id: ops_meeting_notes_summarizer
+name: Meeting Notes Summarizer
+description: Processes meeting transcripts or raw notes to extract key decisions, action items, owners,
+  and deadlines. Produces structured meeting summaries that keep teams aligned without re-watching recordings.
+category: operations_productivity
+tags:
+- meetings
+- notes
+- action-items
+- productivity
+- summaries
+default_complexity: simple
+default_tools:
+- FileReadTool
+sample_prompts:
+- Summarize today's product sync meeting notes and list all action items
+- Extract decisions and owners from this board meeting transcript
+- Create a weekly digest of all meeting outcomes from this week
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: false
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: content_parser
+    role: Meeting Content Parser
+    backstory: Expert note-taker who identifies discussion topics, decisions made, disagreements raised,
+      and follow-up items from unstructured meeting transcripts.
+  - name: action_tracker
+    role: Action Item Tracker
+    backstory: Project coordinator who extracts specific action items, assigns owners based on context,
+      identifies deadlines mentioned, and formats everything into a trackable list.
+expected_outputs:
+- Structured meeting summary with key topics
+- Action items with owners and deadlines
+- Decisions made and rationale
+- Open questions and parking lot items
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: meeting_summary_{date}.md

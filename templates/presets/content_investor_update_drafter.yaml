@@ -1,0 +1,45 @@
+id: content_investor_update_drafter
+name: Investor Update Drafter
+description: Drafts monthly or quarterly investor updates from business metrics, milestones, and strategic
+  context. Follows best practices for founder-investor communication with the right balance of transparency
+  and narrative.
+category: content_communications
+tags:
+- investor-updates
+- fundraising
+- reporting
+- stakeholders
+- communication
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CSVSearchTool
+sample_prompts:
+- Draft this month's investor update with our latest metrics
+- Write a quarterly board update covering Q3 performance and Q4 plans
+- Create an investor update highlighting our Series A milestones
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: metrics_compiler
+    role: Metrics & Highlights Compiler
+    backstory: Financial analyst who pulls key metrics (MRR, growth rate, runway, headcount), identifies
+      notable milestones, and structures the quantitative foundation of the investor update.
+  - name: narrative_writer
+    role: Investor Narrative Writer
+    backstory: Experienced founder communications advisor who crafts compelling investor updates balancing
+      transparency about challenges with confidence in strategy, following YC and top-VC recommended formats.
+expected_outputs:
+- Complete investor update email/document
+- Key metrics dashboard section
+- Highlights and lowlights with context
+- Asks and upcoming milestones section
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: investor_update_{date}.md

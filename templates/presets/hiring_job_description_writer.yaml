@@ -1,0 +1,45 @@
+id: hiring_job_description_writer
+name: Job Description Writer
+description: Creates compelling, inclusive job descriptions from role requirements and company context.
+  Optimizes for candidate attraction while clearly communicating expectations, qualifications, and culture
+  fit.
+category: hiring_team
+tags:
+- job-descriptions
+- hiring
+- recruiting
+- talent
+- employer-brand
+default_complexity: simple
+default_tools:
+- SerperDevTool
+- FileReadTool
+sample_prompts:
+- Write a job description for a Senior Backend Engineer
+- Create a compelling JD for our first Head of Marketing hire
+- Draft job postings for three open positions on the product team
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: role_analyst
+    role: Role Requirements Analyst
+    backstory: HR specialist who translates hiring manager needs into clear role requirements, distinguishing
+      must-haves from nice-to-haves, and benchmarking against market expectations for the role level.
+  - name: jd_writer
+    role: Job Description Writer
+    backstory: Employer branding specialist who crafts engaging job descriptions that attract diverse
+      candidates, clearly communicate the role and growth opportunity, and reflect company culture authentically.
+expected_outputs:
+- Complete job description ready to post
+- Role requirements (must-have vs nice-to-have)
+- Compensation benchmarking notes
+- Interview process outline
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: job_description_{date}.md

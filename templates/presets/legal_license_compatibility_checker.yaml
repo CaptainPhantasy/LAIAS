@@ -1,0 +1,45 @@
+id: legal_license_compatibility_checker
+name: License Compatibility Checker
+description: Analyzes open-source license compatibility across your dependency tree. Identifies license
+  conflicts, copyleft obligations, and attribution requirements to ensure your project stays legally compliant.
+category: legal_compliance
+tags:
+- licensing
+- open-source
+- compliance
+- dependencies
+- legal-risk
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CodeDocsSearchTool
+- SerperDevTool
+sample_prompts:
+- Check our dependency licenses for compatibility with our MIT license
+- Identify any copyleft licenses in our dependency tree
+- Audit our open-source usage for attribution requirements
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: license_scanner
+    role: License Scanner
+    backstory: Open-source compliance analyst who identifies all licenses in the dependency tree, categorizes
+      them by type (permissive, copyleft, proprietary), and flags potential compatibility issues.
+  - name: compliance_advisor
+    role: License Compliance Advisor
+    backstory: Software licensing expert who assesses license compatibility, identifies obligations (attribution,
+      source disclosure, patent grants), and recommends alternatives for incompatible dependencies.
+expected_outputs:
+- Dependency license inventory
+- Compatibility analysis with project license
+- Copyleft and obligation flags
+- Remediation recommendations for conflicts
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: license_audit_{date}.md

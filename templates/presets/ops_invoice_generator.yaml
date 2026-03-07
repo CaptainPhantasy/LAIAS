@@ -1,0 +1,43 @@
+id: ops_invoice_generator
+name: Invoice & Billing Generator
+description: Generates professional invoices from project data, time logs, and contract terms. Calculates
+  totals with tax handling, applies payment terms, and outputs formatted invoices ready to send to clients.
+category: operations_productivity
+tags:
+- invoicing
+- billing
+- finance
+- automation
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CSVSearchTool
+sample_prompts:
+- Generate invoices for all projects completed this month
+- Create an invoice for the Q3 consulting engagement with Acme Corp
+- Calculate outstanding balances across all active clients
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: data_extractor
+    role: Project Data Extractor
+    backstory: Meticulous accountant who pulls billable hours, expenses, and deliverables from project
+      tracking systems and time logs to build accurate line items.
+  - name: invoice_formatter
+    role: Invoice Formatter
+    backstory: Financial document specialist who applies company branding, calculates taxes and discounts,
+      and produces clean professional invoices with proper payment terms.
+expected_outputs:
+- Formatted invoices per client/project
+- Line-item breakdowns with hours and rates
+- Tax calculations and total summaries
+- Payment terms and due dates
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: invoice_{date}.md

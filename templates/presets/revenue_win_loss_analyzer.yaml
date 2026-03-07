@@ -1,0 +1,50 @@
+id: revenue_win_loss_analyzer
+name: Win/Loss Deal Analyzer
+description: Analyzes closed deals (both won and lost) to identify patterns in what drives wins and causes
+  losses. Examines deal characteristics, competitive dynamics, and sales process factors to improve future
+  close rates.
+category: revenue_growth
+tags:
+- win-loss
+- analysis
+- deals
+- sales
+- patterns
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Analyze our last 50 closed deals and tell me why we win vs lose
+- What do our won deals have in common that lost deals don't?
+- Identify the top 3 reasons we lose deals and how to fix each
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: deal_data_analyst
+    role: Deal Pattern Analyst
+    backstory: Examines deal attributes across wins and losses—company size, industry, deal size, sales
+      cycle length, features discussed—to find statistical patterns.
+  - name: loss_investigator
+    role: Loss Reason Investigator
+    backstory: 'Deep-dives into lost deals to understand root causes: pricing objections, missing features,
+      competitor advantages, or process failures.'
+  - name: strategy_recommender
+    role: Sales Strategy Advisor
+    backstory: Translates win/loss patterns into actionable sales process improvements. Recommends qualification
+      criteria changes, pitch adjustments, and competitive responses.
+expected_outputs:
+- Win/loss pattern analysis
+- Top loss reasons with fixes
+- Ideal customer profile refinement
+- Sales process improvement plan
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: win_loss_analysis_{date}.md

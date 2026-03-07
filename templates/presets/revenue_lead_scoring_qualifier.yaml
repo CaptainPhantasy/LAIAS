@@ -1,0 +1,57 @@
+id: revenue_lead_scoring_qualifier
+name: Lead Scoring & Qualification Agent
+description: >-
+  Analyzes inbound leads from website signups, trial activations, and demo requests.
+  Scores each lead based on company size, industry fit, engagement signals, and
+  buying intent. Outputs a prioritized list with recommended next actions for
+  the founder to focus outreach on highest-converting prospects.
+category: revenue_growth
+tags:
+  - leads
+  - scoring
+  - sales
+  - qualification
+  - pipeline
+default_complexity: moderate
+default_tools:
+  - SerperDevTool
+  - ScrapeWebsiteTool
+  - CSVSearchTool
+  - FileReadTool
+sample_prompts:
+  - "Score and qualify my latest batch of trial signups from this week"
+  - "Analyze these 50 leads and rank them by likelihood to convert to paid"
+  - "Research each lead's company and tell me which ones fit our ICP"
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+    - name: lead_researcher
+      role: Lead Research Specialist
+      backstory: >-
+        Expert at gathering company intelligence from public sources. Identifies
+        company size, funding stage, tech stack, and growth signals to assess fit.
+    - name: scoring_analyst
+      role: Lead Scoring Analyst
+      backstory: >-
+        Data-driven analyst who applies ICP criteria and engagement scoring models
+        to rank leads by conversion probability. Considers firmographic, behavioral,
+        and intent signals.
+    - name: action_recommender
+      role: Outreach Strategy Advisor
+      backstory: >-
+        Sales strategist who crafts personalized next-step recommendations for each
+        qualified lead, including talking points and optimal outreach timing.
+expected_outputs:
+  - Scored lead list with qualification tier (A/B/C/D)
+  - Company research summaries for top prospects
+  - Personalized outreach recommendations per lead
+  - Pipeline forecast based on current lead quality
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: "lead_scores_{date}.csv"

@@ -1,0 +1,46 @@
+id: marketing_newsletter_curator
+name: Newsletter Content Curator
+description: Curates and drafts a weekly or monthly newsletter by scanning industry news, product updates,
+  and relevant content. Creates engaging newsletter copy with sections, summaries, and commentary that
+  keeps subscribers informed and engaged.
+category: marketing_brand
+tags:
+- newsletter
+- email
+- curation
+- content
+- engagement
+default_complexity: simple
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Curate this week's newsletter on AI and automation trends
+- Draft our monthly product update newsletter
+- Find the top 10 stories in our industry this week for the newsletter
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: content_curator
+    role: Newsletter Curator
+    backstory: Scans industry sources, blogs, and social media to find the most relevant and interesting
+      stories for your audience. Filters signal from noise with editorial judgment.
+  - name: newsletter_writer
+    role: Newsletter Writer
+    backstory: Transforms curated content into engaging newsletter copy with original commentary, clear
+      summaries, and a consistent editorial voice that subscribers look forward to.
+expected_outputs:
+- Newsletter draft with sections
+- Curated story summaries
+- Subject line options
+- CTA recommendations
+output_config:
+  format: html
+  destination: filesystem
+  filename_pattern: newsletter_{date}.html

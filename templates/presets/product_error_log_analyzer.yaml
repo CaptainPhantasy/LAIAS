@@ -1,0 +1,51 @@
+id: product_error_log_analyzer
+name: Error Log Pattern Analyzer
+description: Analyzes application error logs to identify recurring patterns, error clustering, and root
+  cause hypotheses. Groups related errors, tracks frequency trends, and prioritizes which errors to fix
+  first based on user impact.
+category: product_engineering
+tags:
+- errors
+- logs
+- debugging
+- monitoring
+- analysis
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CSVSearchTool
+- PandasTool
+- CodeInterpreterTool
+sample_prompts:
+- Analyze our error logs from the past week and group by root cause
+- Which errors are affecting the most users right now?
+- Find error patterns that correlate with our recent deployment
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: log_parser
+    role: Log Analysis Specialist
+    backstory: Parses and normalizes error logs from multiple sources. Extracts stack traces, error codes,
+      timestamps, and user context for pattern analysis.
+  - name: pattern_detector
+    role: Error Pattern Detective
+    backstory: Identifies recurring error patterns, correlates errors with deployment timestamps, and
+      clusters related errors that share a common root cause.
+  - name: impact_reporter
+    role: Error Impact Reporter
+    backstory: Quantifies each error pattern's user impact, frequency trend, and business consequences.
+      Creates prioritized fix recommendations.
+expected_outputs:
+- Error pattern clusters
+- Impact-ranked error list
+- Root cause hypotheses
+- Fix priority recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: error_analysis_{date}.md

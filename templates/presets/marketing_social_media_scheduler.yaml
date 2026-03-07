@@ -1,0 +1,46 @@
+id: marketing_social_media_scheduler
+name: Social Media Post Creator
+description: Creates platform-specific social media posts from product updates, blog content, and industry
+  news. Adapts tone and format for Twitter/X, LinkedIn, and other platforms. Outputs ready-to-post content
+  with suggested posting times.
+category: marketing_brand
+tags:
+- social
+- twitter
+- linkedin
+- posts
+- scheduling
+default_complexity: simple
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- FileReadTool
+sample_prompts:
+- Create 20 social media posts from our latest blog article
+- Write a week of LinkedIn posts about AI agent trends
+- Turn our product changelog into engaging Twitter threads
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: content_repurposer
+    role: Content Repurposing Specialist
+    backstory: Transforms long-form content into platform-native social posts. Extracts the most engaging
+      hooks, statistics, and insights for each platform's format and audience expectations.
+  - name: platform_optimizer
+    role: Platform Optimization Expert
+    backstory: Adapts messaging for each platform's algorithm and audience behavior. Optimizes character
+      counts, hashtag strategy, posting times, and engagement hooks.
+expected_outputs:
+- Platform-specific post drafts
+- Posting schedule with times
+- Hashtag recommendations
+- Engagement hook variations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: social_posts_{date}.md

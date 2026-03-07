@@ -1,0 +1,50 @@
+id: product_code_review_assistant
+name: Code Review Assistant
+description: Performs automated code reviews by analyzing code changes for best practices, potential bugs,
+  security issues, and style consistency. Provides actionable feedback with severity levels and suggested
+  fixes.
+category: product_engineering
+tags:
+- code-review
+- quality
+- bugs
+- security
+- best-practices
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+- CodeDocsSearchTool
+sample_prompts:
+- Review this pull request for security issues and code quality
+- Check our authentication module for common vulnerabilities
+- Analyze this Python file for performance anti-patterns
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: security_reviewer
+    role: Security Code Reviewer
+    backstory: Specializes in identifying OWASP Top 10 vulnerabilities, injection risks, authentication
+      flaws, and data exposure in application code.
+  - name: quality_reviewer
+    role: Code Quality Analyst
+    backstory: Reviews code for readability, maintainability, DRY violations, complexity issues, and adherence
+      to language-specific best practices.
+  - name: perf_reviewer
+    role: Performance Reviewer
+    backstory: 'Identifies performance bottlenecks: N+1 queries, unnecessary allocations, missing caching
+      opportunities, and algorithmic inefficiencies.'
+expected_outputs:
+- Code review report with findings
+- Security vulnerability assessment
+- Suggested code improvements
+- Severity-ranked issue list
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: code_review_{date}.md

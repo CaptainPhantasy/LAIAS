@@ -1,0 +1,49 @@
+id: data_customer_segmentation
+name: Customer Segmentation Agent
+description: Segments customers based on behavior, demographics, value, and engagement patterns. Creates
+  actionable segments with distinct profiles, enabling targeted marketing, pricing, and product strategies.
+category: data_intelligence
+tags:
+- segmentation
+- customers
+- analytics
+- targeting
+- personas
+default_complexity: complex
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Segment our customer base by usage patterns and revenue contribution
+- Create customer personas based on our user behavior data
+- Identify which customer segments have the highest expansion potential
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: data_segmenter
+    role: Customer Data Segmentation Analyst
+    backstory: Data scientist who applies clustering and segmentation techniques to customer data, identifying
+      natural groupings based on behavior, value, and engagement metrics.
+  - name: persona_builder
+    role: Customer Persona Builder
+    backstory: Marketing strategist who transforms data segments into rich customer personas with names,
+      motivations, pain points, and preferred engagement channels.
+  - name: strategy_advisor
+    role: Segment Strategy Advisor
+    backstory: Growth strategist who recommends tailored strategies for each segment including messaging,
+      pricing, feature prioritization, and retention tactics.
+expected_outputs:
+- Customer segment definitions with criteria
+- Segment size and revenue contribution
+- Detailed personas per segment
+- Segment-specific strategy recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: customer_segments_{date}.md

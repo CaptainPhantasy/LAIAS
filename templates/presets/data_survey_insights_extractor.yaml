@@ -1,0 +1,44 @@
+id: data_survey_insights_extractor
+name: Survey Insights Extractor
+description: Processes survey responses to extract themes, sentiment, and actionable insights. Handles
+  both quantitative ratings and qualitative open-ended responses, producing structured analysis reports.
+category: data_intelligence
+tags:
+- surveys
+- insights
+- sentiment
+- feedback
+- analysis
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+sample_prompts:
+- Analyze our latest customer satisfaction survey results
+- Extract key themes from the open-ended responses in our employee survey
+- Compare NPS scores across customer segments from this quarter's survey
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: response_analyzer
+    role: Survey Response Analyst
+    backstory: Research analyst who processes both quantitative ratings and qualitative text responses,
+      performing sentiment analysis, theme extraction, and statistical summaries across demographic segments.
+  - name: insight_reporter
+    role: Survey Insight Reporter
+    backstory: Research communicator who distills survey analysis into clear reports with key findings,
+      representative quotes, statistical highlights, and prioritized action recommendations.
+expected_outputs:
+- Quantitative metrics summary with distributions
+- Theme analysis from open-ended responses
+- Sentiment breakdown by question and segment
+- Prioritized action recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: survey_insights_{date}.md

@@ -1,0 +1,51 @@
+id: product_technical_debt_tracker
+name: Technical Debt Tracker
+description: Identifies and catalogs technical debt across the codebase by analyzing code complexity,
+  outdated patterns, TODO comments, deprecated dependencies, and test coverage gaps. Prioritizes debt
+  items by business impact.
+category: product_engineering
+tags:
+- tech-debt
+- refactoring
+- quality
+- maintenance
+- code
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CodeInterpreterTool
+- CodeSearchTool
+- DirectoryReadTool
+sample_prompts:
+- Catalog all technical debt in our codebase with priority scores
+- Find all TODO and FIXME comments and assess their importance
+- Which parts of our code are most likely to cause problems next?
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: debt_scanner
+    role: Technical Debt Scanner
+    backstory: Systematically identifies code smells, complexity hotspots, duplicated logic, and abandoned
+      code paths that constitute technical debt.
+  - name: impact_assessor
+    role: Debt Impact Analyst
+    backstory: 'Evaluates each debt item''s risk: likelihood of causing bugs, impact on development velocity,
+      and cost of deferral vs immediate remediation.'
+  - name: remediation_planner
+    role: Refactoring Planner
+    backstory: Creates incremental remediation plans that can be executed alongside feature work. Breaks
+      large refactors into safe, reviewable chunks.
+expected_outputs:
+- Technical debt inventory
+- Risk-prioritized debt backlog
+- Remediation effort estimates
+- Incremental refactoring plan
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: tech_debt_{date}.md

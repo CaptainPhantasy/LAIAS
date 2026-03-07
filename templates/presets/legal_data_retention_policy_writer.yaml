@@ -1,0 +1,45 @@
+id: legal_data_retention_policy_writer
+name: Data Retention Policy Writer
+description: Creates data retention and deletion policies based on your data types, regulatory requirements,
+  and business needs. Defines retention periods, deletion procedures, and exception handling for legal
+  holds.
+category: legal_compliance
+tags:
+- data-retention
+- policy
+- compliance
+- data-management
+- deletion
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- SerperDevTool
+sample_prompts:
+- Write a data retention policy for our SaaS platform
+- Define retention periods for each type of data we collect
+- Create a data deletion procedure that complies with GDPR right to erasure
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: retention_analyst
+    role: Data Retention Analyst
+    backstory: Data governance specialist who maps data categories to appropriate retention periods based
+      on regulatory requirements, business necessity, and industry best practices.
+  - name: policy_writer
+    role: Retention Policy Writer
+    backstory: Policy writer who creates clear, enforceable data retention policies with defined procedures
+      for data deletion, archival, legal holds, and exception handling.
+expected_outputs:
+- Complete data retention policy document
+- Retention schedule by data category
+- Deletion procedures and verification steps
+- Legal hold and exception handling process
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: data_retention_policy_{date}.md

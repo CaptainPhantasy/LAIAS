@@ -1,0 +1,50 @@
+id: marketing_seo_keyword_researcher
+name: SEO Keyword Research Agent
+description: Researches and prioritizes SEO keywords for your SaaS product. Analyzes search volume, keyword
+  difficulty, and commercial intent to find high-ROI content opportunities. Maps keywords to funnel stages
+  and suggests content formats for each.
+category: marketing_brand
+tags:
+- seo
+- keywords
+- content
+- search
+- organic
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Find 50 long-tail keywords for our AI agent builder product
+- What keywords are our competitors ranking for that we're missing?
+- Build a keyword strategy for our new feature launch
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: keyword_discoverer
+    role: Keyword Discovery Specialist
+    backstory: Expert at finding high-value keyword opportunities using seed terms, competitor analysis,
+      and search trend data. Identifies gaps competitors have missed.
+  - name: difficulty_analyzer
+    role: SERP Competition Analyst
+    backstory: Evaluates keyword difficulty by analyzing top-ranking pages for domain authority, content
+      depth, and backlink profiles. Finds winnable keyword battles.
+  - name: content_mapper
+    role: Content Strategy Planner
+    backstory: Maps keywords to content types and funnel stages. Creates content briefs that target keyword
+      clusters for maximum topical authority.
+expected_outputs:
+- Prioritized keyword list with metrics
+- Content gap analysis
+- Keyword-to-content mapping
+- Monthly content plan
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: seo_keywords_{date}.csv

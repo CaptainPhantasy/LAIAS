@@ -1,0 +1,50 @@
+id: revenue_referral_program_builder
+name: Referral Program Designer
+description: Designs a customer referral program by researching successful SaaS referral programs, analyzing
+  your customer base for advocate potential, and creating program mechanics, incentives, and promotional
+  materials.
+category: revenue_growth
+tags:
+- referral
+- program
+- growth
+- viral
+- advocacy
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- EXASearchTool
+sample_prompts:
+- Design a referral program that gives both sides value
+- Research the best SaaS referral programs and adapt one for our product
+- Create referral email templates and landing page copy for our program
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: program_researcher
+    role: Referral Program Researcher
+    backstory: Studies successful referral programs at companies like Dropbox, Notion, and Loom. Extracts
+      mechanics, incentive structures, and growth multipliers that work for SaaS.
+  - name: program_designer
+    role: Referral Program Architect
+    backstory: 'Designs the complete referral program: incentive structure, reward tiers, tracking mechanics,
+      and fraud prevention. Balances acquisition cost with lifetime value.'
+  - name: content_creator
+    role: Referral Content Writer
+    backstory: 'Creates all referral program assets: invitation emails, social share messages, landing
+      page copy, and in-app prompts. Writes copy that motivates sharing.'
+expected_outputs:
+- Referral program design document
+- Incentive structure and economics
+- Email and social share templates
+- Launch plan and success metrics
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: referral_program_{date}.md

@@ -1,0 +1,45 @@
+id: legal_privacy_policy_generator
+name: Privacy Policy Generator
+description: Generates comprehensive privacy policies based on your data collection practices, third-party
+  integrations, and applicable regulations (GDPR, CCPA, etc.). Covers data types, purposes, retention,
+  and user rights.
+category: legal_compliance
+tags:
+- privacy-policy
+- gdpr
+- ccpa
+- data-protection
+- compliance
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- FileReadTool
+sample_prompts:
+- Generate a GDPR-compliant privacy policy for our mobile app
+- Update our privacy policy to reflect new analytics tracking
+- Create a privacy policy covering both US and EU users
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: false
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: data_mapper
+    role: Data Practice Mapper
+    backstory: Privacy analyst who maps all data collection points, third-party data sharing, storage
+      locations, and retention periods to build a comprehensive data inventory for the privacy policy.
+  - name: policy_writer
+    role: Privacy Policy Writer
+    backstory: Privacy law specialist who drafts compliant privacy policies covering data collection,
+      use, sharing, security, retention, user rights, and contact information in clear accessible language.
+expected_outputs:
+- Complete privacy policy document
+- Data collection and usage inventory
+- User rights section by jurisdiction
+- Third-party data sharing disclosures
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: privacy_policy_{date}.md

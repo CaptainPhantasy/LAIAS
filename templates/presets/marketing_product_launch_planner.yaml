@@ -1,0 +1,54 @@
+id: marketing_product_launch_planner
+name: Product Launch GTM Planner
+description: Plans a complete go-to-market strategy for new product features or launches. Coordinates
+  messaging, channel strategy, timeline, assets needed, and success metrics. Outputs a launch playbook
+  with day-by-day execution plan.
+category: marketing_brand
+tags:
+- launch
+- gtm
+- product
+- strategy
+- planning
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- FileReadTool
+sample_prompts:
+- Plan the go-to-market for our new API feature launching next month
+- Create a launch playbook for our pricing tier expansion
+- Design a Product Hunt launch strategy with pre-launch, launch day, and post-launch plans
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 4
+agent_structure:
+  agents:
+  - name: strategy_planner
+    role: GTM Strategy Lead
+    backstory: Designs launch strategies based on product type, target audience, and competitive landscape.
+      Creates phased rollout plans with clear milestones and contingencies.
+  - name: messaging_writer
+    role: Launch Messaging Specialist
+    backstory: Crafts the core launch narrative, positioning statements, and messaging matrix for different
+      audience segments. Ensures consistent messaging across all channels.
+  - name: channel_planner
+    role: Distribution Channel Planner
+    backstory: 'Selects and sequences launch channels for maximum impact: Product Hunt, social media,
+      email, communities, press, and partnerships.'
+  - name: timeline_builder
+    role: Launch Timeline Coordinator
+    backstory: Creates detailed day-by-day launch timelines with asset deadlines, channel posting schedules,
+      and team responsibilities.
+expected_outputs:
+- Launch strategy document
+- Messaging matrix
+- Channel plan with timeline
+- Asset checklist and deadlines
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: launch_plan_{date}.md

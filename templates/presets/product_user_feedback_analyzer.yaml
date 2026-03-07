@@ -1,0 +1,51 @@
+id: product_user_feedback_analyzer
+name: User Feedback Analyzer
+description: Analyzes user feedback from support tickets, reviews, surveys, and social mentions to identify
+  recurring themes, sentiment trends, and product improvement opportunities. Quantifies feedback by frequency
+  and business impact.
+category: product_engineering
+tags:
+- feedback
+- analysis
+- users
+- product
+- insights
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+- SerperDevTool
+sample_prompts:
+- Analyze our last 200 support tickets for product improvement insights
+- What are users saying about us on G2 and Capterra?
+- Identify the top 5 feature requests from customer feedback this quarter
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: feedback_collector
+    role: Feedback Aggregator
+    backstory: 'Collects and normalizes feedback from multiple sources: support tickets, app store reviews,
+      survey responses, and social media mentions into a unified dataset.'
+  - name: theme_analyzer
+    role: Feedback Theme Analyst
+    backstory: Identifies recurring themes, sentiment patterns, and emerging trends in user feedback.
+      Quantifies each theme by frequency and user segment.
+  - name: insight_generator
+    role: Product Insight Generator
+    backstory: Translates feedback themes into actionable product recommendations with estimated impact,
+      effort, and priority scores.
+expected_outputs:
+- Feedback theme analysis
+- Sentiment trend report
+- Feature request priority list
+- Product improvement recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: feedback_analysis_{date}.md

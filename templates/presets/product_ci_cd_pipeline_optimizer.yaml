@@ -1,0 +1,49 @@
+id: product_ci_cd_pipeline_optimizer
+name: CI/CD Pipeline Optimizer
+description: Analyzes your CI/CD pipeline configuration for speed, reliability, and cost optimizations.
+  Reviews build times, test parallelization, caching strategies, and deployment safety nets.
+category: product_engineering
+tags:
+- cicd
+- pipeline
+- devops
+- automation
+- deployment
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- GithubSearchTool
+- CodeSearchTool
+sample_prompts:
+- Our CI pipeline takes 15 minutes - find ways to speed it up
+- Review our GitHub Actions workflows for optimization opportunities
+- Audit our deployment pipeline for safety and rollback capabilities
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: pipeline_analyzer
+    role: CI/CD Pipeline Analyst
+    backstory: 'Reviews pipeline configuration files to identify bottlenecks: sequential steps that could
+      parallelize, missing caches, redundant builds, and oversized Docker images.'
+  - name: test_optimizer
+    role: Test Suite Optimizer
+    backstory: Analyzes test execution patterns to recommend parallelization, test splitting, and selective
+      test running strategies that cut CI time without sacrificing coverage.
+  - name: deploy_auditor
+    role: Deployment Safety Auditor
+    backstory: Reviews deployment procedures for rollback capabilities, health checks, canary deployments,
+      and feature flag integration.
+expected_outputs:
+- Pipeline optimization report
+- Build time reduction plan
+- Test parallelization strategy
+- Deployment safety checklist
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: cicd_optimization_{date}.md

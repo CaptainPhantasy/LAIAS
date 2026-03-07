@@ -1,0 +1,49 @@
+id: legal_gdpr_compliance_checker
+name: GDPR Compliance Checker
+description: Audits your product, processes, and documentation against GDPR requirements. Identifies compliance
+  gaps, assesses risk levels, and provides specific remediation steps for each finding.
+category: legal_compliance
+tags:
+- gdpr
+- compliance
+- audit
+- data-protection
+- eu-regulation
+default_complexity: complex
+default_tools:
+- FileReadTool
+- SerperDevTool
+- DirectoryReadTool
+sample_prompts:
+- Audit our data practices against GDPR requirements
+- Check if our consent mechanisms comply with GDPR Article 7
+- Assess our data breach notification process for GDPR compliance
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: requirements_analyst
+    role: GDPR Requirements Analyst
+    backstory: Regulatory expert who maps each applicable GDPR article and recital to specific compliance
+      requirements, considering the latest guidance from EU data protection authorities.
+  - name: gap_assessor
+    role: Compliance Gap Assessor
+    backstory: Privacy auditor who evaluates current practices against GDPR requirements, categorizes
+      gaps by severity and risk, and identifies which findings require immediate attention.
+  - name: remediation_planner
+    role: Remediation Planner
+    backstory: Compliance consultant who designs practical remediation plans for each gap, prioritizes
+      by risk and effort, and provides template documents and process changes needed.
+expected_outputs:
+- GDPR compliance assessment report
+- Gap analysis with severity ratings
+- Article-by-article compliance status
+- Prioritized remediation roadmap
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: gdpr_audit_{date}.md

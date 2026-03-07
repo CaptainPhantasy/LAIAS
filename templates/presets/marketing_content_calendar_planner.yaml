@@ -1,0 +1,50 @@
+id: marketing_content_calendar_planner
+name: Content Calendar Planner
+description: Plans a comprehensive monthly content calendar across blog, social media, email, and video
+  channels. Coordinates themes, ensures consistent posting frequency, and aligns content with product
+  milestones and seasonal opportunities.
+category: marketing_brand
+tags:
+- content
+- calendar
+- planning
+- social
+- blog
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- FileReadTool
+- EXASearchTool
+sample_prompts:
+- Plan next month's content calendar across all our channels
+- Create a content calendar around our upcoming product launch
+- Design a 3-month content plan focused on thought leadership
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: trend_researcher
+    role: Content Trend Analyst
+    backstory: Monitors industry trends, seasonal events, and competitor content to identify timely topics
+      and content angles that will resonate with the target audience.
+  - name: calendar_architect
+    role: Editorial Calendar Builder
+    backstory: Structures content across channels with optimal posting frequency, theme weeks, and content
+      pillars. Ensures variety while maintaining brand consistency.
+  - name: brief_writer
+    role: Content Brief Creator
+    backstory: Writes detailed content briefs for each calendar item including target keywords, key points,
+      CTAs, and distribution plan.
+expected_outputs:
+- Monthly content calendar
+- Content briefs per piece
+- Channel distribution plan
+- Theme and pillar mapping
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: content_calendar_{date}.md

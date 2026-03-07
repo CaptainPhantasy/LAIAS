@@ -1,0 +1,45 @@
+id: product_release_notes_generator
+name: Release Notes Generator
+description: Generates user-facing release notes from git commit history, pull requests, and issue trackers.
+  Categorizes changes into features, improvements, and fixes with user-friendly descriptions.
+category: product_engineering
+tags:
+- release-notes
+- changelog
+- git
+- documentation
+- communication
+default_complexity: simple
+default_tools:
+- GithubSearchTool
+- FileReadTool
+- CodeSearchTool
+sample_prompts:
+- Generate release notes for everything merged since last Friday
+- Write user-friendly release notes from our recent pull requests
+- Create a changelog entry for version 2.5.0
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: change_collector
+    role: Change Log Collector
+    backstory: Extracts and categorizes changes from git history, PR descriptions, and linked issues.
+      Groups related changes and identifies user-facing vs internal changes.
+  - name: notes_writer
+    role: Release Notes Writer
+    backstory: Translates technical commit messages into clear, user-friendly release notes. Highlights
+      benefits over features and includes migration notes where needed.
+expected_outputs:
+- User-facing release notes
+- Categorized changelog
+- Migration notes if applicable
+- Social media announcement draft
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: release_notes_{date}.md

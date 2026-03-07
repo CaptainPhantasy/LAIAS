@@ -1,0 +1,46 @@
+id: data_ab_test_analyzer
+name: A/B Test Analyzer
+description: Analyzes A/B test results with statistical rigor. Calculates significance, effect sizes,
+  confidence intervals, and segment-level impacts. Provides clear recommendations on whether to ship,
+  iterate, or abandon experiments.
+category: data_intelligence
+tags:
+- ab-testing
+- experimentation
+- statistics
+- conversion
+- optimization
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+- PandasTool
+sample_prompts:
+- Analyze the results of our pricing page A/B test
+- Is the new onboarding flow statistically better than the control?
+- Break down our checkout experiment results by user segment
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: false
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: stats_analyst
+    role: Statistical Analysis Specialist
+    backstory: Statistician who calculates p-values, confidence intervals, effect sizes, and minimum detectable
+      effects. Guards against common pitfalls like peeking, multiple comparisons, and Simpson's paradox.
+  - name: decision_advisor
+    role: Experiment Decision Advisor
+    backstory: Product analyst who translates statistical results into business decisions, considering
+      practical significance alongside statistical significance, and recommending ship/iterate/kill actions.
+expected_outputs:
+- Statistical significance analysis with p-values
+- Effect size and confidence intervals
+- Segment-level breakdown of results
+- Clear ship/iterate/kill recommendation
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: ab_test_results_{date}.md

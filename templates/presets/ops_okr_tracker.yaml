@@ -1,0 +1,45 @@
+id: ops_okr_tracker
+name: OKR Progress Tracker
+description: Tracks objectives and key results across teams, calculates progress percentages, identifies
+  at-risk OKRs, and generates status reports. Helps founders maintain strategic alignment without manual
+  spreadsheet updates.
+category: operations_productivity
+tags:
+- okr
+- objectives
+- tracking
+- strategy
+- alignment
+default_complexity: moderate
+default_tools:
+- FileReadTool
+- CSVSearchTool
+sample_prompts:
+- Generate a Q3 OKR progress report for all teams
+- Which OKRs are at risk of missing their targets this quarter?
+- Update our OKR tracker with this week's progress data
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: progress_calculator
+    role: OKR Progress Analyst
+    backstory: Data-driven analyst who calculates key result completion percentages, tracks velocity trends,
+      and identifies which objectives are on track, at risk, or behind schedule.
+  - name: report_generator
+    role: Strategic Report Writer
+    backstory: Executive communications specialist who synthesizes OKR data into clear status reports
+      with traffic-light indicators, trend analysis, and recommended corrective actions.
+expected_outputs:
+- OKR progress dashboard with completion percentages
+- At-risk OKR alerts with root cause analysis
+- Team-by-team status breakdown
+- Recommended actions for off-track objectives
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: okr_progress_{date}.csv

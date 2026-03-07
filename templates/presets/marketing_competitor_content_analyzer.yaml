@@ -1,0 +1,50 @@
+id: marketing_competitor_content_analyzer
+name: Competitor Content Strategy Analyzer
+description: Analyzes competitors' content strategies across blog, social, email, and video. Identifies
+  their top-performing content, publishing cadence, keyword targets, and content gaps you can exploit
+  for competitive advantage.
+category: marketing_brand
+tags:
+- competitor
+- content
+- analysis
+- strategy
+- intelligence
+default_complexity: moderate
+default_tools:
+- ScrapeWebsiteTool
+- SerperDevTool
+- EXASearchTool
+sample_prompts:
+- Analyze Competitor X's blog strategy and find topics they're missing
+- What content is driving the most traffic to our top 3 competitors?
+- Compare our content output to competitors across all channels
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: content_scraper
+    role: Competitor Content Collector
+    backstory: 'Systematically catalogs competitor content across all channels: blog posts, social media,
+      newsletters, podcasts, and videos. Captures publishing frequency and engagement metrics.'
+  - name: strategy_analyst
+    role: Content Strategy Analyst
+    backstory: 'Reverse-engineers competitor content strategies: their pillar topics, keyword clusters,
+      content formats, and distribution channels. Identifies what''s working and what''s not.'
+  - name: gap_finder
+    role: Content Gap Identifier
+    backstory: Compares competitor content coverage to market demand. Finds high-value topics competitors
+      haven't covered well that represent your opportunity to win organic traffic.
+expected_outputs:
+- Competitor content audit
+- Top-performing content analysis
+- Content gap opportunities
+- Recommended content plays
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: competitor_content_{date}.md

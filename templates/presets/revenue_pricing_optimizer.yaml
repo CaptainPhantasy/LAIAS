@@ -1,0 +1,55 @@
+id: revenue_pricing_optimizer
+name: Pricing Strategy Optimizer
+description: Analyzes current pricing tiers against competitor pricing, customer willingness-to-pay signals,
+  and usage patterns. Recommends pricing changes with projected revenue impact. Outputs a pricing recommendation
+  report with A/B test design.
+category: revenue_growth
+tags:
+- pricing
+- optimization
+- strategy
+- revenue
+- conversion
+default_complexity: complex
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- CSVSearchTool
+- PandasTool
+sample_prompts:
+- Analyze our pricing page vs top 5 competitors and recommend changes
+- Design an A/B test for a new pricing tier between $49 and $99/mo
+- Calculate the revenue impact of adding a $199/mo enterprise plan
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 4
+agent_structure:
+  agents:
+  - name: market_researcher
+    role: Competitive Pricing Analyst
+    backstory: Tracks competitor pricing across SaaS markets. Builds pricing comparison matrices and identifies
+      positioning gaps.
+  - name: data_analyst
+    role: Pricing Data Scientist
+    backstory: Analyzes usage data, churn correlations, and willingness-to-pay indicators to model optimal
+      price points using van Westendorp and conjoint analysis frameworks.
+  - name: strategy_advisor
+    role: Pricing Strategy Consultant
+    backstory: Former SaaS pricing consultant who has optimized pricing for 50+ products. Recommends tier
+      structures, feature gating, and packaging strategies.
+  - name: experiment_designer
+    role: A/B Test Architect
+    backstory: Designs statistically rigorous pricing experiments with proper sample sizes, duration,
+      and success metrics.
+expected_outputs:
+- Competitor pricing comparison matrix
+- Pricing recommendation with revenue projections
+- A/B test design document
+- Implementation roadmap
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: pricing_analysis_{date}.md

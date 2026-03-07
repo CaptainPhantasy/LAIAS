@@ -1,0 +1,50 @@
+id: revenue_sales_objection_handler
+name: Sales Objection Handler
+description: Researches common sales objections for your product category and prepares evidence-based
+  responses. Analyzes lost deal reasons, competitor claims, and customer concerns to build a comprehensive
+  objection handling playbook.
+category: revenue_growth
+tags:
+- sales
+- objections
+- playbook
+- closing
+- negotiation
+default_complexity: moderate
+default_tools:
+- SerperDevTool
+- ScrapeWebsiteTool
+- FileReadTool
+sample_prompts:
+- Build an objection handling playbook for our most common deal blockers
+- How should I respond when prospects say we're too expensive vs Competitor X?
+- Analyze our lost deal reasons and create counter-arguments for each
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: objection_researcher
+    role: Sales Objection Researcher
+    backstory: Analyzes lost deal data, support conversations, and competitor marketing to catalog every
+      objection buyers raise. Categorizes by frequency and deal impact.
+  - name: response_crafter
+    role: Objection Response Writer
+    backstory: Writes compelling, evidence-based responses to each objection. Uses case studies, ROI calculations,
+      and social proof to overcome buyer hesitations.
+  - name: competitive_analyst
+    role: Competitive Counter-Arguments Specialist
+    backstory: Prepares specific counter-arguments when prospects compare you to competitors. Identifies
+      genuine differentiators and frames comparisons favorably.
+expected_outputs:
+- Objection handling playbook
+- Response scripts per objection
+- Competitive battle cards
+- Win rate improvement recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: objection_playbook_{date}.md

@@ -1,0 +1,45 @@
+id: ops_expense_categorizer
+name: Expense Categorizer
+description: Processes expense reports and transaction data to automatically categorize spending, detect
+  anomalies, and generate budget vs actual reports. Helps founders maintain financial visibility without
+  manual bookkeeping.
+category: operations_productivity
+tags:
+- expenses
+- categorization
+- finance
+- budgeting
+- automation
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- FileReadTool
+sample_prompts:
+- Categorize all transactions from this month's bank statement
+- Generate a budget vs actual report for Q3 expenses
+- Flag any unusual or duplicate expenses in this expense report
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o-mini
+  include_memory: true
+  include_analytics: true
+  max_agents: 2
+agent_structure:
+  agents:
+  - name: transaction_classifier
+    role: Transaction Classifier
+    backstory: Bookkeeping expert who categorizes transactions into standard accounting categories, handles
+      edge cases, and maintains consistent classification rules across periods.
+  - name: anomaly_reporter
+    role: Expense Anomaly Detector
+    backstory: Financial auditor who identifies duplicate charges, unusual spending patterns, policy violations,
+      and budget overruns, then generates clear exception reports.
+expected_outputs:
+- Categorized expense report by category
+- Budget vs actual variance analysis
+- Anomaly and duplicate detection alerts
+- Monthly spending trend summary
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: expenses_{date}.csv

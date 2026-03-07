@@ -1,0 +1,50 @@
+id: marketing_seo_backlink_prospector
+name: SEO Backlink Prospector
+description: Finds high-quality backlink opportunities by analyzing competitor backlink profiles, identifying
+  resource pages, broken links, and guest posting opportunities. Prioritizes prospects by domain authority
+  and relevance.
+category: marketing_brand
+tags:
+- seo
+- backlinks
+- link-building
+- outreach
+- authority
+default_complexity: moderate
+default_tools:
+- ScrapeWebsiteTool
+- SerperDevTool
+- EXASearchTool
+sample_prompts:
+- Find 30 backlink opportunities for our AI tools comparison page
+- Analyze where our top competitor gets their backlinks from
+- Find broken links on resource pages in our niche that we could replace
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: backlink_analyst
+    role: Backlink Profile Researcher
+    backstory: Analyzes competitor backlink profiles to identify linking domains, anchor text patterns,
+      and link-worthy content formats that attract natural links.
+  - name: opportunity_hunter
+    role: Link Opportunity Finder
+    backstory: Discovers resource pages, roundup posts, broken links, and guest posting sites in your
+      niche. Finds link prospects that competitors haven't targeted yet.
+  - name: outreach_crafter
+    role: Link Building Outreach Writer
+    backstory: 'Writes personalized outreach emails for each link prospect type: guest posts, resource
+      additions, broken link replacements, and expert quotes.'
+expected_outputs:
+- Backlink opportunity list with DA scores
+- Competitor backlink analysis
+- Outreach email templates
+- Link building priority queue
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: backlink_prospects_{date}.csv

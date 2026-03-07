@@ -1,0 +1,50 @@
+id: revenue_pipeline_forecaster
+name: Revenue Pipeline Forecaster
+description: Analyzes deal pipeline data to forecast monthly and quarterly revenue. Applies weighted probability
+  models to each deal stage, identifies stalled deals, and highlights pipeline gaps that need filling
+  to hit targets.
+category: revenue_growth
+tags:
+- pipeline
+- forecast
+- revenue
+- deals
+- projections
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Forecast our revenue for next quarter based on current pipeline
+- Which deals have been stuck in the same stage for over 2 weeks?
+- How much new pipeline do we need to hit $50K MRR by Q4?
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: pipeline_analyzer
+    role: Pipeline Data Analyst
+    backstory: Processes deal data across stages, applying historical conversion rates and stage velocity
+      to produce probability-weighted revenue forecasts.
+  - name: deal_health_checker
+    role: Deal Velocity Monitor
+    backstory: Identifies stalled, aging, and at-risk deals by comparing stage duration to historical
+      benchmarks. Flags deals that need immediate attention.
+  - name: gap_calculator
+    role: Pipeline Gap Strategist
+    backstory: Calculates the pipeline coverage ratio needed to hit revenue targets and recommends specific
+      lead generation activities to fill gaps.
+expected_outputs:
+- Monthly/quarterly revenue forecast
+- Stalled deal alerts
+- Pipeline coverage analysis
+- Lead generation recommendations
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: pipeline_forecast_{date}.md

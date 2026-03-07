@@ -1,0 +1,50 @@
+id: revenue_upsell_cross_sell
+name: Upsell & Cross-Sell Finder
+description: Scans existing customer accounts to find upsell and cross-sell opportunities based on usage
+  patterns, plan limits approaching, and feature adoption gaps. Prioritizes opportunities by estimated
+  revenue impact and conversion likelihood.
+category: revenue_growth
+tags:
+- upsell
+- cross-sell
+- expansion
+- revenue
+- growth
+default_complexity: moderate
+default_tools:
+- CSVSearchTool
+- PandasTool
+- FileReadTool
+sample_prompts:
+- Find customers on the starter plan who are using 80%+ of their limits
+- Which customers would benefit from our new analytics add-on?
+- Identify the top 20 expansion revenue opportunities this quarter
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: usage_scanner
+    role: Account Usage Auditor
+    backstory: Monitors account utilization metrics against plan limits. Identifies customers approaching
+      thresholds who would naturally benefit from upgrading.
+  - name: opportunity_ranker
+    role: Revenue Opportunity Analyst
+    backstory: Scores expansion opportunities by estimated deal size, conversion probability, and customer
+      health. Focuses founder time on highest-ROI conversations.
+  - name: pitch_crafter
+    role: Upgrade Messaging Specialist
+    backstory: Writes personalized upgrade pitches that connect the customer's actual usage patterns to
+      the value of a higher tier. Makes the business case obvious.
+expected_outputs:
+- Ranked upsell opportunity list
+- Per-account upgrade recommendations
+- Personalized pitch templates
+- Projected expansion revenue
+output_config:
+  format: csv
+  destination: filesystem
+  filename_pattern: upsell_opportunities_{date}.csv

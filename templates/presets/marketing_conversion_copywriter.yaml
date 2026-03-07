@@ -1,0 +1,50 @@
+id: marketing_conversion_copywriter
+name: High-Converting Website Copywriter
+description: Writes or rewrites website copy optimized for conversions. Applies proven copywriting frameworks
+  (PAS, AIDA, StoryBrand) to homepage, features page, pricing page, and about page. Outputs ready-to-deploy
+  copy with headline variations.
+category: marketing_brand
+tags:
+- copywriting
+- conversion
+- website
+- messaging
+- cro
+default_complexity: moderate
+default_tools:
+- ScrapeWebsiteTool
+- SerperDevTool
+- FileReadTool
+sample_prompts:
+- Rewrite our homepage copy to increase trial signups
+- Write conversion-optimized copy for our new features page
+- Create 10 headline variations for our pricing page hero section
+suggested_config:
+  llm_provider: openai
+  model: gpt-4o
+  include_memory: true
+  include_analytics: true
+  max_agents: 3
+agent_structure:
+  agents:
+  - name: audience_researcher
+    role: Target Audience Researcher
+    backstory: Studies your ideal customer profile, their language patterns, pain points, and decision
+      criteria. Ensures copy speaks in the customer's own words.
+  - name: conversion_writer
+    role: Conversion Copywriter
+    backstory: Writes website copy using proven conversion frameworks. Masters the art of clear value
+      propositions, benefit-driven headlines, and friction-reducing microcopy.
+  - name: variation_tester
+    role: Copy A/B Test Creator
+    backstory: Creates multiple copy variations for headline, subheadline, and CTA testing. Designs tests
+      that isolate specific copy elements for measurable impact.
+expected_outputs:
+- Page-by-page copy recommendations
+- Headline and CTA variations
+- Copy framework annotations
+- A/B test suggestions
+output_config:
+  format: markdown
+  destination: filesystem
+  filename_pattern: website_copy_{date}.md
