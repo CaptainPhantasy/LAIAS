@@ -113,6 +113,9 @@ services:
       - SERVICE_PORT=4521
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TEMPLATES_DIR=/app/templates/presets
+      # Auth
+      - AUTH_DEV_MODE=${AUTH_DEV_MODE:-false}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       # Internal service-to-service URL (Docker DNS, not localhost)
       - DOCKER_ORCHESTRATOR_URL=http://docker-orchestrator:8002
     volumes:
@@ -155,6 +158,8 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       - AGENT_IMAGE_BASE=laias/agent-runner:latest
       - AGENT_CODE_PATH=/var/laias/agents
+      - HOST_AGENT_CODE_PATH=/Volumes/Storage/LAIAS/agents-runtime
+      - HOST_AGENT_OUTPUT_PATH=/Volumes/Storage/LAIAS/outputs
       - FILESYSTEM_BROWSE_ROOT=/var/laias/outputs
       - SERVICE_PORT=4522
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
@@ -164,9 +169,8 @@ services:
       # CRITICAL: Access host Docker socket for sibling container spawning
       - /var/run/docker.sock:/var/run/docker.sock
       # Store generated agent code (mounted into spawned containers)
-      - agent_code:/var/laias/agents
-      # Store agent execution outputs (persistent across container recreates)
-      - agent_outputs:/var/laias/outputs
+      - /Volumes/Storage/LAIAS/agents-runtime:/var/laias/agents
+      - /Volumes/Storage/LAIAS/outputs:/var/laias/outputs
     depends_on:
       postgres:
         condition: service_healthy

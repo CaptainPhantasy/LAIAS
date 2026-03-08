@@ -20,8 +20,8 @@
 │                                                                              │
 │  ZAI API:                                 ZAI API:                           │
 │  • Endpoint: /api/coding/paas/v4 (wrong) • Endpoint: /api/paas/v4 ✓         │
-│  • Model: glm-5 (low concurrency)        • Model: GLM-4-Plus (20 concur) ✓  │
-│  • thinking: not disabled                • thinking: disabled ✓             │
+│  • Model: glm-5 (low concurrency)        • Model: GLM-4-Plus (worker) ✓     │
+│  • thinking: not disabled (double layer!) • thinking: disabled ✓             │
 │                                                                              │
 │  DOCKER ORCHESTRATOR:                     DOCKER ORCHESTRATOR:               │
 │  • /api/containers → 500 error           • /api/containers → 200 ✓          │
@@ -117,9 +117,19 @@ curl -X POST http://localhost:4522/api/deploy \
 ## Gotchas to Avoid
 
 1. **Port 3000/3001** - Don't use these. Other projects use them.
-2. **ZAI thinking mode** - Must disable or content is empty
-3. **ZAI concurrency** - GLM-4-Plus has 20 concurrent, GLM-5 has lower
-4. **Rate limits** - Don't hammer the API or you'll block other projects
+2. **ZAI thinking mode on GLM-5 = CATASTROPHIC** - GLM-5 already has a reasoning layer
+   injected at the ZAI endpoint. Enabling thinking mode adds a **second reasoning layer**
+   that overwhelms the model into total paralysis — it produces empty/unusable output 100%
+   of the time. Always set `"thinking": {"type": "disabled"}`.
+3. **GLM-4-Plus is worker-only** - Lacks reasoning depth to be a primary builder or
+   orchestrator. The 20 concurrent limit is **plan-wide** — using all 20 starves GLM-5
+   and any other sessions on the same ZAI plan. Never run more than 3–5 workers per
+   session. Each must be headless, single-task, and isolated to avoid race conditions.
+   For orchestration/building, use GLM-5 (thinking disabled) or external providers.
+4. **ZAI endpoint** - Use `/api/paas/v4` — NOT `/api/coding/paas/v4`.
+5. **Rate limits** - Don't hammer the API or you'll block other projects.
+
+See `ZAI_API_VERIFIED.md` for the full model capability matrix.
 
 ---
 

@@ -42,6 +42,7 @@ class DockerService:
         output_config: dict[str, bool] | None = None,
         output_path: str | None = None,
         output_format: str = "markdown",
+        input_volumes: list[dict[str, str]] | None = None,
         cpu_limit: float = 1.0,
         memory_limit: str = "512m",
     ) -> Any:
@@ -57,6 +58,7 @@ class DockerService:
             output_config=output_config,
             output_path=output_path,
             output_format=output_format,
+            input_volumes=input_volumes,
             cpu_limit=cpu_limit,
             memory_limit=memory_limit,
         )

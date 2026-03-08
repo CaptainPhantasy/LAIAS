@@ -70,6 +70,27 @@ class DeployAgentRequest(BaseModel):
         default="markdown",
         description="Output format: markdown or html",
     )
+    input_volumes: list[dict[str, str]] = Field(
+        default_factory=list,
+        description="Read-only host directories to mount into the agent container. "
+        "Each entry: {host_path: '/path/on/host', container_path: '/data/input'}",
+    )
+
+    @field_validator("input_volumes")
+    @classmethod
+    def validate_input_volumes(cls, v: list[dict[str, str]]) -> list[dict[str, str]]:
+        for vol in v:
+            if "host_path" not in vol or "container_path" not in vol:
+                raise ValueError("Each input_volume must have 'host_path' and 'container_path'")
+            if not os.path.isabs(vol["host_path"]):
+                raise ValueError(f"host_path must be absolute: {vol['host_path']}")
+            if not os.path.isabs(vol["container_path"]):
+                raise ValueError(f"container_path must be absolute: {vol['container_path']}")
+            if ".." in vol["host_path"].split(os.sep) or ".." in vol["container_path"].split(
+                os.sep
+            ):
+                raise ValueError("Paths must not contain '..' components")
+        return v
 
     @field_validator("memory_limit")
     @classmethod

@@ -207,12 +207,13 @@ Connect all components and prepare for production.
 ### AI/LLM
 | Technology | Purpose |
 |------------|---------|
-| ZAI GLM-5 | **Primary LLM provider (default)** |
+| ZAI GLM-5 | **Primary LLM provider (orchestrator — thinking MUST be disabled)** |
+| ZAI GLM-4-Plus | Worker-only tasks (20 max plan-wide — never use all; see ZAI_API_VERIFIED.md) |
 | OpenAI API | Alternative LLM provider |
 | Anthropic API | Alternative LLM provider |
 | OpenRouter | Multi-model gateway |
 | CrewAI Tools | Agent capabilities |
-| Portkey AI | LLM gateway abstraction |
+| Portkey AI | LLM gateway (Zhipu, Anthropic, Mistral) |
 | Composio MCP | Tool integration platform |
 
 ---

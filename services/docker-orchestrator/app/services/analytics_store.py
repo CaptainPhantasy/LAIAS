@@ -37,10 +37,13 @@ class AnalyticsStore:
         event_data: dict[str, Any],
         created_at: datetime | None = None,
     ) -> dict[str, Any]:
+        ts = created_at or datetime.now(UTC)
+        if ts.tzinfo is not None:
+            ts = ts.replace(tzinfo=None)
         record = AnalyticsEvent(
             event_type=event_type,
             event_data=event_data,
-            created_at=created_at or datetime.now(UTC),
+            created_at=ts,
         )
 
         async with async_session_factory() as session:

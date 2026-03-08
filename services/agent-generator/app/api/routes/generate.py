@@ -29,6 +29,7 @@ class GenerateAndDeployRequest(GenerateAgentRequest):
     output_config: dict[str, bool] | None = None
     output_path: str | None = None
     output_format: str = "markdown"
+    input_volumes: list[dict[str, str]] | None = None
 
 
 @limiter.limit(RATE_LIMITS["generation"])
@@ -247,6 +248,7 @@ async def generate_and_deploy(
             output_config=body.output_config,
             output_path=body.output_path,
             output_format=body.output_format,
+            input_volumes=body.input_volumes,
             auto_start=True,
         )
 

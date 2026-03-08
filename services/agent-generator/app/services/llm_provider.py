@@ -52,11 +52,11 @@ class LLMConfig(BaseModel):
     """
     Configuration for LLM provider.
 
-    Defaults to ZAI GLM-5 for cost-effective daily use.
+    Defaults to ZAI GLM-4.7-Flash for cost-effective daily use.
     """
 
     provider: ProviderType = Field(default=ProviderType.ZAI, description="LLM provider type")
-    model: str = Field(default="glm-5", description="Model name")
+    model: str = Field(default="glm-4.7-flash", description="Model name")
     api_key: str | None = Field(default=None, description="API key (overrides env var)")
     base_url: str | None = Field(default=None, description="Base URL (overrides default)")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
@@ -91,10 +91,10 @@ class LLMProvider:
     """
     Unified LLM provider supporting multiple vendors.
 
-    Default: ZAI GLM-5 for cost-effective operation.
+    Default: ZAI GLM-4.7-Flash for cost-effective operation.
 
     Example:
-        provider = LLMProvider()  # Uses ZAI GLM-5 by default
+        provider = LLMProvider()  # Uses ZAI GLM-4.7-Flash by default
         response = await provider.complete([
             {"role": "user", "content": "Hello!"}
         ])
@@ -108,7 +108,7 @@ class LLMProvider:
     PROVIDER_CONFIGS: dict[ProviderType, dict[str, Any]] = {
         ProviderType.ZAI: {
             "base_url": "https://api.z.ai/api/paas/v4",  # Standard endpoint (not coding)
-            "default_model": "glm-5",  # Produces valid JSON for code gen; case-sensitive API
+            "default_model": "glm-4.7-flash",  # Higher concurrency limits than GLM-5; case-sensitive API
             "api_key_env": "ZAI_API_KEY",
             "header_prefix": "Bearer",
             "supports_streaming": True,
@@ -117,14 +117,15 @@ class LLMProvider:
         },
         ProviderType.PORTKEY: {
             "base_url": "https://api.portkey.ai/v1",
-            "default_model": "@zhipu/glm-4.7-flashx",  # GLM-4.7 via Portkey
+            "default_model": "glm-4.7-flash",
             "api_key_env": "PORTKEY_API_KEY",
-            "header_prefix": "",  # Uses x-portkey-api-key header
+            "header_prefix": "__skip__",
             "supports_streaming": True,
             "format": "openai",
             "extra_headers": {
-                "x-portkey-api-key": "{api_key}",  # Portkey uses custom header
-                "x-portkey-provider": "zhipu",  # Route to ZhipuAI
+                "x-portkey-api-key": "{api_key}",
+                "x-portkey-provider": "zhipu",
+                "Authorization": "Bearer {zai_api_key}",
             },
         },
         ProviderType.OPENAI: {
@@ -343,20 +344,21 @@ class LLMProvider:
             "Content-Type": "application/json",
         }
 
-        # Add auth header
         header_prefix = provider_config.get("header_prefix", "Bearer")
-        if header_prefix:
+        if header_prefix == "__skip__":
+            pass
+        elif header_prefix:
             headers["Authorization"] = f"{header_prefix} {self._api_key}"
         else:
             headers["Authorization"] = self._api_key
 
-        # Add extra headers (e.g., OpenRouter, Portkey)
         for key, value in provider_config.get("extra_headers", {}).items():
-            # Support {api_key} placeholder in header values
-            if "{api_key}" in str(value):
-                headers[key] = value.replace("{api_key}", self._api_key)
-            else:
-                headers[key] = value
+            value_str = str(value)
+            if "{api_key}" in value_str:
+                value_str = value_str.replace("{api_key}", self._api_key)
+            if "{zai_api_key}" in value_str:
+                value_str = value_str.replace("{zai_api_key}", os.getenv("ZAI_API_KEY", ""))
+            headers[key] = value_str
 
         # Build request payload
         payload = {

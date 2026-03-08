@@ -94,6 +94,7 @@ async def deploy_agent(
             output_format=body.output_format,
             cpu_limit=body.cpu_limit,
             memory_limit=body.memory_limit,
+            input_volumes=body.input_volumes,
         )
 
         # Start container if requested
@@ -106,6 +107,26 @@ async def deploy_agent(
             container_status = "running"
 
         try:
+            await db.execute(
+                text(
+                    """
+                    INSERT INTO agents (id, name, flow_code, agents_yaml)
+                    VALUES (:id, :name, :flow_code, :agents_yaml)
+                    ON CONFLICT (id) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        flow_code = EXCLUDED.flow_code,
+                        agents_yaml = EXCLUDED.agents_yaml,
+                        updated_at = NOW()
+                    """
+                ),
+                {
+                    "id": body.agent_id,
+                    "name": body.agent_name,
+                    "flow_code": body.flow_code,
+                    "agents_yaml": body.agents_yaml,
+                },
+            )
+
             await db.execute(
                 text(
                     """
@@ -152,8 +173,8 @@ async def deploy_agent(
                     "cpu_limit": body.cpu_limit,
                     "memory_limit": body.memory_limit,
                     "environment_vars": json.dumps(body.environment_vars),
-                    "created_at": datetime.now(UTC),
-                    "started_at": started_at,
+                    "created_at": datetime.now(UTC).replace(tzinfo=None),
+                    "started_at": started_at.replace(tzinfo=None) if started_at else None,
                 },
             )
             await db.commit()

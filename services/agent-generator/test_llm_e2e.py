@@ -27,9 +27,9 @@ from app.services.llm_provider import (
 
 async def test_provider(provider_type: ProviderType, model: str, api_key: str) -> dict:
     """Test a single LLM provider."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Testing: {provider_type.value.upper()} / {model}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     if not api_key:
         print(f"  [SKIP] No API key found for {provider_type.value}")
@@ -45,9 +45,9 @@ async def test_provider(provider_type: ProviderType, model: str, api_key: str) -
         config.api_key = api_key  # Set directly
 
         async with LLMProvider(config) as llm:
-            response = await llm.complete([
-                {"role": "user", "content": "Say 'Hello from LAIAS' and nothing else."}
-            ])
+            response = await llm.complete(
+                [{"role": "user", "content": "Say 'Hello from LAIAS' and nothing else."}]
+            )
 
         print(f"  [OK] Response: {response.content[:100]}...")
         print(f"  [OK] Tokens: {response.tokens_used}")
@@ -55,7 +55,7 @@ async def test_provider(provider_type: ProviderType, model: str, api_key: str) -
             "provider": provider_type.value,
             "status": "success",
             "tokens": response.tokens_used,
-            "response_preview": response.content[:50]
+            "response_preview": response.content[:50],
         }
 
     except Exception as e:
@@ -65,9 +65,9 @@ async def test_provider(provider_type: ProviderType, model: str, api_key: str) -
 
 async def main():
     """Run all provider tests."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("LAIAS LLM Provider E2E Tests")
-    print("="*60)
+    print("=" * 60)
 
     # Check available API keys
     zai_key = os.getenv("ZAI_API_KEY", "")
@@ -85,39 +85,39 @@ async def main():
 
     # Test ZAI (GLM-5)
     if zai_key:
-        results.append(await test_provider(
-            ProviderType.ZAI, "glm-5", zai_key
-        ))
+        results.append(await test_provider(ProviderType.ZAI, "glm-5", zai_key))
 
     # Test OpenAI
     if openai_key:
-        results.append(await test_provider(
-            ProviderType.OPENAI, "gpt-4o-mini", openai_key
-        ))
+        results.append(await test_provider(ProviderType.OPENAI, "gpt-4o-mini", openai_key))
 
     # Test Anthropic
     if anthropic_key:
-        results.append(await test_provider(
-            ProviderType.ANTHROPIC, "claude-3-haiku-20240307", anthropic_key
-        ))
+        results.append(
+            await test_provider(ProviderType.ANTHROPIC, "claude-3-haiku-20240307", anthropic_key)
+        )
 
     # Test Portkey (if key available)
     if portkey_key:
-        results.append(await test_provider(
-            ProviderType.PORTKEY, "@zhipu/glm-4.7-flashx", portkey_key
-        ))
+        results.append(await test_provider(ProviderType.PORTKEY, "glm-4.7-flash", portkey_key))
 
     # Summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("SUMMARY")
-    print("="*60)
+    print("=" * 60)
 
     success = sum(1 for r in results if r["status"] == "success")
     skipped = sum(1 for r in results if r["status"] == "skipped")
     errors = sum(1 for r in results if r["status"] == "error")
 
     for r in results:
-        status_icon = "[OK]" if r["status"] == "success" else "[SKIP]" if r["status"] == "skipped" else "[ERR]"
+        status_icon = (
+            "[OK]"
+            if r["status"] == "success"
+            else "[SKIP]"
+            if r["status"] == "skipped"
+            else "[ERR]"
+        )
         print(f"  {status_icon} {r['provider']}: {r['status']}")
 
     print(f"\nTotal: {success} passed, {skipped} skipped, {errors} failed")

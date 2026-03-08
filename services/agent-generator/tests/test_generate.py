@@ -20,16 +20,16 @@ def client():
 def mock_llm_provider():
     """Mock LLM provider fixture."""
     mock_response = MagicMock()
-    mock_response.content = '''{
+    mock_response.content = """{
         "flow_code": "class TestFlow(Flow[AgentState]):\\n    @start()\\n    async def begin(self):\\n        pass",
         "state_class": "class AgentState(BaseModel):\\n    task_id: str = ''",
         "agents_yaml": "agents:\\n  test:",
         "requirements": ["crewai[tools]>=0.80.0"],
         "flow_diagram": "graph TD\\n    A[Start]",
         "agents_info": []
-    }'''
+    }"""
     mock_response.tokens_used = 1000
-    mock_response.model = "glm-5"
+    mock_response.model = "glm-4.7-flash"
     mock_response.provider = MagicMock(value="zai")
 
     with patch("app.services.llm_provider.LLMProvider") as mock_provider_class:
@@ -68,7 +68,7 @@ def test_generate_agent_validation_error(client):
     request_data = {
         "description": "short",  # Too short
         "agent_name": "123Invalid",  # Starts with number
-        "complexity": "invalid"
+        "complexity": "invalid",
     }
 
     response = client.post("/api/generate-agent", json=request_data)

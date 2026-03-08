@@ -62,8 +62,16 @@ class Settings(BaseSettings):
     AGENT_CODE_PATH: str = Field(
         default="/var/laias/agents", description="Path to store generated agent code"
     )
+    HOST_AGENT_CODE_PATH: str = Field(
+        default="/Volumes/Storage/LAIAS/agents-runtime",
+        description="Host-side path that maps to AGENT_CODE_PATH (for sibling container bind mounts)",
+    )
     AGENT_OUTPUT_PATH: str = Field(
         default="/var/laias/outputs", description="Path to persist agent run outputs"
+    )
+    HOST_AGENT_OUTPUT_PATH: str = Field(
+        default="/Volumes/Storage/LAIAS/outputs",
+        description="Host-side path that maps to AGENT_OUTPUT_PATH (for sibling container bind mounts)",
     )
     FILESYSTEM_BROWSE_ROOT: str = Field(
         default="/var/laias/outputs", description="Root path for file browser"

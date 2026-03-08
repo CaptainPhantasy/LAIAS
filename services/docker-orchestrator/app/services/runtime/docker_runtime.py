@@ -131,6 +131,7 @@ class DockerRuntime(ContainerRuntime):
         output_config: dict[str, bool] | None = None,
         output_path: str | None = None,
         output_format: str = "markdown",
+        input_volumes: list[dict[str, str]] | None = None,
         cpu_limit: float = 1.0,
         memory_limit: str = "512m",
     ) -> Any:
@@ -146,6 +147,16 @@ class DockerRuntime(ContainerRuntime):
         await self._write_agent_code(deploy_dir, flow_code, agents_yaml, requirements)
         os.makedirs(output_dir, exist_ok=True)
         self._write_deployment_config(deployment_id, output_dir, output_format, output_config)
+
+        host_deploy_dir = deploy_dir.replace(
+            settings.AGENT_CODE_PATH, settings.HOST_AGENT_CODE_PATH, 1
+        )
+        if output_dir.startswith(settings.AGENT_OUTPUT_PATH):
+            host_output_dir = output_dir.replace(
+                settings.AGENT_OUTPUT_PATH, settings.HOST_AGENT_OUTPUT_PATH, 1
+            )
+        else:
+            host_output_dir = output_dir
 
         container_name = f"{settings.CONTAINER_PREFIX}{deployment_id[:12]}"
         ingest_url = (
@@ -164,14 +175,21 @@ class DockerRuntime(ContainerRuntime):
             **environment_vars,
         }
 
+        volume_mounts = {
+            host_deploy_dir: {"bind": "/app/agent", "mode": "ro"},
+            host_output_dir: {"bind": "/app/outputs", "mode": "rw"},
+        }
+        for vol in input_volumes or []:
+            volume_mounts[vol["host_path"]] = {
+                "bind": vol["container_path"],
+                "mode": "ro",
+            }
+
         try:
             container = self.client.containers.create(
                 image=self.base_image,
                 name=container_name,
-                volumes={
-                    deploy_dir: {"bind": "/app/agent", "mode": "ro"},
-                    output_dir: {"bind": "/app/outputs", "mode": "rw"},
-                },
+                volumes=volume_mounts,
                 environment=env_vars,
                 cpu_period=100000,
                 cpu_quota=int(cpu_limit * 100000),

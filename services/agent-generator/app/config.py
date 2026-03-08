@@ -64,7 +64,7 @@ class Settings(BaseSettings):
     # === LLM Settings ===
     default_llm_provider: str = Field(default="zai", description="Default LLM provider")
     default_model: str = Field(
-        default="GLM-5", description="Default model (ZAI requires exact case)"
+        default="glm-4.7-flash", description="Default model (ZAI requires exact case)"
     )
     max_tokens: int = Field(default=8000, description="Max tokens for generation")
     temperature: float = Field(default=0.7, description="Default temperature")

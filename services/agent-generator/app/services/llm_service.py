@@ -5,7 +5,7 @@ Handles communication with multiple LLM providers through the
 vendor-agnostic LLMProvider for code generation with retry logic
 and error handling.
 
-Default provider: ZAI GLM-5
+Default provider: ZAI GLM-4.7-Flash
 """
 
 import json
@@ -31,7 +31,7 @@ class LLMService:
     Service for LLM-powered code generation.
 
     Supports multiple providers through the vendor-agnostic LLMProvider:
-    - ZAI (GLM-4, GLM-5) - DEFAULT
+    - ZAI (GLM-4, GLM-4.7-Flash) - DEFAULT
     - OpenAI (GPT-4, GPT-4o, etc.)
     - Anthropic (Claude models)
     - OpenRouter (access to many models)
@@ -256,8 +256,8 @@ class LLMService:
 
     def _get_model_for_provider(self, provider: str) -> str:
         provider_map = {
-            "zai": "GLM-5",
-            "portkey": "@zhipu/glm-4.7-flashx",
+            "zai": "glm-4.7-flash",
+            "portkey": "glm-4.7-flash",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
             "openrouter": "anthropic/claude-sonnet-4",
@@ -379,8 +379,8 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
         """
         status = {}
         all_providers = [
-            ("portkey", ProviderType.PORTKEY, "@zhipu/glm-4.7-flashx"),
-            ("zai", ProviderType.ZAI, "glm-5"),
+            ("portkey", ProviderType.PORTKEY, "glm-4.7-flash"),
+            ("zai", ProviderType.ZAI, "glm-4.7-flash"),
             ("openai", ProviderType.OPENAI, "gpt-4o-mini"),
             ("anthropic", ProviderType.ANTHROPIC, "claude-3-haiku-20240307"),
             ("openrouter", ProviderType.OPENROUTER, "openai/gpt-4o-mini"),

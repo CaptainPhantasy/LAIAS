@@ -202,16 +202,24 @@ uvicorn app.main:app --reload --port 8002
 
 ## LLM Providers
 
-LAIAS supports multiple LLM providers with ZAI GLM-5 as default:
+LAIAS supports multiple LLM providers. See `docs/ZAI_API_VERIFIED.md` for critical ZAI configuration.
 
-| Provider | Models | Status |
-|----------|--------|--------|
-| ZAI | GLM-5 | Default |
-| OpenAI | GPT-4o, GPT-4 | Verified |
-| Anthropic | Claude 3.5 | Verified |
-| OpenRouter | Multi-model | Supported |
-| Google | Gemini | Supported |
-| Mistral | Mistral | Supported |
+| Provider | Models | Role | Status |
+|----------|--------|------|--------|
+| ZAI | GLM-5 | Orchestrator (thinking MUST be disabled) | Default |
+| ZAI | GLM-4-Plus | Worker only (20 max plan-wide — never use all; reserve for GLM-5 + other sessions) | Verified |
+| OpenAI | GPT-4o, GPT-4 | General purpose | Verified |
+| Anthropic | Claude 3.5 | General purpose | Verified |
+| Portkey | Zhipu, Anthropic, Mistral | Multi-provider gateway | Verified |
+| OpenRouter | Multi-model | Gateway | Supported |
+| Google | Gemini | General purpose | Supported |
+| Mistral | Mistral | General purpose | Supported |
+
+> **⚠️ ZAI Warning:** GLM-5 has a reasoning layer built into the ZAI endpoint. Enabling
+> thinking mode creates a double-layer that completely paralyzes the model. Always disable
+> thinking. GLM-4-Plus lacks reasoning depth — use only for headless, single-task workers.
+> The 20 concurrent limit is **plan-wide** — over-subscribing starves GLM-5 and other
+> sessions. Recommend 3–5 max per session. See `docs/ZAI_API_VERIFIED.md`.
 
 ## License
 

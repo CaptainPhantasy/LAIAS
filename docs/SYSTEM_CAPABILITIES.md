@@ -222,8 +222,8 @@ The generator supports 7 LLM providers with automatic fallback:
 
 | Provider | Default Model | API Key Env Var |
 |----------|---------------|-----------------|
-| ZAI | GLM-5 | `ZAI_API_KEY` |
-| Portkey | @zhipu/glm-4.7-flashx | `PORTKEY_API_KEY` |
+| ZAI | GLM-5 (orchestrator, thinking MUST be disabled) / GLM-4-Plus (worker only, 20 max plan-wide — never use all) | `ZAI_API_KEY` |
+| Portkey | Zhipu, Anthropic, Mistral (multi-provider gateway) | `PORTKEY_API_KEY` |
 | OpenAI | gpt-4o | `OPENAI_API_KEY` |
 | Anthropic | claude-sonnet-4-20250514 | `ANTHROPIC_API_KEY` |
 | OpenRouter | anthropic/claude-sonnet-4 | `OPENROUTER_API_KEY` |

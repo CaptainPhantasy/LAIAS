@@ -37,12 +37,16 @@
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  Endpoint:  https://api.z.ai/api/paas/v4/chat/completions                   │
-│  Model:     GLM-4-Plus (20 concurrent) or GLM-4.7 (5 concurrent)            │
+│  Models:    GLM-5 (orchestrator) │ GLM-4-Plus (worker, 20 max plan-wide)    │
 │  Temp:      0.2 MAX                                                          │
 │  REQUIRED:  "thinking": {"type": "disabled"}                                │
 │                                                                              │
-│  WITHOUT thinking disabled, content returns EMPTY and goes to               │
-│  reasoning_content field instead!                                           │
+│  ⚠ GLM-5 has a reasoning layer BUILT INTO the endpoint. Enabling            │
+│  thinking mode adds a SECOND layer → model paralysis → empty output.        │
+│  This is a TOTAL FAILURE, not a degradation.                                │
+│                                                                              │
+│  ⚠ GLM-4-Plus is WORKER ONLY — fast but lacks reasoning depth.             │
+│  Cannot serve as primary builder/orchestrator. Needs clear direction.       │
 │                                                                              │
 │  See: /Volumes/Storage/LAIAS/docs/ZAI_API_VERIFIED.md                       │
 │                                                                              │
@@ -100,11 +104,11 @@ This guide documents the exact process used to:
 
 | Issue | Cause | Fix |
 |-------|-------|-----|
-| Empty LLM response | ZAI thinking mode enabled | Add `"thinking": {"type": "disabled"}` to payload |
+| Empty LLM response | ZAI thinking mode enabled on GLM-5 | Add `"thinking": {"type": "disabled"}` — GLM-5 already has endpoint-level reasoning; enabling thinking adds a **double layer** that paralyzes the model completely |
 | JSON parse error | LLM returns markdown, not JSON | Check `extract_code_from_markdown` helper |
-| ZAI concurrency limit | GLM-5 has low concurrency | Use `GLM-4-Plus` (20 concurrent) |
+| Bad orchestration output | Using GLM-4-Plus as primary builder | GLM-4-Plus is **worker-only** — lacks reasoning depth for orchestration. Use GLM-5 (thinking disabled) or OpenAI/Anthropic for builder roles |
 | Wrong ZAI endpoint | Using /api/coding/paas/v4 | Use /api/paas/v4 |
-| Model name case | glm-4-plus vs GLM-4-Plus | Use exact case: `GLM-4-Plus` |
+| Model name case | glm-4-plus vs GLM-4-Plus | Use exact case: `GLM-4-Plus`, `GLM-5` |
 
 ---
 

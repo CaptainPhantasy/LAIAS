@@ -78,7 +78,9 @@ frontend/*/.env.local
 !frontend/control-room/lib/
 !frontend/shared/lib/
 
-# Agent output directories (generated at runtime)
+# Agent runtime directories (generated at runtime, persistent)
+outputs/
+agents-runtime/
 agents/*/research/
 agents/*/output/
 agents/*/results/

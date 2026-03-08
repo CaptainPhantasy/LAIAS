@@ -53,7 +53,7 @@ class _FakeAgent:
         self.task_type = "general"
         self.requirements = ["crewai"]
         self.llm_provider = "zai"
-        self.model = "glm-5"
+        self.model = "glm-4.7-flash"
         self.estimated_cost_per_run = 0.1
         self.complexity_score = 3
         self.validation_status = {"is_valid": True}
