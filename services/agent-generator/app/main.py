@@ -174,6 +174,7 @@ def create_app() -> FastAPI:
     from app.api.routes.tools import router as tools_router
     from app.api.routes.users import router as users_router
     from app.api.routes.validate import router as validate_router
+    from app.api.routes.dases import router as dases_router
 
     app.include_router(auth_router)
     app.include_router(generate_router)
@@ -184,6 +185,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router)
     app.include_router(teams_router)
     app.include_router(templates_router)
+    app.include_router(dases_router)
     # app.include_router(business_dev_router)  # Disabled - see GAP-ANALYSIS P0-4
 
     # =============================================================================

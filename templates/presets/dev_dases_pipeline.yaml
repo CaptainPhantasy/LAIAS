@@ -1,0 +1,80 @@
+id: dev_dases_pipeline
+name: DASES Production Pipeline
+description: Deterministic Agentic Software Engineering System — a quality-gated multi-agent
+  pipeline that produces production-release quality software. 8 specialized agents execute
+  sequentially with The Critic verifying at each stage. Covers requirements, technical review,
+  scaffolding, database design, implementation, frontend, documentation, and release sign-off.
+category: development
+tags:
+- software-engineering
+- multi-agent
+- quality-gates
+- production-pipeline
+- full-stack
+- deterministic
+- code-generation
+default_complexity: complex
+default_tools:
+- FileReadTool
+- DirectoryReadTool
+- CodeInterpreterTool
+sample_prompts:
+- Build a task management app with real-time collaboration, due dates, and team workspaces
+- Create a SaaS dashboard with user auth, billing integration, and analytics
+- Build an e-commerce platform with inventory management and payment processing
+- Create a CRM system with contact management, deal pipeline, and email integration
+suggested_config:
+  llm_provider: zai
+  model: glm-4-flash
+  include_memory: true
+  include_analytics: true
+  max_agents: 8
+agent_structure:
+  agents:
+  - name: deep_planner
+    role: Deep Planner — Senior Requirements Architect
+    backstory: Senior Requirements Architect with 20+ years of experience. Extracts complete,
+      unambiguous requirements through structured interrogation. Produces SPEC.md documents
+      so thorough that any developer could implement without asking a single question.
+  - name: deep_thinker
+    role: Deep Thinker — Senior Technical Blocker Finder
+    backstory: Senior Technical Architect and Scrum Master who finds unknown unknowns before
+      they become expensive problems. Classifies issues as Blockers, High Risk, or Recommendations.
+  - name: scaffolding_expert
+    role: Scaffolding Expert — Dependencies Architect
+    backstory: Senior DevOps and Build Engineer obsessed with reproducibility. All dependencies
+      locked at exact versions. No tildes, no carets, no floating versions.
+  - name: database_specialist
+    role: Database Specialist — Data Architecture Engineer
+    backstory: Senior Database Architect who designs schemas in at least 3NF with strategic
+      indexing, idempotent migrations, and repository-pattern data access layers.
+  - name: coding_expert
+    role: Coding Expert — Principal Software Engineer
+    backstory: Principal Engineer who writes clean, testable, maintainable, performant, and
+      secure code. Strict typing, comprehensive error handling, 90%+ test coverage.
+  - name: frontend_designer
+    role: Frontend Designer — Senior UI/UX Engineer
+    backstory: Pixel-perfect developer who implements any visual style with full accessibility
+      compliance (WCAG 2.1 AA), responsive design, and performance optimization.
+  - name: release_documentarian
+    role: Release Documentarian — Technical Writer
+    backstory: Senior Technical Writer who produces README, user manuals, API docs, test plans,
+      and marketing materials. Documentation is a feature.
+  - name: the_critic
+    role: The Critic — Senior QA Engineer
+    backstory: Ruthless quality gatekeeper who verifies every piece of work. Blocks releases
+      that don't meet production standards. Nothing passes without being perfect.
+expected_outputs:
+- SPEC.md — Complete project specification
+- Technical Review — Blocker analysis and feasibility assessment
+- Scaffolding Manifest — Project structure with locked dependencies
+- Database Architecture — Schema, migrations, data access layer
+- Implementation Report — Feature completion, test coverage, security checklist
+- Frontend Report — UI components, accessibility audit, performance metrics
+- Design System — Colors, typography, spacing, component specifications
+- Documentation Package — README, user manual, API docs, test plan
+- Release Sign-off — Final production-ready verification
+output_config:
+  format: markdown_with_attachments
+  destination: filesystem
+  filename_pattern: dases_{project_name}_{date}/
