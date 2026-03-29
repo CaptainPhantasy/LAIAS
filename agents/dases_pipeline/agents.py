@@ -44,36 +44,55 @@ def get_llm(config: Optional[DASESConfig] = None) -> LLM:
     """
     Create an LLM instance configured for the DASES pipeline.
 
-    Priority:
-    1. Environment variables (ZAI_API_KEY, OPENAI_API_KEY, etc.)
-    2. DASESConfig defaults (GLM via ZAI)
+    Litellm-native provider routing — model prefix determines provider:
+      openrouter/...  → OpenRouter (OPENROUTER_API_KEY)
+      deepseek/...    → DeepSeek  (DEEPSEEK_API_KEY)
+      anthropic/...   → Anthropic (ANTHROPIC_API_KEY)
+      openai/...      → OpenAI   (OPENAI_API_KEY)
+      mistral/...     → Mistral  (MISTRAL_API_KEY)
+      (no prefix)     → ZAI/OpenAI-compatible via custom base_url
 
     Returns:
         Configured CrewAI LLM instance
     """
     cfg = config or DASESConfig()
+    model = os.getenv("LLM_MODEL", os.getenv("DEFAULT_MODEL", cfg.default_model))
 
-    # Determine model and API base from environment
-    api_key = (
-        os.getenv("ZAI_API_KEY")
-        or os.getenv("OPENAI_API_KEY")
-        or os.getenv("LLM_API_KEY", "")
-    )
-    api_base = os.getenv(
-        "ZAI_API_BASE",
-        os.getenv("OPENAI_API_BASE", "https://open.bigmodel.cn/api/paas/v4")
-    )
-    model = os.getenv("LLM_MODEL", cfg.default_model)
-
-    llm = LLM(
-        model=model,
-        api_key=api_key,
-        base_url=api_base,
-        temperature=cfg.temperature,
-        max_tokens=cfg.max_tokens,
+    # Litellm-native providers — no custom base_url needed
+    NATIVE_PREFIXES = (
+        "openrouter/", "deepseek/", "anthropic/", "mistral/",
+        "openai/", "ollama/", "groq/", "xai/",
     )
 
-    logger.info("LLM configured", model=model, base_url=api_base)
+    if model.startswith(NATIVE_PREFIXES):
+        llm = LLM(
+            model=model,
+            temperature=cfg.temperature,
+            max_tokens=cfg.max_tokens,
+        )
+        logger.info("LLM configured (native provider)", model=model)
+    else:
+        # Fallback: OpenAI-compatible endpoint (ZAI, local, etc.)
+        api_key = (
+            os.getenv("ZAI_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+            or os.getenv("LLM_API_KEY", "")
+        )
+        api_base = os.getenv(
+            "ZAI_API_BASE",
+            os.getenv("OPENAI_API_BASE", "https://open.bigmodel.cn/api/paas/v4")
+        )
+        if not model.startswith("openai/"):
+            model = f"openai/{model}"
+        llm = LLM(
+            model=model,
+            api_key=api_key,
+            base_url=api_base,
+            temperature=cfg.temperature,
+            max_tokens=cfg.max_tokens,
+        )
+        logger.info("LLM configured (custom endpoint)", model=model, base_url=api_base)
+
     return llm
 
 

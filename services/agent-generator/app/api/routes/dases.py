@@ -92,7 +92,7 @@ async def start_dases_pipeline(
     logger.info(
         "DASES pipeline run requested",
         project_name=body.project_name,
-        user=current_user.user_id,
+        user=current_user.id,
     )
 
     task_id = f"dases_{datetime.now().strftime('%Y%m%d_%H%M%S')}"

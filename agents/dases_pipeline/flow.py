@@ -23,7 +23,9 @@ Follows Godzilla pattern: Flow[DASESState], structlog, error recovery.
 
 from crewai import Task, Crew, Process
 from crewai.flow.flow import Flow, listen, start, router
-from crewai.flow.persistence import persist
+# Note: @persist() removed — CrewAI 0.126.0's persist uses dict() instead of
+# model_dump(), which fails to serialize nested Pydantic models (QualityGate).
+# State persistence is handled by the API route's in-memory registry instead.
 from pydantic import Field
 from typing import Optional
 from datetime import datetime
@@ -69,7 +71,6 @@ logger = structlog.get_logger()
 # THE DASES FLOW
 # =============================================================================
 
-@persist()
 class DASESFlow(Flow[DASESState]):
     """
     DASES — Deterministic Agentic Software Engineering System

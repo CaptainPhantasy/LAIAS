@@ -169,7 +169,7 @@ class DASESConfig(BaseModel):
 
     # LLM Settings — defaults to GLM via ZAI
     default_model: str = Field(
-        default="openai/glm-4-flash",
+        default="openai/glm-4.7-flash",
         description="LLM model identifier for CrewAI"
     )
     temperature: float = 0.7

@@ -120,6 +120,8 @@ services:
       - DOCKER_ORCHESTRATOR_URL=http://docker-orchestrator:8002
     volumes:
       - ./templates/presets:/app/templates/presets:ro
+      - ./agents:/app/agents:ro
+      - ./services/agent-generator/app:/app/app:ro
     depends_on:
       postgres:
         condition: service_healthy
