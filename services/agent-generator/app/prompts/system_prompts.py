@@ -246,7 +246,7 @@ class MyCrew():
         return Agent(
             config=self.agents_config['researcher'],
             verbose=True,
-            llm=LLM(model="openai/gpt-4o")
+            llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
         )
 
     @agent
@@ -254,7 +254,7 @@ class MyCrew():
         return Agent(
             config=self.agents_config['analyst'],
             verbose=True,
-            llm=LLM(model="openai/gpt-4o")
+            llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
         )
 
     @crew
@@ -282,14 +282,17 @@ except Exception as e:
     self.state["last_error"] = str(e)
 ```
 
-### 6. LLM Configuration (REQUIRED)
+### 6. LLM Configuration (REQUIRED — all requests route through Portkey gateway)
 ```python
 from crewai import LLM
+import os
 
-# Correct format: provider/model-id
-llm = LLM(model="openai/gpt-4o")
-llm = LLM(model="anthropic/claude-sonnet-4-20250514")
-llm = LLM(model="openai/gpt-4o-mini")  # Cost efficient default
+# All LLM calls route through Portkey AI Gateway
+llm = LLM(
+    model=os.getenv("DEFAULT_MODEL", "gpt-4o"),
+    base_url="https://api.portkey.ai/v1",
+    api_key=os.getenv("PORTKEY_API_KEY", ""),
+)
 ```
 
 ## GENERATION RULES

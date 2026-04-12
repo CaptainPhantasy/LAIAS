@@ -175,8 +175,9 @@ class AgentState(BaseModel):
 class AgentConfig(BaseModel):
     """Configuration for the agent flow."""
 
-    # LLM Settings
+    # LLM Settings — routed through Portkey AI Gateway
     default_model: str = "gpt-4o"
+    llm_base_url: str = "https://api.portkey.ai/v1"
     temperature: float = 0.7
     max_tokens: int = 4000
 
@@ -1095,13 +1096,15 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
         return Agent(
             role="Senior Research Analyst",
             goal="Gather comprehensive, accurate information from multiple sources",
-            backstory="""You are an expert research analyst with 15+ years of 
-            experience. You excel at finding relevant information, verifying 
-            sources, and synthesizing findings into actionable insights. You 
+            backstory="""You are an expert research analyst with 15+ years of
+            experience. You excel at finding relevant information, verifying
+            sources, and synthesizing findings into actionable insights. You
             approach every research task with thoroughness and skepticism.""",
             tools=self.tools,
             llm=LLM(
                 model=self.config.default_model,
+                base_url=self.config.llm_base_url,
+                api_key=os.getenv("PORTKEY_API_KEY", ""),
                 temperature=0.7,  # Slightly creative for research
             ),
             verbose=self.config.verbose,
@@ -1120,12 +1123,14 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
         return Agent(
             role="Requirements Analyst",
             goal="Analyze requirements and create detailed execution plans",
-            backstory="""You are a meticulous requirements analyst who excels 
-            at breaking down complex requests into actionable components. You 
+            backstory="""You are a meticulous requirements analyst who excels
+            at breaking down complex requests into actionable components. You
             identify dependencies, risks, and optimal execution strategies.""",
             tools=[],  # Analysis doesn't need external tools
             llm=LLM(
                 model=self.config.default_model,
+                base_url=self.config.llm_base_url,
+                api_key=os.getenv("PORTKEY_API_KEY", ""),
                 temperature=0.3,  # More deterministic for analysis
             ),
             verbose=self.config.verbose,
@@ -1146,7 +1151,12 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             into reality. You pay attention to detail, follow best practices, 
             and ensure deliverables meet or exceed expectations.""",
             tools=self.tools,
-            llm=LLM(model=self.config.default_model, temperature=0.5),
+            llm=LLM(
+                model=self.config.default_model,
+                base_url=self.config.llm_base_url,
+                api_key=os.getenv("PORTKEY_API_KEY", ""),
+                temperature=0.5,
+            ),
             verbose=self.config.verbose,
             memory=self.config.memory_enabled,
             max_iter=20,
@@ -1169,6 +1179,8 @@ class LegacyAIPrimeFlow(Flow[AgentState]):
             tools=[],  # Reporting doesn't need external tools
             llm=LLM(
                 model=self.config.default_model,
+                base_url=self.config.llm_base_url,
+                api_key=os.getenv("PORTKEY_API_KEY", ""),
                 temperature=0.2,  # Very deterministic for reports
             ),
             verbose=self.config.verbose,
@@ -1336,7 +1348,7 @@ EXAMPLE 4: Using Composio for 850+ integrations
         role="Integration Specialist",
         goal="Manage tasks across multiple platforms",
         tools=tools,
-        llm=LLM(model="gpt-4o")
+        llm=LLM(model="gpt-4o", base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
     )
     
     # Popular Composio toolkits:

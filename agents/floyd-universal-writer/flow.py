@@ -390,10 +390,10 @@ class FloydUniversalWriterFlow(Flow[FloydWriterState]):
     BIBLE_FILENAME = os.environ.get("BIBLE_FILENAME", "STORY_ARC_BIBLE.md")
 
     def _creative_llm(self) -> LLM:
-        return LLM(model=self.CREATIVE_MODEL)
+        return LLM(model=self.CREATIVE_MODEL, base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
 
     def _utility_llm(self) -> LLM:
-        return LLM(model=self.UTILITY_MODEL)
+        return LLM(model=self.UTILITY_MODEL, base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
 
     def _parse_story_numbers(self) -> list[int]:
         """Parse STORIES env var into sorted list of story numbers."""

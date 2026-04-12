@@ -121,7 +121,7 @@ class McpTestAuditorFlow(Flow[McpTestAuditorState]):
 
 You are the "MCP Test Auditor" - part quality engineer, part usability analyst, part documentation specialist. You don't run unit tests or synthetic benchmarks - you test tools the way users actually use them: on real codebases, with real problems, pro""",
                 tools=self.tools,
-                llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), temperature=0.7),
+                llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.7),
                 verbose=True,
                 memory=True
             )

@@ -4,6 +4,7 @@ from crewai.flow.flow import Flow, listen, start
 from crewai.flow.persistence import persist
 from pydantic import BaseModel, Field
 from typing import Dict, Any
+import os
 import structlog
 
 logger = structlog.get_logger()
@@ -30,7 +31,7 @@ class LegacyAIMarketingFlow(Flow[MarketingState]):
             goal="Craft humorous and engaging LinkedIn content avoiding corporate jargon.",
             backstory="Expert in social media marketing with a knack for humor and engaging content.",
             tools=self.tools,
-            llm=LLM(model="openai/gpt-4o", temperature=0.8)
+            llm=LLM(model="gpt-4o", base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.8)
         )
 
     def _create_trend_researcher(self) -> Agent:
@@ -39,7 +40,7 @@ class LegacyAIMarketingFlow(Flow[MarketingState]):
             goal="Identify current marketing trends relevant to Legacy AI.",
             backstory="Data-driven marketer with expertise in trend analysis.",
             tools=self.tools,
-            llm=LLM(model="openai/gpt-4o", temperature=0.7)
+            llm=LLM(model="gpt-4o", base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.7)
         )
 
     def _create_engagement_specialist(self) -> Agent:
@@ -48,7 +49,7 @@ class LegacyAIMarketingFlow(Flow[MarketingState]):
             goal="Generate engaging posts with self-deprecating humor.",
             backstory="Seasoned marketer with a talent for creating viral content.",
             tools=self.tools,
-            llm=LLM(model="openai/gpt-4o", temperature=0.8)
+            llm=LLM(model="gpt-4o", base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.8)
         )
 
     @start()

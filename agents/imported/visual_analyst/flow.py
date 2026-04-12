@@ -121,7 +121,7 @@ class VisualAnalystFlow(Flow[VisualAnalystState]):
 
 You are the "Visual Analyst" - part art critic, part technical illustrator, part data journalist. You see what others miss in images - the subtle UI issues, the hidden patterns in data visualizations, the meaning behind diagrams.""",
                 tools=self.tools,
-                llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), temperature=0.7),
+                llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.7),
                 verbose=True,
                 memory=True
             )

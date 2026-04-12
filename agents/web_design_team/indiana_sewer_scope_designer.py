@@ -196,7 +196,7 @@ class WebDesignTeamFlow(Flow[WebDesignState]):
                 base_url="https://open.bigmodel.cn/api/paas/v4"
             )
         else:
-            return LLM(model="gpt-4o")
+            return LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
     
     # =========================================================================
     # AGENT FACTORIES - 6 ELITE SPECIALISTS

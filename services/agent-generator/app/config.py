@@ -46,7 +46,7 @@ class Settings(BaseSettings):
 
     # === LLM Provider Override ===
     LLM_PROVIDER: str = Field(default="portkey", description="Default LLM provider")
-    LLM_MODEL: str = Field(default="", description="Override default model")
+    LLM_MODEL: str = Field(default="gpt-4o", description="Override default model")
 
     # === Database ===
     database_url: str = Field(
@@ -62,9 +62,9 @@ class Settings(BaseSettings):
     redis_max_connections: int = Field(default=50, description="Redis max connections")
 
     # === LLM Settings ===
-    default_llm_provider: str = Field(default="zai", description="Default LLM provider")
+    default_llm_provider: str = Field(default="portkey", description="Default LLM provider")
     default_model: str = Field(
-        default="glm-4.7-flash", description="Default model (ZAI requires exact case)"
+        default="gpt-4o", description="Default model routed through Portkey gateway"
     )
     max_tokens: int = Field(default=8000, description="Max tokens for generation")
     temperature: float = Field(default=0.7, description="Default temperature")
@@ -201,14 +201,14 @@ class Settings(BaseSettings):
         if provider_override:
             return provider_override
 
-        # Fallback to ZAI if available (preferred for GLM-5), then Portkey, then OpenAI
-        if self.zai_available:
-            return "zai"
+        # Portkey is the primary gateway — all requests route through it
         if self.portkey_available:
             return "portkey"
         if self.openai_available:
             return "openai"
-        return "zai"  # Default to ZAI for GLM-5
+        if self.zai_available:
+            return "zai"
+        return "portkey"
 
 
 @lru_cache

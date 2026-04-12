@@ -2,14 +2,15 @@
 Vendor-Agnostic LLM Provider Service.
 
 Provides a unified interface for multiple LLM providers including:
-- ZAI (GLM-4, GLM-5) - DEFAULT
+- Portkey AI Gateway (GPT-4o via gateway) - DEFAULT
 - OpenAI (GPT-4, GPT-4o, etc.)
 - Anthropic (Claude models)
 - OpenRouter (access to many models)
+- ZAI (GLM-4, GLM-5)
 - Google (Gemini)
 - Mistral
 
-Default provider: ZAI GLM-5
+Default provider: Portkey -> GPT-4o
 """
 
 import json
@@ -52,11 +53,11 @@ class LLMConfig(BaseModel):
     """
     Configuration for LLM provider.
 
-    Defaults to ZAI GLM-4.7-Flash for cost-effective daily use.
+    Defaults to Portkey gateway routing to GPT-4o.
     """
 
-    provider: ProviderType = Field(default=ProviderType.ZAI, description="LLM provider type")
-    model: str = Field(default="glm-4.7-flash", description="Model name")
+    provider: ProviderType = Field(default=ProviderType.PORTKEY, description="LLM provider type")
+    model: str = Field(default="gpt-4o", description="Model name")
     api_key: str | None = Field(default=None, description="API key (overrides env var)")
     base_url: str | None = Field(default=None, description="Base URL (overrides default)")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
@@ -91,15 +92,15 @@ class LLMProvider:
     """
     Unified LLM provider supporting multiple vendors.
 
-    Default: ZAI GLM-4.7-Flash for cost-effective operation.
+    Default: Portkey gateway routing to GPT-4o.
 
     Example:
-        provider = LLMProvider()  # Uses ZAI GLM-4.7-Flash by default
+        provider = LLMProvider()  # Uses Portkey -> GPT-4o by default
         response = await provider.complete([
             {"role": "user", "content": "Hello!"}
         ])
 
-        # Use OpenAI
+        # Use OpenAI directly (bypassing gateway)
         config = LLMConfig(provider=ProviderType.OPENAI, model="gpt-4o")
         provider = LLMProvider(config)
     """
@@ -117,15 +118,13 @@ class LLMProvider:
         },
         ProviderType.PORTKEY: {
             "base_url": "https://api.portkey.ai/v1",
-            "default_model": "glm-4.7-flash",
+            "default_model": "gpt-4o",
             "api_key_env": "PORTKEY_API_KEY",
             "header_prefix": "__skip__",
             "supports_streaming": True,
             "format": "openai",
             "extra_headers": {
                 "x-portkey-api-key": "{api_key}",
-                "x-portkey-provider": "zhipu",
-                "Authorization": "Bearer {zai_api_key}",
             },
         },
         ProviderType.OPENAI: {
@@ -192,7 +191,7 @@ class LLMProvider:
     def _default_config(cls) -> LLMConfig:
         """Create default config from environment variables."""
         # Check for provider override
-        provider_env = os.getenv("LLM_PROVIDER", "zai").lower()
+        provider_env = os.getenv("LLM_PROVIDER", "portkey").lower()
         provider_map = {
             "zai": ProviderType.ZAI,
             "portkey": ProviderType.PORTKEY,
@@ -202,7 +201,7 @@ class LLMProvider:
             "google": ProviderType.GOOGLE,
             "mistral": ProviderType.MISTRAL,
         }
-        provider = provider_map.get(provider_env, ProviderType.ZAI)
+        provider = provider_map.get(provider_env, ProviderType.PORTKEY)
 
         # Check for model override
         model = os.getenv("LLM_MODEL")

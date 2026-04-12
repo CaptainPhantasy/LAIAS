@@ -26,7 +26,7 @@ class OpenAI_RE_Extractor:
 
     def __init__(self):
         # Use OpenAI instead of ZAI (model issue)
-        self.llm = LLM(model="gpt-4o")
+        self.llm = LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
 
         # Tools
         self.search_tool = SerperDevTool()

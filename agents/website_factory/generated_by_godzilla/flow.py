@@ -111,8 +111,8 @@ class ContextMonitorTool:
 # -------------------------------------------------------------------------
 
 # Default LLM configuration (using a placeholder, user should configure)
-# In production: llm=LLM(model="openai/gpt-4o", temperature=0.1) or similar
-default_llm = LLM(model="openai/gpt-4o", temperature=0.1)
+# In production: llm=LLM(model="gpt-4o", base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.1) or similar
+default_llm = LLM(model="gpt-4o", base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.1)
 
 orchestrator = Agent(
     role="System Orchestrator & Manager",

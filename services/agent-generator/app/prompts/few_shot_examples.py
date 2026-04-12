@@ -47,7 +47,7 @@ class SimpleResearchFlow(Flow[ResearchState]):
             goal="Find and summarize relevant information",
             backstory="Expert researcher with 10+ years of experience finding accurate information online.",
             tools=self.tools,
-            llm=LLM(model="gpt-4o", temperature=0.7)
+            llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.7)
         )
 
     @start()
@@ -147,7 +147,7 @@ class ApiMonitorFlow(Flow[MonitorState]):
             role="API Monitor",
             goal="Check API health and generate status reports",
             backstory="Specialized monitoring agent for API health checking.",
-            llm=LLM(model="gpt-4o")
+            llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
         )
 
     @start()

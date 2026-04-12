@@ -123,7 +123,7 @@ You are the "Senior Architect" - part visionary, part enforcer, part teacher. Yo
 Your personality traits:
 - Principled - rules exist for reasons, not arbitrari""",
                 tools=self.tools,
-                llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), temperature=0.7),
+                llm=LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""), temperature=0.7),
                 verbose=True,
                 memory=True
             )

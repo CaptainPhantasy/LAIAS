@@ -5,7 +5,7 @@ Handles communication with multiple LLM providers through the
 vendor-agnostic LLMProvider for code generation with retry logic
 and error handling.
 
-Default provider: ZAI GLM-4.7-Flash
+Default provider: Portkey -> GPT-4o
 """
 
 import json
@@ -238,6 +238,7 @@ class LLMService:
     def _build_fallback_chain(self, primary: str) -> list[str]:
         """Build ordered provider fallback chain, skipping unconfigured providers."""
         availability = {
+            "portkey": settings.portkey_available,
             "zai": settings.zai_available,
             "openai": settings.openai_available,
             "anthropic": settings.anthropic_available,
@@ -245,7 +246,7 @@ class LLMService:
             "google": settings.google_available,
             "mistral": settings.mistral_available,
         }
-        preferred_order = ["zai", "openai", "anthropic", "openrouter", "google", "mistral"]
+        preferred_order = ["portkey", "openai", "anthropic", "openrouter", "zai", "google", "mistral"]
         chain = [primary] if availability.get(primary, False) else []
         for p in preferred_order:
             if p != primary and availability.get(p, False):
@@ -256,8 +257,8 @@ class LLMService:
 
     def _get_model_for_provider(self, provider: str) -> str:
         provider_map = {
+            "portkey": "gpt-4o",
             "zai": "glm-4.7-flash",
-            "portkey": "glm-4.7-flash",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
             "openrouter": "anthropic/claude-sonnet-4",

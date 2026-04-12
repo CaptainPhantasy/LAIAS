@@ -69,7 +69,7 @@ class FixerAgent:
                 api_key=os.getenv("ZAI_API_KEY"),
                 base_url="https://open.bigmodel.cn/api/paas/v4",
             )
-        return LLM(model="gpt-4o")
+        return LLM(model=os.getenv("DEFAULT_MODEL", "gpt-4o"), base_url="https://api.portkey.ai/v1", api_key=os.getenv("PORTKEY_API_KEY", ""))
 
     # =========================================================================
     # MAIN FIX LOOP
