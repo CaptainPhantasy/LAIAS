@@ -9,6 +9,7 @@ Default provider: Portkey -> GPT-4o
 """
 
 import json
+import os
 from typing import Any
 
 import structlog
@@ -256,8 +257,17 @@ class LLMService:
         return chain
 
     def _get_model_for_provider(self, provider: str) -> str:
+        # LLM_MODEL env var overrides the per-provider default. This is
+        # required when routing Portkey through a non-OpenAI virtual key
+        # (e.g. portkeyclaude → Anthropic); the hardcoded 'gpt-4o' below
+        # would 404 against an Anthropic-bound virtual key.
+        env_override = os.getenv("LLM_MODEL", "").strip()
+        if env_override:
+            return env_override
         provider_map = {
-            "portkey": "gpt-4o",
+            "portkey": os.getenv(
+                "PORTKEY_HEALTH_MODEL", "claude-haiku-4-5-20251001"
+            ),
             "zai": "glm-4.7-flash",
             "openai": "gpt-4o",
             "anthropic": "claude-sonnet-4-20250514",
@@ -379,8 +389,16 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
             Dict mapping provider names to status strings
         """
         status = {}
+        # Health probe models per provider. These are whatever cheap/fast
+        # model each provider will accept for a 1-token ping. The portkey
+        # entry uses an Anthropic model because the default portkey virtual
+        # key (portkeyclaude) routes to Anthropic. If you swap
+        # PORTKEY_VIRTUAL_KEY to a different provider (openai-portkey, etc.),
+        # update this model to match.
         all_providers = [
-            ("portkey", ProviderType.PORTKEY, "glm-4.7-flash"),
+            ("portkey", ProviderType.PORTKEY, os.getenv(
+                "PORTKEY_HEALTH_MODEL", "claude-haiku-4-5-20251001"
+            )),
             ("zai", ProviderType.ZAI, "glm-4.7-flash"),
             ("openai", ProviderType.OPENAI, "gpt-4o-mini"),
             ("anthropic", ProviderType.ANTHROPIC, "claude-3-haiku-20240307"),

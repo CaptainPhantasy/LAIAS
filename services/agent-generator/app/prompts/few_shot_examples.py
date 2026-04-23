@@ -35,10 +35,10 @@ class ResearchState(BaseModel):
     query: str = Field(default="")
     research_results: str = Field(default="")
 
-@persist
+@persist()
 class SimpleResearchFlow(Flow[ResearchState]):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):  # @persist() injects persistence kwarg
+        super().__init__(**kwargs)
         self.tools = [SerperDevTool(), ScrapeWebsiteTool()]
 
     def _create_researcher(self) -> Agent:
@@ -137,10 +137,10 @@ class MonitorState(BaseModel):
     health_status: str = Field(default="unknown")
     alerts_sent: int = Field(default=0)
 
-@persist
+@persist()
 class ApiMonitorFlow(Flow[MonitorState]):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):  # @persist() injects persistence kwarg
+        super().__init__(**kwargs)
 
     def _create_monitor(self) -> Agent:
         return Agent(

@@ -118,13 +118,23 @@ class LLMProvider:
         },
         ProviderType.PORTKEY: {
             "base_url": "https://api.portkey.ai/v1",
-            "default_model": "gpt-4o",
+            # Default model is an Anthropic model because the default virtual
+            # key below is Anthropic-backed (portkeyclaude). Override by
+            # setting both PORTKEY_VIRTUAL_KEY and PORTKEY_MODEL together.
+            "default_model": "claude-haiku-4-5-20251001",
             "api_key_env": "PORTKEY_API_KEY",
             "header_prefix": "__skip__",
             "supports_streaming": True,
             "format": "openai",
+            # Virtual-key mode: the Portkey dashboard holds the upstream
+            # Anthropic/OpenAI credential; we send only the Portkey admin key
+            # + the virtual-key slug. No raw provider key leaves LAIAS.
+            # Legacy provider-hint mode (x-portkey-provider) is still
+            # supported via the {portkey_provider} placeholder below if
+            # PORTKEY_VIRTUAL_KEY is not set at runtime.
             "extra_headers": {
                 "x-portkey-api-key": "{api_key}",
+                "x-portkey-virtual-key": "{portkey_virtual_key}",
             },
         },
         ProviderType.OPENAI: {
@@ -357,6 +367,15 @@ class LLMProvider:
                 value_str = value_str.replace("{api_key}", self._api_key)
             if "{zai_api_key}" in value_str:
                 value_str = value_str.replace("{zai_api_key}", os.getenv("ZAI_API_KEY", ""))
+            if "{portkey_provider}" in value_str:
+                value_str = value_str.replace(
+                    "{portkey_provider}", os.getenv("PORTKEY_PROVIDER", "openai")
+                )
+            if "{portkey_virtual_key}" in value_str:
+                value_str = value_str.replace(
+                    "{portkey_virtual_key}",
+                    os.getenv("PORTKEY_VIRTUAL_KEY", "portkeyclaude"),
+                )
             headers[key] = value_str
 
         # Build request payload
@@ -577,13 +596,29 @@ class LLMProvider:
         }
 
         header_prefix = provider_config.get("header_prefix", "Bearer")
-        if header_prefix:
+        if header_prefix == "__skip__":
+            pass
+        elif header_prefix:
             headers["Authorization"] = f"{header_prefix} {self._api_key}"
         else:
             headers["Authorization"] = self._api_key
 
         for key, value in provider_config.get("extra_headers", {}).items():
-            headers[key] = value
+            value_str = str(value)
+            if "{api_key}" in value_str:
+                value_str = value_str.replace("{api_key}", self._api_key)
+            if "{zai_api_key}" in value_str:
+                value_str = value_str.replace("{zai_api_key}", os.getenv("ZAI_API_KEY", ""))
+            if "{portkey_provider}" in value_str:
+                value_str = value_str.replace(
+                    "{portkey_provider}", os.getenv("PORTKEY_PROVIDER", "openai")
+                )
+            if "{portkey_virtual_key}" in value_str:
+                value_str = value_str.replace(
+                    "{portkey_virtual_key}",
+                    os.getenv("PORTKEY_VIRTUAL_KEY", "portkeyclaude"),
+                )
+            headers[key] = value_str
 
         payload = {
             "model": model,
