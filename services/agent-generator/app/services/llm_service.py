@@ -743,23 +743,37 @@ except Exception:
 
 
 def _laias_stub_callable(*_args, **_kwargs):
-    raise RuntimeError(
-        "This tool is unavailable at runtime (shimmed by LAIAS safe-import). "
-        "The generated code referenced a tool that the installed crewai_tools "
-        "version does not export."
+    return (
+        "[laias-stub] This tool is unavailable at runtime (shimmed by "
+        "LAIAS safe-import). The generated code referenced a tool that the "
+        "installed crewai_tools version does not export. Returning an "
+        "empty result so the flow can continue."
     )
 
 
-class _LaiasStubTool:
-    """Stand-in for any crewai_tools symbol that the generator invents."""
-    name = "laias-stub"
-    description = "LAIAS safe-import stub — raises on actual use."
-    def __init__(self, *_args, **_kwargs):
-        pass
-    def __call__(self, *_args, **_kwargs):
-        return _laias_stub_callable()
-    def run(self, *_args, **_kwargs):
-        return _laias_stub_callable()
+# Create a BaseTool-compatible stub. crewai.tools.BaseTool extends Pydantic;
+# agents validate every entry in their `tools` list against that type, so a
+# plain class will fail with 'Input should be a valid BaseTool'. We subclass
+# the real BaseTool if importable; if not, we fall back to a minimal shim.
+try:
+    from crewai.tools import BaseTool as _LaiasRealBaseTool
+    class _LaiasStubTool(_LaiasRealBaseTool):
+        name: str = "laias-stub"
+        description: str = "LAIAS safe-import stub — no-op."
+        def _run(self, *_args, **_kwargs):
+            return _laias_stub_callable()
+except Exception:
+    class _LaiasStubTool:  # pragma: no cover
+        name = "laias-stub"
+        description = "LAIAS safe-import stub — no-op (minimal)."
+        def __init__(self, *_args, **_kwargs):
+            pass
+        def __call__(self, *_args, **_kwargs):
+            return _laias_stub_callable()
+        def _run(self, *_args, **_kwargs):
+            return _laias_stub_callable()
+        def run(self, *_args, **_kwargs):
+            return _laias_stub_callable()
 
 
 _laias_original_import = _laias_builtins.__import__

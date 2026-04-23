@@ -47,7 +47,11 @@ RUN pip install --no-cache-dir \
     # as a hard dep — pinning it explicitly prevents `ImportError:
     # Fallback to LiteLLM is not available` inside generated agents.)
     "crewai[tools]>=0.80.0" \
-    "litellm[proxy]>=1.50.0" \
+    # Pin litellm to a version before the proxy/cold_storage_handler
+    # hard-dependency chain (introduced ~1.60). Older versions do not
+    # lazy-import litellm.proxy during a simple llm.call(), avoiding the
+    # apscheduler/asyncio shutdown chain that breaks CrewAI's LLM path.
+    "litellm>=1.50.0,<1.60.0" \
     # Composio - 850+ integrations
     "composio-core>=0.6.11" \
     "composio-crewai>=0.1.0" \
