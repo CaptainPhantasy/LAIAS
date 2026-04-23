@@ -53,6 +53,13 @@ class GeneratedFlow(Flow[AgentState]):
     def __init__(self, **kwargs):
         # **kwargs is REQUIRED — @persist() injects a 'persistence' kwarg
         super().__init__(**kwargs)
+        # CRITICAL — DO NOT write `self.state = AgentState()` here.
+        # `Flow[AgentState]` declares a managed property `self.state` that
+        # CrewAI populates automatically from the generic type + the
+        # kickoff_async(inputs=...) dict. Assigning to it raises
+        # `AttributeError: property 'state' has no setter`. Inside flow
+        # methods, mutate fields on self.state (e.g. `self.state.task_id = ...`)
+        # — never rebind `self.state` as a whole.
         self.tools = self._initialize_tools()
         self.config = self._get_config()
 
@@ -114,7 +121,32 @@ class GeneratedFlow(Flow[AgentState]):
 ```
 
 ### 3. Agent Factory Pattern (REQUIRED)
+
+**CRITICAL — LLM routing**: Every `Agent` MUST use a Portkey-routed LLM.
+CrewAI's default LLM tries to hit OpenAI directly, which will 401 inside
+the deployed container (no raw provider keys live there). LAIAS ships
+every container with `PORTKEY_API_KEY` + `PORTKEY_VIRTUAL_KEY` env vars;
+use them in a `_make_llm()` factory and pass its result to every Agent.
+
 ```python
+def _make_llm(self) -> LLM:
+    \"\"\"Portkey-routed LLM for every Agent in this flow.\"\"\"
+    model = os.getenv("LLM_MODEL") or os.getenv("DEFAULT_MODEL", "claude-haiku-4-5-20251001")
+    # LiteLLM (CrewAI's LLM backend) treats the 'openai/' prefix as
+    # 'use an OpenAI-compatible endpoint at base_url'. Portkey is
+    # OpenAI-compatible regardless of which upstream provider the
+    # virtual key points to (Anthropic, OpenAI, Google, etc.).
+    return LLM(
+        model=f"openai/{model}",
+        base_url="https://api.portkey.ai/v1",
+        api_key=os.getenv("PORTKEY_API_KEY", ""),
+        extra_headers={
+            "x-portkey-api-key": os.getenv("PORTKEY_API_KEY", ""),
+            "x-portkey-virtual-key": os.getenv("PORTKEY_VIRTUAL_KEY", "portkeyclaude"),
+        },
+        temperature=0.4,
+    )
+
 def _create_specialist_agent(self) -> Agent:
     \"\"\"Create a specialist agent with proper configuration.\"\"\"
     return Agent(
@@ -122,10 +154,7 @@ def _create_specialist_agent(self) -> Agent:
         goal="Clear, specific goal",
         backstory="Detailed backstory motivating behavior",
         tools=self.tools,
-        llm=LLM(
-            model=self.config.model,
-            temperature=self.config.temperature
-        ),
+        llm=self._make_llm(),   # ← MUST use the Portkey factory above
         verbose=True,
         memory=True,
         max_iter=15

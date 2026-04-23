@@ -42,8 +42,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install all dependencies in a single layer for caching efficiency
 RUN pip install --no-cache-dir \
-    # CrewAI framework
+    # CrewAI framework + LiteLLM (CrewAI's LLM backend; required for
+    # model routing. Recent crewai versions no longer bundle litellm
+    # as a hard dep — pinning it explicitly prevents `ImportError:
+    # Fallback to LiteLLM is not available` inside generated agents.)
     "crewai[tools]>=0.80.0" \
+    "litellm[proxy]>=1.50.0" \
     # Composio - 850+ integrations
     "composio-core>=0.6.11" \
     "composio-crewai>=0.1.0" \

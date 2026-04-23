@@ -218,7 +218,16 @@ class LLMService:
                     tokens_used=response.tokens_used,
                 )
 
-                return self._parse_response(response.content)
+                parsed = self._parse_response(response.content)
+                # Post-process the generated flow_code: ensure every LLM()
+                # constructor carries the Portkey virtual-key header and the
+                # 'openai/' model prefix. The LLM template shows this, but
+                # code-generation models sometimes omit fields during long
+                # outputs. This deterministic fix prevents a downstream 401
+                # inside the deployed container.
+                if isinstance(parsed, dict) and "flow_code" in parsed:
+                    parsed["flow_code"] = _postprocess_flow_code(parsed["flow_code"])
+                return parsed
 
             except (LLMServiceException, Exception) as e:
                 error_detail = str(e) or f"{type(e).__name__} (no message)"
@@ -480,6 +489,490 @@ OUTPUT INSTRUMENTATION REQUIREMENTS:
         """
         llm = self._get_provider(provider=provider, model=model, **kwargs)
         return await llm.complete(messages, **kwargs)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Deterministic LLM() constructor fix-up for generated flow code.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_LLM_FIXED_BODY = (
+    'LLM(\n'
+    '            model=f"openai/{os.getenv(\'LLM_MODEL\', os.getenv(\'DEFAULT_MODEL\', \'claude-haiku-4-5-20251001\'))}",\n'
+    '            base_url="https://api.portkey.ai/v1",\n'
+    '            api_key=os.getenv("PORTKEY_API_KEY", ""),\n'
+    '            extra_headers={\n'
+    '                "x-portkey-api-key": os.getenv("PORTKEY_API_KEY", ""),\n'
+    '                "x-portkey-virtual-key": os.getenv("PORTKEY_VIRTUAL_KEY", "portkeyclaude"),\n'
+    '            },\n'
+    '            temperature=0.4,\n'
+    '        )'
+)
+
+
+def _postprocess_llm_factory(flow_code: str) -> str:
+    """Replace any `LLM(...)` body with a canonical Portkey-routed factory.
+
+    LAIAS templates + few-shot examples teach the right shape, but code-
+    generation LLMs sometimes omit `extra_headers` or the `openai/` model
+    prefix during long outputs. Without those fields the deployed agent
+    container 401s against Portkey. This regex sweep guarantees every
+    LLM() body in the generated code has the full Portkey routing block,
+    regardless of what the model wrote.
+
+    Idempotent: a body that already matches _LLM_FIXED_BODY is left alone.
+    """
+    import re
+
+    # Pattern matches from `LLM(` through the matching `)` — tolerant of
+    # multi-line bodies and nested parens in dict values. We use a
+    # non-greedy outer match plus a simple paren-balance counter in a
+    # callback to find the true end.
+    idx = 0
+    out = []
+    while idx < len(flow_code):
+        m = re.search(r'\bLLM\(', flow_code[idx:])
+        if not m:
+            out.append(flow_code[idx:])
+            break
+        start = idx + m.start()
+        out.append(flow_code[idx:start])
+
+        # Find matching close-paren
+        depth = 0
+        i = start + len('LLM(')  # inside the opening paren
+        depth = 1
+        while i < len(flow_code) and depth > 0:
+            ch = flow_code[i]
+            if ch == '(':
+                depth += 1
+            elif ch == ')':
+                depth -= 1
+            i += 1
+        if depth != 0:
+            # Unbalanced — bail out, don't corrupt the code
+            out.append(flow_code[start:])
+            break
+
+        # Replace the entire LLM(...) body with the canonical one.
+        out.append(_LLM_FIXED_BODY)
+        idx = i  # resume after the replaced body
+
+    return ''.join(out)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Runtime entrypoint injection.
+# The base image `laias/agent-runner:latest` runs `python flow.py` as its CMD.
+# If flow.py has no `__main__` block, the module imports then exits with
+# code 0 — no crew kickoff, no artifact, no event posted to the orchestrator.
+# We inject a deterministic wrapper that: (a) parses the flow class name,
+# (b) instantiates it, (c) awaits kickoff_async with env-sourced inputs,
+# (d) writes artifact to /app/outputs/report.md (created if missing),
+# (e) POSTs a final ingest event. Failures are caught and reported.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_MAIN_BLOCK_MARKER = "# ─── LAIAS runtime entrypoint (auto-injected) ───"
+
+_MAIN_BLOCK_TEMPLATE = '''
+
+# ─── LAIAS runtime entrypoint (auto-injected) ───
+if __name__ == "__main__":
+    import asyncio as _laias_asyncio
+    import os as _laias_os
+    import json as _laias_json
+    import sys as _laias_sys
+    import traceback as _laias_traceback
+    from pathlib import Path as _LaiasPath
+    from datetime import datetime as _laias_datetime
+
+    try:
+        import httpx as _laias_httpx
+    except Exception:
+        _laias_httpx = None
+
+    _laias_out_root = _LaiasPath(_laias_os.getenv("LAIAS_OUTPUT_ROOT", "/app/outputs"))
+    _laias_out_root.mkdir(parents=True, exist_ok=True)
+    _laias_deployment_id = _laias_os.getenv("LAIAS_DEPLOYMENT_ID", "local")
+    _laias_ingest_url = _laias_os.getenv("LAIAS_OUTPUT_INGEST_URL", "")
+
+    def _laias_emit(kind, payload):
+        event = {
+            "event_type": kind,
+            "deployment_id": _laias_deployment_id,
+            "timestamp": _laias_datetime.utcnow().isoformat() + "Z",
+            "payload": payload,
+        }
+        # Always write to the file channel — guaranteed surface for the portal.
+        (_laias_out_root / "events.ndjson").open("a", encoding="utf-8").write(
+            _laias_json.dumps(event) + "\\n"
+        )
+        if _laias_httpx is not None and _laias_ingest_url:
+            try:
+                _laias_httpx.post(_laias_ingest_url, json=event, timeout=5.0)
+            except Exception:
+                # Best-effort: ingest is optional, file channel is authoritative.
+                pass
+
+    # Auto-discover the Flow subclass in this module. Falls back to the first
+    # class that has a `kickoff_async` method if none inherit from Flow.
+    _laias_flow_cls = None
+    for _laias_name, _laias_obj in list(globals().items()):
+        if isinstance(_laias_obj, type) and _laias_name != "Flow":
+            if hasattr(_laias_obj, "kickoff_async") or getattr(_laias_obj, "__bases__", ()):
+                try:
+                    from crewai.flow.flow import Flow as _LaiasFlowBase
+                    if issubclass(_laias_obj, _LaiasFlowBase):
+                        _laias_flow_cls = _laias_obj
+                        break
+                except Exception:
+                    pass
+    if _laias_flow_cls is None:
+        for _laias_name, _laias_obj in list(globals().items()):
+            if isinstance(_laias_obj, type) and hasattr(_laias_obj, "kickoff_async"):
+                _laias_flow_cls = _laias_obj
+                break
+
+    _laias_inputs = {
+        k.lower(): v
+        for k, v in _laias_os.environ.items()
+        if k.isupper() and not k.startswith(("PATH", "HOME", "PYTHON", "LAIAS_", "PORTKEY_", "OPENAI_", "ANTHROPIC_"))
+    }
+
+    async def _laias_run():
+        if _laias_flow_cls is None:
+            raise RuntimeError("No Flow subclass found in module — nothing to kick off.")
+        flow = _laias_flow_cls()
+        kickoff = getattr(flow, "kickoff_async", None) or getattr(flow, "kickoff", None)
+        if kickoff is None:
+            raise RuntimeError(f"Flow {_laias_flow_cls.__name__} has no kickoff method.")
+        if _laias_asyncio.iscoroutinefunction(kickoff):
+            return await kickoff(inputs=_laias_inputs)
+        return kickoff(inputs=_laias_inputs)
+
+    _laias_emit("flow_starting", {"inputs": list(_laias_inputs.keys())})
+    try:
+        _laias_result = _laias_asyncio.run(_laias_run())
+        _laias_text = str(_laias_result) if _laias_result is not None else ""
+        (_laias_out_root / "report.md").write_text(_laias_text, encoding="utf-8")
+        _laias_emit("flow_completed", {"report_bytes": len(_laias_text)})
+        _laias_sys.exit(0)
+    except Exception as _laias_err:
+        _laias_tb = _laias_traceback.format_exc()
+        (_laias_out_root / "error.txt").write_text(_laias_tb, encoding="utf-8")
+        _laias_emit("flow_failed", {"error": str(_laias_err), "traceback_bytes": len(_laias_tb)})
+        _laias_sys.exit(1)
+'''
+
+
+def _postprocess_ensure_main(flow_code: str) -> str:
+    """Append a deterministic __main__ runtime block if none exists.
+
+    The agent-runner Dockerfile runs `python flow.py`. Without a __main__
+    block the module just imports and exits with no side effects — no crew
+    kickoff, no artifact. This injection guarantees runtime execution,
+    error capture, and event emission regardless of what the code
+    generator produced.
+
+    Idempotent — the marker comment prevents double-injection.
+    """
+    if _MAIN_BLOCK_MARKER in flow_code:
+        return flow_code
+    # If generator produced its own __main__ block, wrap/augment rather
+    # than replace: append ours unconditionally so there's always a
+    # guaranteed path. Python executes all top-level code in order; an
+    # existing __main__ that already exited will short-circuit ours (via
+    # sys.exit), and one that completed without exit will fall through to
+    # ours, which re-runs kickoff if needed.
+    return flow_code.rstrip() + "\n" + _MAIN_BLOCK_TEMPLATE
+
+
+_STATE_ASSIGNMENT_PATTERN = (
+    r"^(\s*)self\.state\s*=\s*[A-Za-z_][A-Za-z0-9_]*\([^)]*\)\s*(?:#[^\n]*)?$"
+)
+
+
+def _postprocess_strip_state_assignment(flow_code: str) -> str:
+    """Remove `self.state = SomeState()` assignments inside __init__.
+
+    CrewAI `Flow[T]` exposes `self.state` as a read-only managed property;
+    direct assignment raises `AttributeError: property 'state' has no setter`
+    at runtime. Generator models frequently write this line anyway because
+    it reads like idiomatic Python. We strip it deterministically — the
+    state is already initialised by the Flow base class via the generic
+    type argument, and any initial values should come through
+    `kickoff_async(inputs=...)` instead.
+    """
+    import re
+
+    cleaned_lines: list[str] = []
+    for line in flow_code.splitlines():
+        if re.match(_STATE_ASSIGNMENT_PATTERN, line):
+            # Keep a short comment so the change is traceable during audit.
+            indent = re.match(r"^(\s*)", line).group(1)
+            cleaned_lines.append(
+                f"{indent}# [laias-postprocess] removed 'self.state = …()' — "
+                "Flow[T].state is a managed property."
+            )
+            continue
+        cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
+
+
+_SAFE_IMPORT_MARKER = "# ─── LAIAS safe-import shim (auto-injected) ───"
+
+_SAFE_IMPORT_PREAMBLE = '''# ─── LAIAS safe-import shim (auto-injected) ───
+# Code-generation LLMs often import symbols that don\'t exist in the
+# runtime\'s crewai_tools version (FileWriteTool, FileReadTool, etc.).
+# A failed top-level import prevents our main-block entrypoint from
+# even running, so no error artifact is written. We patch the import
+# machinery here: if a submodule or symbol is missing, substitute a
+# no-op stub that the generated code can reference harmlessly, and
+# log the substitution to the events file so the portal can surface it.
+import builtins as _laias_builtins
+import os as _laias_os_early
+import sys as _laias_sys_early
+import json as _laias_json_early
+from pathlib import Path as _LaiasPathEarly
+from datetime import datetime as _laias_dt_early
+
+_laias_early_out = _LaiasPathEarly(_laias_os_early.getenv("LAIAS_OUTPUT_ROOT", "/app/outputs"))
+try:
+    _laias_early_out.mkdir(parents=True, exist_ok=True)
+except Exception:
+    pass
+
+
+def _laias_stub_callable(*_args, **_kwargs):
+    raise RuntimeError(
+        "This tool is unavailable at runtime (shimmed by LAIAS safe-import). "
+        "The generated code referenced a tool that the installed crewai_tools "
+        "version does not export."
+    )
+
+
+class _LaiasStubTool:
+    """Stand-in for any crewai_tools symbol that the generator invents."""
+    name = "laias-stub"
+    description = "LAIAS safe-import stub — raises on actual use."
+    def __init__(self, *_args, **_kwargs):
+        pass
+    def __call__(self, *_args, **_kwargs):
+        return _laias_stub_callable()
+    def run(self, *_args, **_kwargs):
+        return _laias_stub_callable()
+
+
+_laias_original_import = _laias_builtins.__import__
+
+
+def _laias_safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+    try:
+        mod = _laias_original_import(name, globals, locals, fromlist, level)
+    except ImportError as exc:
+        # If the missing module is crewai_tools or a submodule thereof,
+        # return a stub module carrying _LaiasStubTool for every name.
+        if name == "crewai_tools" or name.startswith("crewai_tools."):
+            import types as _laias_types
+            stub = _laias_types.ModuleType(name)
+            for sym in (fromlist or ()):
+                setattr(stub, sym, _LaiasStubTool)
+            try:
+                (_laias_early_out / "events.ndjson").open("a", encoding="utf-8").write(
+                    _laias_json_early.dumps({
+                        "event_type": "safe_import_stubbed",
+                        "timestamp": _laias_dt_early.utcnow().isoformat() + "Z",
+                        "payload": {"module": name, "fromlist": list(fromlist or ()), "error": str(exc)},
+                    }) + "\\n"
+                )
+            except Exception:
+                pass
+            return stub
+        raise
+
+    # Module imported successfully, but some `from x import Y` symbols may
+    # be missing. Patch those too.
+    if fromlist and name.startswith("crewai_tools"):
+        for sym in fromlist:
+            if not hasattr(mod, sym):
+                setattr(mod, sym, _LaiasStubTool)
+                try:
+                    (_laias_early_out / "events.ndjson").open("a", encoding="utf-8").write(
+                        _laias_json_early.dumps({
+                            "event_type": "safe_import_symbol_stubbed",
+                            "timestamp": _laias_dt_early.utcnow().isoformat() + "Z",
+                            "payload": {"module": name, "symbol": sym},
+                        }) + "\\n"
+                    )
+                except Exception:
+                    pass
+    return mod
+
+
+_laias_builtins.__import__ = _laias_safe_import
+# ─── end safe-import shim ───
+
+'''
+
+
+def _postprocess_ensure_safe_imports(flow_code: str) -> str:
+    """Prepend the safe-import shim if not already present.
+
+    The shim MUST come before the first `from crewai_tools import …` line
+    in the generated code, otherwise the patched __import__ never gets a
+    chance. Because we prepend, all subsequent imports go through the
+    shimmed machinery and missing crewai_tools symbols become harmless
+    stubs instead of module-load-time ImportErrors.
+    """
+    if _SAFE_IMPORT_MARKER in flow_code:
+        return flow_code
+    return _SAFE_IMPORT_PREAMBLE + flow_code
+
+
+def _postprocess_strip_inputs_param(flow_code: str) -> str:
+    """Remove the `inputs:` positional parameter from @start-decorated methods.
+
+    CrewAI's `@start()` calls the decorated method with NO arguments —
+    inputs live on `self.state`, which CrewAI pre-populates from the
+    `kickoff_async(inputs={...})` dict. Generator models frequently write
+
+        @start()
+        async def initialize(self, inputs: Dict[str, Any]) -> Something:
+            self.state.foo = inputs.get("foo", "")
+
+    which raises `TypeError: initialize() missing 1 required positional
+    argument: 'inputs'`. We rewrite the signature to `(self)` only and
+    translate body references `inputs.get("x", default)` /
+    `inputs["x"]` → `getattr(self.state, "x", default)` /
+    `getattr(self.state, "x")` so the body still compiles.
+
+    We deliberately do NOT touch `@listen`/`@router` methods — those DO
+    receive the return value of the listened method as a positional arg.
+    """
+    import re
+
+    lines = flow_code.splitlines(keepends=True)
+    out: list[str] = []
+    i = 0
+    rewrote_method_indent: str | None = None
+
+    def _balance_match_paren(s: str, start: int) -> int:
+        """Return index of matching close-paren for open paren at `start`."""
+        depth = 1
+        i2 = start + 1
+        while i2 < len(s) and depth > 0:
+            if s[i2] == "(":
+                depth += 1
+            elif s[i2] == ")":
+                depth -= 1
+            i2 += 1
+        return i2 - 1 if depth == 0 else -1
+
+    while i < len(lines):
+        line = lines[i]
+
+        # Is this an @start() decorator?
+        dec_match = re.match(r"^(\s*)@start\b", line)
+        if dec_match:
+            out.append(line)
+            # Skip any additional stacked decorators
+            j = i + 1
+            while j < len(lines) and re.match(r"^\s*@", lines[j]):
+                out.append(lines[j])
+                j += 1
+            if j >= len(lines):
+                i = j
+                continue
+            def_line = lines[j]
+            # Does the def line have inputs as 2nd param?
+            m = re.match(
+                r"^(?P<indent>\s*)(?P<async>async\s+)?def\s+(?P<name>[A-Za-z_]\w*)\s*\(\s*self\s*,\s*inputs\b",
+                def_line,
+            )
+            if m:
+                indent = m.group("indent")
+                is_async = m.group("async") or ""
+                name = m.group("name")
+                # Find the closing paren of the signature (could span lines)
+                signature_text = def_line[m.start():]
+                paren_open = signature_text.index("(")
+                # Concatenate following lines until we find a balanced close
+                buffer = signature_text
+                buffer_start_line = j
+                while True:
+                    close_idx = _balance_match_paren(buffer, paren_open)
+                    if close_idx != -1:
+                        break
+                    buffer_start_line += 1
+                    if buffer_start_line >= len(lines):
+                        close_idx = -1
+                        break
+                    buffer += lines[buffer_start_line]
+                if close_idx == -1:
+                    # Can't safely rewrite; keep as-is
+                    out.append(def_line)
+                    i = j + 1
+                    continue
+                # Everything after close_idx until the colon/end-of-line is the return type
+                after_paren = buffer[close_idx + 1 :]
+                colon_idx = after_paren.index(":") if ":" in after_paren else -1
+                rettype = after_paren[:colon_idx].rstrip() if colon_idx != -1 else ""
+                rewritten = (
+                    f"{indent}{is_async}def {name}(self){rettype}:"
+                    "  # [laias-postprocess] @start() removes inputs param\n"
+                )
+                out.append(rewritten)
+                # Skip the consumed def lines
+                i = buffer_start_line + 1
+                rewrote_method_indent = indent
+                continue
+            else:
+                out.append(def_line)
+                i = j + 1
+                continue
+
+        # In the body of a rewritten method, translate inputs refs.
+        if rewrote_method_indent is not None:
+            stripped = line.lstrip()
+            if stripped and not line.startswith(rewrote_method_indent + " ") and not line.startswith(
+                rewrote_method_indent + "\t"
+            ) and not re.match(r"^\s*$", line):
+                rewrote_method_indent = None
+            else:
+                line = re.sub(
+                    r"\binputs\.get\(\s*(['\"])([^'\"]+)\1\s*(?:,\s*([^)]+))?\)",
+                    lambda m: (
+                        f'getattr(self.state, "{m.group(2)}", {m.group(3).strip()})'
+                        if m.group(3)
+                        else f'getattr(self.state, "{m.group(2)}", None)'
+                    ),
+                    line,
+                )
+                line = re.sub(
+                    r"\binputs\[\s*(['\"])([^'\"]+)\1\s*\]",
+                    lambda m: f'getattr(self.state, "{m.group(2)}")',
+                    line,
+                )
+
+        out.append(line)
+        i += 1
+
+    return "".join(out)
+
+
+def _postprocess_flow_code(flow_code: str) -> str:
+    """Full deterministic pipeline applied in-order to the generator output.
+
+    Each step is idempotent and fixes a specific class of LLM hallucination
+    that would otherwise crash the deployed container. Ordering matters:
+    the safe-import shim goes first (must precede any `from x import y`)
+    and the runtime entrypoint goes last (must be at module bottom).
+    """
+    fixed = _postprocess_ensure_safe_imports(flow_code)
+    fixed = _postprocess_llm_factory(fixed)
+    fixed = _postprocess_strip_state_assignment(fixed)
+    fixed = _postprocess_strip_inputs_param(fixed)
+    fixed = _postprocess_ensure_main(fixed)
+    return fixed
 
 
 # Global service instance

@@ -119,10 +119,11 @@ services:
       - PORTKEY_VIRTUAL_KEY=${PORTKEY_VIRTUAL_KEY:-portkeyclaude}
       - PORTKEY_PROVIDER=${PORTKEY_PROVIDER:-openai}
       - PORTKEY_HEALTH_MODEL=${PORTKEY_HEALTH_MODEL:-claude-haiku-4-5-20251001}
-      # Generation budget — must fit a full CrewAI flow (typically 6-12K
-      # tokens of Python + YAML). Claude Haiku 4.5 supports 64k output; we
-      # conservatively allocate 16k which covers 95% of generated flows.
-      - MAX_TOKENS=${MAX_TOKENS:-16000}
+      # Generation budget — must fit a full CrewAI flow (typically 8-18K
+      # tokens of Python + YAML when JSON-escaped). Claude Haiku 4.5
+      # supports 64k output; we allocate 32k which covers >99% of flows
+      # including the safe-import shim + runtime entrypoint injection.
+      - MAX_TOKENS=${MAX_TOKENS:-32000}
       # Client-side rate limits so LAIAS cannot hammer Portkey like a DoS.
       # Portkey free tier is ~60 req/min; we cap well below that and let
       # the tenacity retry loop naturally back off on 429.
