@@ -613,47 +613,155 @@ if __name__ == "__main__":
                 # Best-effort: ingest is optional, file channel is authoritative.
                 pass
 
-    # Auto-discover the Flow subclass in this module. Falls back to the first
-    # class that has a `kickoff_async` method if none inherit from Flow.
+    # Auto-discover the Flow subclass AND its state type.
     _laias_flow_cls = None
+    _laias_state_cls = None
+    try:
+        from crewai.flow.flow import Flow as _LaiasFlowBase
+    except Exception:
+        _LaiasFlowBase = None
+    try:
+        from pydantic import BaseModel as _LaiasBaseModel
+    except Exception:
+        _LaiasBaseModel = None
     for _laias_name, _laias_obj in list(globals().items()):
-        if isinstance(_laias_obj, type) and _laias_name != "Flow":
-            if hasattr(_laias_obj, "kickoff_async") or getattr(_laias_obj, "__bases__", ()):
-                try:
-                    from crewai.flow.flow import Flow as _LaiasFlowBase
-                    if issubclass(_laias_obj, _LaiasFlowBase):
-                        _laias_flow_cls = _laias_obj
-                        break
-                except Exception:
-                    pass
+        if not isinstance(_laias_obj, type) or _laias_name == "Flow":
+            continue
+        if _LaiasFlowBase is not None:
+            try:
+                if issubclass(_laias_obj, _LaiasFlowBase):
+                    _laias_flow_cls = _laias_obj
+                    # Try the generic-param path first: `Flow[StateCls]`.
+                    for _ob in getattr(_laias_obj, "__orig_bases__", ()):
+                        args = getattr(_ob, "__args__", None)
+                        if not args:
+                            continue
+                        cand = args[0]
+                        # Skip TypeVars / ForwardRefs — we want a real class.
+                        if isinstance(cand, type) and _LaiasBaseModel is not None and issubclass(cand, _LaiasBaseModel):
+                            _laias_state_cls = cand
+                            break
+                    break
+            except Exception:
+                pass
     if _laias_flow_cls is None:
         for _laias_name, _laias_obj in list(globals().items()):
             if isinstance(_laias_obj, type) and hasattr(_laias_obj, "kickoff_async"):
                 _laias_flow_cls = _laias_obj
                 break
+    # Fallback state-class discovery: if the generic-param path yielded a
+    # TypeVar or nothing, scan the module for the first BaseModel subclass
+    # named like `*State*`. This catches the conventional
+    # `class TrafficTattletaleState(BaseModel)` pattern the generator emits.
+    if _laias_state_cls is None and _LaiasBaseModel is not None:
+        for _laias_name, _laias_obj in list(globals().items()):
+            if (
+                isinstance(_laias_obj, type)
+                and _laias_obj is not _LaiasBaseModel
+                and "State" in _laias_name
+            ):
+                try:
+                    if issubclass(_laias_obj, _LaiasBaseModel):
+                        _laias_state_cls = _laias_obj
+                        break
+                except Exception:
+                    pass
 
-    _laias_inputs = {
+    # Tenant configuration comes from upper-case env vars that aren't in
+    # the platform allow-list. These become state fields if (and only if)
+    # the Flow has a typed state class; otherwise CrewAI stores them as a
+    # plain dict, which breaks `self.state.<field>` access inside flow
+    # methods. The Pydantic construction below tolerates extra keys.
+    _laias_tenant_env = {
         k.lower(): v
         for k, v in _laias_os.environ.items()
-        if k.isupper() and not k.startswith(("PATH", "HOME", "PYTHON", "LAIAS_", "PORTKEY_", "OPENAI_", "ANTHROPIC_"))
+        if k.isupper() and not k.startswith(
+            ("PATH", "HOME", "PYTHON", "LAIAS_", "PORTKEY_", "OPENAI_",
+             "ANTHROPIC_", "LC_", "LANG", "GPG_", "SHELL", "TERM", "USER",
+             "HOSTNAME", "MEMORY_", "TOKENIZERS_", "VERBOSE", "LOG_", "TIKTOKEN_")
+        )
     }
 
     async def _laias_run():
         if _laias_flow_cls is None:
             raise RuntimeError("No Flow subclass found in module — nothing to kick off.")
+        # CrewAI Flow[T].__init__() constructs a default-populated typed
+        # state. We must NOT pass `inputs=` to kickoff — that silently
+        # replaces the typed state with a plain dict and breaks every
+        # `self.state.<field>` access downstream. Instead: build the flow
+        # first, then mutate fields on the already-constructed typed
+        # state before kickoff reads them.
         flow = _laias_flow_cls()
+        _laias_emit("state_seeding_start", {
+            "state_cls": _laias_state_cls.__name__ if _laias_state_cls else None,
+            "env_keys_available": sorted(_laias_tenant_env.keys()),
+        })
+        _laias_seeded = []
+        _laias_failed = []
+        if _laias_state_cls is not None:
+            try:
+                _known = set(getattr(_laias_state_cls, "model_fields", {}).keys())
+                for k, v in _laias_tenant_env.items():
+                    if k in _known:
+                        try:
+                            setattr(flow.state, k, v)
+                            _laias_seeded.append({"field": k, "value_chars": len(str(v))})
+                        except Exception as _laias_seed_err:
+                            _laias_failed.append({"field": k, "error": str(_laias_seed_err)})
+            except Exception as _laias_outer_err:
+                _laias_failed.append({"error": str(_laias_outer_err)})
+        _laias_emit("state_seeding_done", {
+            "state_fields": sorted(getattr(_laias_state_cls, "model_fields", {}).keys()) if _laias_state_cls else [],
+            "seeded": _laias_seeded,
+            "failed": _laias_failed,
+            "post_seed_site_url": str(getattr(flow.state, "site_url", "<unset>")),
+        })
         kickoff = getattr(flow, "kickoff_async", None) or getattr(flow, "kickoff", None)
         if kickoff is None:
             raise RuntimeError(f"Flow {_laias_flow_cls.__name__} has no kickoff method.")
         if _laias_asyncio.iscoroutinefunction(kickoff):
-            return await kickoff(inputs=_laias_inputs)
-        return kickoff(inputs=_laias_inputs)
+            return await kickoff()
+        return kickoff()
 
-    _laias_emit("flow_starting", {"inputs": list(_laias_inputs.keys())})
+    _laias_emit("flow_starting", {"inputs": list(_laias_tenant_env.keys())})
     try:
         _laias_result = _laias_asyncio.run(_laias_run())
-        _laias_text = str(_laias_result) if _laias_result is not None else ""
+        # Extract the actual Markdown report from the flow's final state.
+        # Flow.kickoff_async returns the state dict/object; the generated
+        # code typically stores the report in one of a few conventional
+        # fields. Fall back to str(result) only if none exist.
+        def _laias_extract_report(r):
+            if r is None:
+                return ""
+            for field in (
+                "report_content", "final_report", "report", "output",
+                "markdown", "content", "summary", "result",
+            ):
+                try:
+                    v = getattr(r, field, None) if not isinstance(r, dict) else r.get(field)
+                except Exception:
+                    v = None
+                if isinstance(v, str) and v.strip():
+                    return v
+            # Last resort: repr the whole state
+            return str(r)
+
+        _laias_text = _laias_extract_report(_laias_result)
         (_laias_out_root / "report.md").write_text(_laias_text, encoding="utf-8")
+        # Also dump the full state for debugging/audit.
+        try:
+            _laias_state_repr = (
+                _laias_result.model_dump()
+                if hasattr(_laias_result, "model_dump")
+                else dict(_laias_result) if isinstance(_laias_result, dict)
+                else {"repr": str(_laias_result)}
+            )
+            (_laias_out_root / "final_state.json").write_text(
+                _laias_json.dumps(_laias_state_repr, default=str, indent=2),
+                encoding="utf-8",
+            )
+        except Exception:
+            pass
         _laias_emit("flow_completed", {"report_bytes": len(_laias_text)})
         _laias_sys.exit(0)
     except Exception as _laias_err:
@@ -973,15 +1081,83 @@ def _postprocess_strip_inputs_param(flow_code: str) -> str:
     return "".join(out)
 
 
+def _postprocess_fix_multiline_fstrings(flow_code: str) -> str:
+    """Convert `f"...<newline>..."` → `f\"\"\"...<newline>...\"\"\"`.
+
+    LLMs frequently emit Task descriptions like
+
+        description=f"Analyze traffic for website: {x}
+        - point 1
+        - point 2",
+
+    Python rejects that with `SyntaxError: unterminated string literal`
+    because single-quoted f-strings must be on one line. We detect
+    a single-or-double-quoted f-string that contains a raw newline
+    before its matching close quote and upgrade it to a triple-quoted
+    f-string. Idempotent — triple-quoted strings are untouched.
+    """
+    import re
+
+    def walk(s: str, i: int) -> str:
+        out: list[str] = []
+        while i < len(s):
+            # Look for the start of an f-string with a SINGLE quote char
+            m = re.match(r'([fF][rR]?|[rR][fF])(["\'])', s[i:])
+            if not m:
+                out.append(s[i])
+                i += 1
+                continue
+            prefix = m.group(1)
+            quote = m.group(2)
+            # Already triple-quoted? Pass through as-is
+            if s[i + len(prefix): i + len(prefix) + 3] == quote * 3:
+                out.append(s[i])
+                i += 1
+                continue
+
+            # Find the matching close-quote on the same line
+            j = i + len(prefix) + 1
+            has_newline = False
+            while j < len(s):
+                ch = s[j]
+                if ch == "\\" and j + 1 < len(s):
+                    j += 2
+                    continue
+                if ch == "\n":
+                    has_newline = True
+                    j += 1
+                    continue
+                if ch == quote:
+                    break
+                j += 1
+
+            if has_newline and j < len(s) and s[j] == quote:
+                # Rewrite to triple-quoted f-string
+                body = s[i + len(prefix) + 1 : j]
+                out.append(f"{prefix}{quote*3}{body}{quote*3}")
+                i = j + 1
+            else:
+                # Copy the whole (single-line) string verbatim
+                end = j + 1 if j < len(s) else j
+                out.append(s[i:end])
+                i = end
+        return "".join(out)
+
+    return walk(flow_code, 0)
+
+
 def _postprocess_flow_code(flow_code: str) -> str:
     """Full deterministic pipeline applied in-order to the generator output.
 
     Each step is idempotent and fixes a specific class of LLM hallucination
     that would otherwise crash the deployed container. Ordering matters:
     the safe-import shim goes first (must precede any `from x import y`)
-    and the runtime entrypoint goes last (must be at module bottom).
+    and the runtime entrypoint goes last (must be at module bottom). The
+    f-string fix comes before structural rewrites so subsequent regex
+    passes see valid single-line string literals.
     """
-    fixed = _postprocess_ensure_safe_imports(flow_code)
+    fixed = _postprocess_fix_multiline_fstrings(flow_code)
+    fixed = _postprocess_ensure_safe_imports(fixed)
     fixed = _postprocess_llm_factory(fixed)
     fixed = _postprocess_strip_state_assignment(fixed)
     fixed = _postprocess_strip_inputs_param(fixed)
