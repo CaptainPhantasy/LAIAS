@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "gates": [
+    {
+      "name": "agent-generator-static-checks",
+      "command": [
+        "sh",
+        "-c",
+        "ruff check services/agent-generator/app/config.py services/agent-generator/app/prompts/system_prompts.py services/agent-generator/app/services/llm_provider.py services/agent-generator/app/tools/search_tools.py services/agent-generator/app/tools/web_tools.py && python3 -m compileall -q services/agent-generator/app"
+      ],
+      "required": true
+    }
+  ],
+  "include": [
+    ".gitleaks.toml",
+    ".proofline.json",
+    "services/agent-generator/Dockerfile",
+    "services/agent-generator/app/config.py",
+    "services/agent-generator/app/prompts/system_prompts.py",
+    "services/agent-generator/app/services/llm_provider.py",
+    "services/agent-generator/app/tools/search_tools.py",
+    "services/agent-generator/app/tools/web_tools.py",
+    "services/agent-generator/constraints.txt",
+    "services/agent-generator/requirements.txt"
+  ],
+  "deny": [
+    ".env",
+    ".env.*",
+    "*.pem",
+    "*.key",
+    "node_modules/**",
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    ".git/**",
+    ".harness/**",
+    ".pi/**",
+    ".omp/**",
+    ".supercache/**",
+    ".floyd/**"
+  ],
+  "baseBranch": "autonomously-fixed",
+  "publish": true
+}

@@ -2,6 +2,7 @@
 Search & Research Tools Configuration
 
 Tools for web search, code search, and research across various sources.
+Implements Layer 1 (Web Search Priority) of the 7-Layer Data Collection Protocol.
 """
 
 import os
@@ -17,7 +18,33 @@ logger = structlog.get_logger()
 
 @dataclass
 class SearchToolsConfig:
-    """Configuration for Search & Research tools."""
+    """Configuration for Search & Research tools.
+
+    Layer 1 — Web Search Priority (MANDATORY FIRST STEP):
+    - ALWAYS try web search first (up to 2 attempts) before scraping any website.
+    - Check for public APIs before resorting to browser scraping.
+    - Web search is faster, safer, and doesn't trigger bot detection.
+    - Only scrape when search and API approaches both fail.
+
+    Full 7-Layer Protocol Reference:
+    1. Web Search Priority (this layer) - search first, scrape last resort
+    2. Human Timing - 5-12s delays, max 5 pages/session, 15s breaks
+    3. Fingerprint Protection - real browser, hide webdriver, randomize canvas
+    4. Session Consistency - cookies, referer headers, natural navigation
+    5. Proxy & IP Management - residential proxies, per-session rotation
+    6. CAPTCHA & Block Response - stop on CAPTCHA, retry 429s once
+    7. Content Extraction - LLM-based extraction, validate, deduplicate
+
+    Decision Tree: 1. Web search → 2. Public API → 3. Scrape (LAST RESORT ONLY)
+    """
+
+    # =========================================================================
+    # Layer 1: Web Search Priority (ALWAYS TRY FIRST)
+    # =========================================================================
+    try_search_first: bool = True  # ALWAYS try search before scraping
+    max_search_attempts: int = 2  # Up to 2 search attempts before fallback
+    check_public_apis: bool = True  # Check APIs (GitHub, arXiv, NVD, etc.)
+    search_before_scrape: bool = True  # Enforce search-first policy
 
     # General search settings
     max_results: int = 10
