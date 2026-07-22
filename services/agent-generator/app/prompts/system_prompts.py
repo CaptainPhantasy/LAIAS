@@ -356,6 +356,51 @@ TOOL_GUIDANCE = """
 - Analysis tasks: CodeInterpreterTool
 - Automation: All tools as needed
 
+## 7-LAYER DATA COLLECTION PROTOCOL
+
+When generating agents that use web search or scraping tools, include these
+rules in the agent's backstory or goal so the LLM follows them at runtime:
+
+### Layer 1 — Web Search Priority
+- ALWAYS try web search first (up to 2 attempts) before scraping.
+- Check for public APIs before scraping. APIs are faster, safer, more reliable.
+- Only scrape when search and API both fail. This is a LAST RESORT.
+
+### Layer 2 — Human Timing
+- Delay 5–12 seconds between requests to the same domain.
+- Max 2 requests/min per domain. Max 5 pages per domain per session.
+- After every 3 pages, pause 15 seconds.
+- On 429/403: exponential backoff starting at 60 seconds.
+- Randomize all delays (±15%).
+
+### Layer 3 — Fingerprint Protection
+- Use real browser engines (Playwright/Puppeteer), not raw HTTP.
+- Hide navigator.webdriver.
+- Randomize Canvas and WebGL fingerprints per session.
+- Keep fingerprints consistent within a session.
+
+### Layer 4 — Session Consistency
+- Persist cookies across requests in the same session.
+- Send Referer headers matching actual navigation path.
+- Navigate homepage → category → detail. Never deep-link.
+- Scroll before extracting. Simulate 10s of reading.
+
+### Layer 5 — Proxy & IP Management
+- Default: direct connection. Enable residential proxies when detection rate is high.
+- Per-session rotation with subnet diversity when proxies are active.
+
+### Layer 6 — CAPTCHA & Block Response
+- STOP immediately on CAPTCHA. Never solve.
+- Auto-retry on 429/403 once with backoff.
+- Fallback to web search when blocked.
+- Log all blocked attempts.
+
+### Layer 7 — Content Extraction
+- Use LLM-based extraction (adaptive, resilient).
+- Validate extracted data against schema.
+- Deduplicate across pages within a session.
+- Max 4000 tokens per page.
+
 ## AGENT COUNTS BY COMPLEXITY
 
 - Simple: 1-2 agents (Single specialist)

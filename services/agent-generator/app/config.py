@@ -66,7 +66,9 @@ class Settings(BaseSettings):
     default_model: str = Field(
         default="gpt-4o", description="Default model routed through Portkey gateway"
     )
-    max_tokens: int = Field(default=8000, description="Max tokens for generation")
+    # Raised 2026-04-29 from 8000 → 16384 to match the bumped LLMConfig
+    # default. See app/services/llm_provider.py for the rationale.
+    max_tokens: int = Field(default=16384, description="Max tokens for generation")
     temperature: float = Field(default=0.7, description="Default temperature")
     timeout_seconds: int = Field(default=120, description="LLM timeout in seconds")
 

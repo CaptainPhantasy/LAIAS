@@ -61,7 +61,17 @@ class LLMConfig(BaseModel):
     api_key: str | None = Field(default=None, description="API key (overrides env var)")
     base_url: str | None = Field(default=None, description="Base URL (overrides default)")
     temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Sampling temperature")
-    max_tokens: int = Field(default=4096, ge=1, description="Maximum tokens to generate")
+    # Raised 2026-04-29 from 4096 → 16384. The agent-generator's
+    # generate_agent flow asks Claude/GPT to emit a full CrewAI Flow as a
+    # JSON-encoded `flow_code` string. A medium-complexity flow is
+    # 20-30 KB of Python, which encodes to ~6-8k tokens. At 4096 the
+    # response gets truncated mid-string and JSON parsing fails with
+    # "Expecting value: line 2 column N" — observed in production
+    # 2026-04-29 across 10 consecutive provision attempts (all failed,
+    # POST /api/generate-agent returned 500). Claude Haiku 4.5 supports
+    # up to 200k output tokens; 16k is conservative but covers every
+    # template currently shipped.
+    max_tokens: int = Field(default=16384, ge=1, description="Maximum tokens to generate")
     timeout: int = Field(default=120, ge=1, description="Request timeout in seconds")
     # Provider-specific options
     extra: dict[str, Any] = Field(
